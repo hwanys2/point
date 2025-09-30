@@ -518,7 +518,7 @@ const App = () => {
     if (!isValid) {
       setActiveTab(visibleTabs[0].id);
     }
-  }, [visibleTabs]);
+  }, [visibleTabs, activeTab]);
 
   // 기간별 필터링된 학생 점수 계산
   const filteredStudentsWithScores = useMemo(() => {
