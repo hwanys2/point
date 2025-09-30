@@ -3,7 +3,7 @@ import {
   Award, UserPlus, ListOrdered, Loader2, AlertTriangle, Plus, Calendar, 
   Shirt, BookOpenCheck, Sparkles, Armchair, Smile, Lightbulb,
   Feather, ShieldCheck, Settings, BarChart3, FileText, Trash2, Edit, Save, 
-  ClipboardPlus, X, BarChart, Palette, LogOut, Clock, CheckSquare, XSquare 
+  ClipboardList, X, BarChart, Palette, LogOut, Clock, CheckSquare, XSquare 
 } from 'lucide-react';
 import Auth from './components/Auth';
 import { studentsAPI, rulesAPI, scoresAPI, settingsAPI } from './services/api';
@@ -35,7 +35,7 @@ const TABS = [
   { id: 'leaderboard', name: '순위표', icon: ListOrdered },
   { id: 'scoring', name: '점수 부여', icon: Plus },
   { id: 'management', name: '학생 관리', icon: Settings },
-  { id: 'rules', name: '규칙', icon: ClipboardPlus },
+  { id: 'rules', name: '규칙', icon: ClipboardList },
 ];
 
 const getIconComponent = (iconId) => {
@@ -43,7 +43,7 @@ const getIconComponent = (iconId) => {
     acc[curr.id] = curr.icon;
     return acc;
   }, {});
-  return iconMap[iconId] || ClipboardPlus;
+  return iconMap[iconId] || ClipboardList;
 };
 
 // --- Sub-Components ---
