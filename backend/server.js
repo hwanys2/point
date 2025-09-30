@@ -21,6 +21,7 @@ app.use('/api/rules', require('./routes/rules'));
 app.use('/api/scores', require('./routes/scores'));
 app.use('/api/settings', require('./routes/settings'));
 app.use('/api/student-managers', require('./routes/student-managers'));
+app.use('/api/public', require('./routes/public'));
 
 // In production, serve frontend build as static files
 if (process.env.NODE_ENV === 'production') {

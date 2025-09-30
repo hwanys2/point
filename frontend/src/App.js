@@ -7,7 +7,8 @@ import {
 } from 'lucide-react';
 import Auth from './components/Auth';
 import LandingPage from './components/LandingPage';
-import { studentsAPI, rulesAPI, scoresAPI, settingsAPI, studentManagersAPI } from './services/api';
+import PublicLeaderboard from './components/PublicLeaderboard';
+import { studentsAPI, rulesAPI, scoresAPI, settingsAPI, studentManagersAPI, publicAPI } from './services/api';
 
 // Helper functions
 const getTodayDate = () => new Date().toISOString().split('T')[0];
@@ -406,6 +407,8 @@ const App = () => {
   const [editingRuleId, setEditingRuleId] = useState(null);
   const [appSettings, setAppSettings] = useState(defaultSettings);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [shareEnabled, setShareEnabled] = useState(false);
+  const [shareToken, setShareToken] = useState(null);
   
   // 순위표 기간 필터
   const [periodFilter, setPeriodFilter] = useState('all'); // 'all', 'daily', 'weekly', 'monthly', 'custom'
@@ -456,7 +459,10 @@ const App = () => {
 
       setStudents(results[0].data);
       setRules(results[1].data);
-      setAppSettings({ ...defaultSettings, ...results[2].data });
+      const settings = { ...defaultSettings, ...results[2].data };
+      setAppSettings(settings);
+      setShareEnabled(settings.shareEnabled || false);
+      setShareToken(settings.shareToken || null);
       
       if (savedUser.role === 'teacher' && results[3]) {
         setManagers(results[3].data);
@@ -792,9 +798,56 @@ const App = () => {
   const renderLeaderboard = () => (
     <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
       <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-2xl border border-gray-100 h-fit">
-        <h2 className="text-3xl font-bold text-gray-800 mb-6 flex items-center">
-          <ListOrdered className="w-7 h-7 mr-2 text-indigo-500" /> 종합 순위표
-        </h2>
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-3xl font-bold text-gray-800 flex items-center">
+            <ListOrdered className="w-7 h-7 mr-2 text-indigo-500" /> 종합 순위표
+          </h2>
+          
+          {/* 공유 설정 (교사만) */}
+          {user?.role === 'teacher' && (
+            <div className="flex items-center gap-3">
+              <label className="flex items-center gap-2 text-sm text-gray-600">
+                <input
+                  type="checkbox"
+                  checked={shareEnabled}
+                  onChange={async (e) => {
+                    const enabled = e.target.checked;
+                    setShareEnabled(enabled);
+                    try {
+                      const response = await settingsAPI.update({ shareEnabled: enabled });
+                      setShareToken(response.data.settings.shareToken);
+                    } catch (err) {
+                      setError('공유 설정 업데이트 중 오류가 발생했습니다.');
+                      setShareEnabled(!enabled); // 롤백
+                    }
+                  }}
+                  className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                />
+                공개 링크 활성화
+              </label>
+              
+              {shareEnabled && shareToken && (
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={`${window.location.origin}/#/share/${shareToken}`}
+                    readOnly
+                    className="px-3 py-1 text-sm border border-gray-300 rounded bg-gray-50 text-gray-600 w-64"
+                  />
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(`${window.location.origin}/#/share/${shareToken}`);
+                      alert('링크가 클립보드에 복사되었습니다!');
+                    }}
+                    className="px-3 py-1 text-sm bg-indigo-600 text-white rounded hover:bg-indigo-700 transition"
+                  >
+                    복사
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
         
         {/* 기간 필터 */}
         <div className="mb-6 p-4 bg-gray-50 rounded-lg border">
@@ -1252,6 +1305,15 @@ const App = () => {
       )}
     </div>
   );
+
+  // 공개 리더보드 라우트 처리
+  const currentPath = window.location.hash;
+  const shareMatch = currentPath.match(/#\/share\/([a-f0-9]+)/);
+  
+  if (shareMatch) {
+    const shareToken = shareMatch[1];
+    return <PublicLeaderboard token={shareToken} />;
+  }
 
   if (!user) {
     return (

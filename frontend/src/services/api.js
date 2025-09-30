@@ -80,4 +80,12 @@ export const studentManagersAPI = {
   delete: (id) => api.delete(`/student-managers/${id}`),
 };
 
+// Public API (no auth required)
+export const publicAPI = {
+  getLeaderboard: (token, params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return axios.get(`${API_BASE_URL}/public/leaderboard/${token}${queryString ? `?${queryString}` : ''}`);
+  },
+};
+
 export default api;
