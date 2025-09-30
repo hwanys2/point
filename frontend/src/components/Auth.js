@@ -11,6 +11,7 @@ const Auth = ({ onLogin, onClose, initialMode = 'login' }) => {
     username: '',
     email: '',
     password: '',
+    confirmPassword: '',
     schoolName: '',
   });
 
@@ -28,6 +29,11 @@ const Auth = ({ onLogin, onClose, initialMode = 'login' }) => {
           password: formData.password,
         });
       } else {
+        if (formData.password !== formData.confirmPassword) {
+          setIsLoading(false);
+          setError('비밀번호와 비밀번호 확인이 일치하지 않습니다.');
+          return;
+        }
         response = await authAPI.register({
           username: formData.username,
           email: formData.email,
@@ -138,6 +144,23 @@ const Auth = ({ onLogin, onClose, initialMode = 'login' }) => {
               minLength={isLogin ? "4" : "6"}
             />
           </div>
+
+          {!isLogin && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                비밀번호 확인
+              </label>
+              <input
+                type="password"
+                name="confirmPassword"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                required
+                minLength="6"
+              />
+            </div>
+          )}
 
           <button
             type="submit"

@@ -20,28 +20,25 @@ const PublicLeaderboard = ({ token }) => {
   const [customStartDate, setCustomStartDate] = useState(new Date().toISOString().split('T')[0]);
   const [customEndDate, setCustomEndDate] = useState(new Date().toISOString().split('T')[0]);
 
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      const params = { period: periodFilter };
-      if (periodFilter === 'custom') {
-        params.startDate = customStartDate;
-        params.endDate = customEndDate;
-      }
-      
-      const response = await publicAPI.getLeaderboard(token, params);
-      setData(response.data);
-    } catch (err) {
-      setError(err.response?.data?.error || '데이터를 불러오는 중 오류가 발생했습니다.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    if (token) {
-      loadData();
-    }
+    const run = async () => {
+      if (!token) return;
+      try {
+        setLoading(true);
+        const params = { period: periodFilter };
+        if (periodFilter === 'custom') {
+          params.startDate = customStartDate;
+          params.endDate = customEndDate;
+        }
+        const response = await publicAPI.getLeaderboard(token, params);
+        setData(response.data);
+      } catch (err) {
+        setError(err.response?.data?.error || '데이터를 불러오는 중 오류가 발생했습니다.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    run();
   }, [token, periodFilter, customStartDate, customEndDate]);
 
   const sortedStudents = useMemo(() => {
@@ -84,7 +81,7 @@ const PublicLeaderboard = ({ token }) => {
     );
   }
 
-  const { settings, leaderboard, rules } = data;
+  const { settings, rules } = data;
   const IconComponent = getIconComponent(settings.iconId);
 
   return (

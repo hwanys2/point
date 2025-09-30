@@ -8,7 +8,7 @@ import {
 import Auth from './components/Auth';
 import LandingPage from './components/LandingPage';
 import PublicLeaderboard from './components/PublicLeaderboard';
-import { studentsAPI, rulesAPI, scoresAPI, settingsAPI, studentManagersAPI, publicAPI } from './services/api';
+import { studentsAPI, rulesAPI, scoresAPI, settingsAPI, studentManagersAPI } from './services/api';
 
 // Helper functions
 const getTodayDate = () => new Date().toISOString().split('T')[0];
@@ -423,7 +423,7 @@ const App = () => {
   // eslint-disable-next-line no-unused-vars
   const [managers, setManagers] = useState([]);
   // eslint-disable-next-line no-unused-vars
-  const [newManager, setNewManager] = useState({ username: '', password: '', displayName: '', allowedRuleIds: [] });
+  const [newManager, setNewManager] = useState({ username: '', password: '', confirmPassword: '', displayName: '', allowedRuleIds: [] });
 
   // 초기 로드: 토큰 확인
   useEffect(() => {
@@ -1438,6 +1438,14 @@ const App = () => {
                       required
                     />
                     <input
+                      type="password"
+                      placeholder="비밀번호 확인"
+                      value={newManager.confirmPassword}
+                      onChange={(e) => setNewManager(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                      className="px-3 py-2 border border-gray-300 rounded-lg"
+                      required
+                    />
+                    <input
                       type="text"
                       placeholder="표시 이름 (학생 이름)"
                       value={newManager.displayName}
@@ -1482,8 +1490,12 @@ const App = () => {
                   <button
                     type="button"
                     onClick={async () => {
-                      if (!newManager.username || !newManager.password || !newManager.displayName) {
+                      if (!newManager.username || !newManager.password || !newManager.confirmPassword || !newManager.displayName) {
                         alert('모든 필드를 입력하세요.');
+                        return;
+                      }
+                      if (newManager.password !== newManager.confirmPassword) {
+                        alert('비밀번호와 비밀번호 확인이 일치하지 않습니다.');
                         return;
                       }
                       if (newManager.allowedRuleIds.length === 0) {
@@ -1492,8 +1504,8 @@ const App = () => {
                       }
                       try {
                         setIsLoading(true);
-                        await studentManagersAPI.create(newManager);
-                        setNewManager({ username: '', password: '', displayName: '', allowedRuleIds: [] });
+                        await studentManagersAPI.create({ username: newManager.username, password: newManager.password, displayName: newManager.displayName, allowedRuleIds: newManager.allowedRuleIds });
+                        setNewManager({ username: '', password: '', confirmPassword: '', displayName: '', allowedRuleIds: [] });
                         await loadData();
                         alert('학생 관리자가 생성되었습니다!');
                       } catch (err) {
