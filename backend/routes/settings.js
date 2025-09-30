@@ -16,7 +16,7 @@ const initSettingsTable = async () => {
         subtitle VARCHAR(200) DEFAULT '학년/반/번호 기반 관리 및 실시간 점수 순위표',
         icon_id VARCHAR(50) DEFAULT 'Award',
         icon_color VARCHAR(20) DEFAULT '#4f46e5',
-        font VARCHAR(100) DEFAULT '''Inter'', sans-serif',
+        font VARCHAR(100) DEFAULT '''Noto Sans KR'', Pretendard, ''Apple SD Gothic Neo'', ''Malgun Gothic'', sans-serif',
         share_enabled BOOLEAN DEFAULT FALSE,
         share_token TEXT,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -47,7 +47,7 @@ router.get('/', auth, async (req, res) => {
         subtitle: '학년/반/번호 기반 관리 및 실시간 점수 순위표',
         iconId: 'Award',
         iconColor: '#4f46e5',
-        font: "'Inter', sans-serif",
+        font: "'Noto Sans KR', Pretendard, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif",
         shareEnabled: false,
         shareToken: null
       };

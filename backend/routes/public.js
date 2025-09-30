@@ -125,8 +125,9 @@ router.get('/leaderboard/:token', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Public leaderboard error:', error);
-    res.status(500).json({ error: '리더보드 조회 중 오류가 발생했습니다.' });
+    console.error('Public leaderboard error:', error.message);
+    console.error('Stack trace:', error.stack);
+    res.status(500).json({ error: '리더보드 조회 중 오류가 발생했습니다.', details: error.message });
   }
 });
 
