@@ -906,7 +906,7 @@ const App = () => {
   const renderRules = () => (
     <div className="bg-white p-6 rounded-xl shadow-2xl border border-gray-100 min-h-[70vh] space-y-8">
       <h2 className="text-3xl font-bold text-gray-800 mb-6 flex items-center">
-        <ClipboardPlus className="w-7 h-7 mr-2 text-indigo-500" /> 규칙 관리
+        <ClipboardList className="w-7 h-7 mr-2 text-indigo-500" /> 규칙 관리
       </h2>
 
       <div className="border p-4 rounded-lg bg-indigo-50">
