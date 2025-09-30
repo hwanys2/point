@@ -1,5 +1,5 @@
 import React from 'react';
-import { Award, ListOrdered, Plus, ClipboardList, BarChart3, Calendar, CheckSquare, Sparkles, Zap, Shield, Users } from 'lucide-react';
+import { Award, ListOrdered, Plus, ClipboardList, BarChart3, Calendar, CheckSquare, Sparkles, Zap, Shield, Users, KeySquare } from 'lucide-react';
 
 const LandingPage = ({ onShowAuth }) => {
   // 샘플 데이터
@@ -17,6 +17,7 @@ const LandingPage = ({ onShowAuth }) => {
     { icon: ClipboardList, title: '맞춤형 규칙', desc: '등교시간, 과제제출 등 원하는 규칙을 자유롭게 생성', color: 'text-purple-500' },
     { icon: Users, title: 'CSV 일괄 등록', desc: '학생 명단을 CSV로 한 번에 업로드', color: 'text-orange-500' },
     { icon: Calendar, title: '기간별 분석', desc: '오늘/주간/월간/사용자 지정 기간별 통계', color: 'text-pink-500' },
+    { icon: KeySquare, title: '학생 관리자 권한', desc: '학생에게 특정 규칙만 체크 권한을 부여 (교사 관리)', color: 'text-emerald-600' },
     { icon: Shield, title: '안전한 데이터', desc: '개인별 데이터 보호 및 안전한 클라우드 저장', color: 'text-indigo-500' },
   ];
 
@@ -58,7 +59,7 @@ const LandingPage = ({ onShowAuth }) => {
         </h1>
         <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
           실시간 순위표, 맞춤형 규칙, 기간별 분석까지.<br />
-          선생님을 위한 올인원 학급 관리 솔루션입니다.
+          <span className="font-semibold text-gray-800">학생 관리자(제한 권한) 계정</span>으로 학생이 스스로 점수를 체크하도록 맡겨보세요.
         </p>
         <div className="flex justify-center gap-4">
           <button
@@ -143,6 +144,17 @@ const LandingPage = ({ onShowAuth }) => {
             </div>
             <h4 className="font-bold text-gray-900 mb-2">기간별 순위</h4>
             <p className="text-sm text-gray-600">일간/주간/월간 또는 원하는 기간 선택 가능</p>
+          </div>
+          <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 hover:shadow-xl transition md:col-span-3">
+            <div className="flex items-center gap-3 mb-2">
+              <KeySquare className="w-6 h-6 text-emerald-600" />
+              <h4 className="font-bold text-gray-900">학생 관리자(제한 권한) 워크플로우</h4>
+            </div>
+            <ol className="list-decimal list-inside text-sm text-gray-600 space-y-1">
+              <li>교사가 학생 관리자 계정 생성 (로그인 ID/비밀번호, 허용 규칙 선택)</li>
+              <li>학생은 본인 계정으로 로그인 → 허용된 규칙만 체크 가능</li>
+              <li>교사는 언제든 권한을 변경/회수 가능</li>
+            </ol>
           </div>
         </div>
       </section>
