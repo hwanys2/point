@@ -22,8 +22,9 @@ const Auth = ({ onLogin, onClose, initialMode = 'login' }) => {
     try {
       let response;
       if (isLogin) {
+        // 로그인은 username 또는 email 모두 가능
         response = await authAPI.login({
-          email: formData.email,
+          username: formData.email, // email 입력란을 username으로 사용
           password: formData.password,
         });
       } else {
@@ -111,10 +112,10 @@ const Auth = ({ onLogin, onClose, initialMode = 'login' }) => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              이메일
+              {isLogin ? '이메일 또는 사용자명' : '이메일'}
             </label>
             <input
-              type="email"
+              type={isLogin ? "text" : "email"}
               name="email"
               value={formData.email}
               onChange={handleChange}

@@ -49,10 +49,21 @@ const initDatabase = async () => {
         UNIQUE(student_id, rule_id, date)
       );
 
+      CREATE TABLE IF NOT EXISTS student_managers (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        username VARCHAR(50) UNIQUE NOT NULL,
+        password VARCHAR(255) NOT NULL,
+        display_name VARCHAR(100) NOT NULL,
+        allowed_rule_ids TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
       CREATE INDEX IF NOT EXISTS idx_students_user_id ON students(user_id);
       CREATE INDEX IF NOT EXISTS idx_rules_user_id ON rules(user_id);
       CREATE INDEX IF NOT EXISTS idx_daily_scores_student ON daily_scores(student_id);
       CREATE INDEX IF NOT EXISTS idx_daily_scores_date ON daily_scores(date);
+      CREATE INDEX IF NOT EXISTS idx_student_managers_user_id ON student_managers(user_id);
     `);
     
     console.log('✅ Database tables initialized successfully');

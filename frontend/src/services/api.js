@@ -72,4 +72,12 @@ export const settingsAPI = {
   update: (data) => api.put('/settings', data),
 };
 
+// Student Managers API
+export const studentManagersAPI = {
+  getAll: () => api.get('/student-managers'),
+  create: (data) => api.post('/student-managers', data),
+  update: (id, data) => api.put(`/student-managers/${id}`, data),
+  delete: (id) => api.delete(`/student-managers/${id}`),
+};
+
 export default api;

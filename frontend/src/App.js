@@ -32,10 +32,11 @@ const ICON_OPTIONS = [
 ];
 
 const TABS = [
-  { id: 'leaderboard', name: '순위표', icon: ListOrdered },
-  { id: 'scoring', name: '점수 부여', icon: Plus },
-  { id: 'management', name: '학생 관리', icon: Settings },
-  { id: 'rules', name: '규칙', icon: ClipboardList },
+  { id: 'leaderboard', name: '순위표', icon: ListOrdered, roles: ['teacher', 'student_manager'] },
+  { id: 'scoring', name: '점수 부여', icon: Plus, roles: ['teacher', 'student_manager'] },
+  { id: 'management', name: '학생 관리', icon: Settings, roles: ['teacher'] },
+  { id: 'rules', name: '규칙', icon: ClipboardList, roles: ['teacher'] },
+  { id: 'managers', name: '학생 관리자', icon: UserPlus, roles: ['teacher'] },
 ];
 
 const getIconComponent = (iconId) => {
@@ -414,6 +415,11 @@ const App = () => {
   // Auth 모달 상태
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState('login'); // 'login' or 'register'
+  
+  // 학생 관리자 관리
+  const [managers, setManagers] = useState([]);
+  const [newManager, setNewManager] = useState({ username: '', password: '', displayName: '', allowedRuleIds: [] });
+  const [editingManager, setEditingManager] = useState(null);
 
   // 초기 로드: 토큰 확인
   useEffect(() => {
@@ -467,6 +473,22 @@ const App = () => {
     setStudents([]);
     setRules([]);
   };
+
+  // 역할에 따라 허용된 규칙만 필터링
+  const allowedRules = useMemo(() => {
+    if (!user) return [];
+    if (user.role === 'teacher') return rules;
+    if (user.role === 'student_manager' && user.allowedRuleIds) {
+      return rules.filter(rule => user.allowedRuleIds.includes(rule.id));
+    }
+    return [];
+  }, [user, rules]);
+
+  // 역할에 따라 표시할 탭 필터링
+  const visibleTabs = useMemo(() => {
+    if (!user) return [];
+    return TABS.filter(tab => tab.roles.includes(user.role));
+  }, [user]);
 
   // 기간별 필터링된 학생 점수 계산
   const filteredStudentsWithScores = useMemo(() => {
@@ -903,9 +925,21 @@ const App = () => {
 
       <h3 className="text-xl font-semibold text-gray-700 mb-4">{selectedDate} 점수 부여 그리드</h3>
       
-      {rules.length === 0 ? (
+      {user?.role === 'student_manager' && (
+        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <p className="text-sm text-blue-700">
+            <strong>{user.displayName}</strong>님은 <strong>{allowedRules.length}개 규칙</strong>에 대한 점수 부여 권한이 있습니다.
+          </p>
+        </div>
+      )}
+      
+      {allowedRules.length === 0 ? (
         <div className="text-center p-8 bg-yellow-50 border border-yellow-300 rounded-lg">
-          <p className="text-lg text-yellow-800 font-semibold">점수를 부여할 규칙이 없습니다. '규칙' 탭에서 규칙을 먼저 등록해주세요.</p>
+          <p className="text-lg text-yellow-800 font-semibold">
+            {user?.role === 'teacher' 
+              ? "점수를 부여할 규칙이 없습니다. '규칙' 탭에서 규칙을 먼저 등록해주세요."
+              : "부여된 권한이 없습니다. 교사에게 문의하세요."}
+          </p>
         </div>
       ) : (
         <div className="overflow-x-auto">
@@ -916,7 +950,7 @@ const App = () => {
                 <th className="px-3 py-3 text-left text-sm font-semibold text-gray-700 w-12">반</th>
                 <th className="px-3 py-3 text-left text-sm font-semibold text-gray-700 w-12">번호</th>
                 <th className="px-3 py-3 text-left text-sm font-semibold text-gray-700 w-24">이름</th>
-                {rules.map((rule) => {
+                {allowedRules.map((rule) => {
                   const RuleIcon = getIconComponent(rule.iconId);
                   return (
                     <th key={rule.id} className="px-3 py-3 text-center text-xs font-semibold text-gray-600 whitespace-nowrap">
@@ -937,11 +971,11 @@ const App = () => {
                       <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-900">{student.classNum}</td>
                       <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-900">{student.studentNum}</td>
                       <td className="px-3 py-3 whitespace-nowrap text-sm font-medium text-gray-900">{student.name}</td>
-                      {rules.map((rule) => {
+                      {allowedRules.map((rule) => {
                         const isChecked = dailyEntry[rule.id] === 1;
                         return (
                           <td key={rule.id} className="px-3 py-3 whitespace-nowrap text-center">
-                            <button
+            <button
                               onClick={() => handleToggleRulePoint(student.id, rule.id, selectedDate)}
                               className={`p-2 rounded-full transition duration-100 shadow-sm ${
                                 isChecked
@@ -961,7 +995,7 @@ const App = () => {
                 })
               ) : (
                 <tr>
-                  <td colSpan={4 + rules.length} className="text-center text-gray-500 py-8">
+                  <td colSpan={4 + allowedRules.length} className="text-center text-gray-500 py-8">
                     학생 관리 탭에서 학생을 먼저 등록해주세요.
                   </td>
                 </tr>
@@ -1273,7 +1307,7 @@ const App = () => {
 
       <div className="max-w-7xl mx-auto">
         <div className="flex border-b border-gray-200 mb-6 sticky top-0 bg-white z-10 shadow-sm rounded-t-xl">
-          {TABS.map(tab => {
+          {visibleTabs.map(tab => {
             const TabIcon = tab.icon;
             const isActive = activeTab === tab.id;
             return (
@@ -1297,6 +1331,17 @@ const App = () => {
           {activeTab === 'scoring' && renderScoring()}
           {activeTab === 'management' && renderManagement()}
           {activeTab === 'rules' && renderRules()}
+          {activeTab === 'managers' && user?.role === 'teacher' && <div className="bg-white p-6 rounded-xl shadow-2xl border border-gray-100 min-h-[70vh]">
+            <h2 className="text-3xl font-bold text-gray-800 mb-6 flex items-center">
+              <UserPlus className="w-7 h-7 mr-2 text-indigo-500" /> 학생 관리자 관리
+            </h2>
+            <p className="text-gray-600 mb-6">학생들이 직접 점수를 체크할 수 있도록 제한된 권한의 계정을 만들어주세요.</p>
+            <div className="text-center p-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+              <UserPlus className="w-16 h-16 mx-auto text-gray-400 mb-4" />
+              <p className="text-lg text-gray-500">학생 관리자 기능은 곧 추가됩니다!</p>
+              <p className="text-sm text-gray-400 mt-2">학생에게 특정 규칙에 대한 점수 체크 권한을 부여할 수 있습니다.</p>
+            </div>
+          </div>}
         </div>
       </div>
     </div>

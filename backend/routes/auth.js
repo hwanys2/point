@@ -62,9 +62,9 @@ router.post('/register', [
   }
 });
 
-// 로그인
+// 로그인 (교사 또는 학생 관리자)
 router.post('/login', [
-  body('email').isEmail().withMessage('유효한 이메일을 입력하세요.'),
+  body('username').notEmpty().withMessage('사용자명을 입력하세요.'),
   body('password').notEmpty().withMessage('비밀번호를 입력하세요.')
 ], async (req, res) => {
   try {
@@ -73,39 +73,75 @@ router.post('/login', [
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { email, password } = req.body;
+    const { username, password } = req.body;
 
-    // 사용자 찾기
-    const result = await pool.query(
-      'SELECT * FROM users WHERE email = $1',
-      [email]
+    // 1. 먼저 교사(users) 테이블에서 확인 (email 또는 username으로 검색)
+    const teacherResult = await pool.query(
+      'SELECT * FROM users WHERE email = $1 OR username = $1',
+      [username]
     );
 
-    if (result.rows.length === 0) {
-      return res.status(401).json({ error: '이메일 또는 비밀번호가 일치하지 않습니다.' });
-    }
+    if (teacherResult.rows.length > 0) {
+      const teacher = teacherResult.rows[0];
+      const isMatch = await bcrypt.compare(password, teacher.password);
+      
+      if (isMatch) {
+        const token = jwt.sign(
+          { userId: teacher.id, role: 'teacher' }, 
+          process.env.JWT_SECRET, 
+          { expiresIn: '30d' }
+        );
 
-    const user = result.rows[0];
-
-    // 비밀번호 확인
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(401).json({ error: '이메일 또는 비밀번호가 일치하지 않습니다.' });
-    }
-
-    // JWT 토큰 생성
-    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '30d' });
-
-    res.json({
-      message: '로그인 성공',
-      token,
-      user: {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        schoolName: user.school_name
+        return res.json({
+          message: '로그인 성공',
+          token,
+          user: {
+            id: teacher.id,
+            username: teacher.username,
+            email: teacher.email,
+            schoolName: teacher.school_name,
+            role: 'teacher'
+          }
+        });
       }
-    });
+    }
+
+    // 2. 학생 관리자 테이블에서 확인
+    const managerResult = await pool.query(
+      'SELECT sm.*, u.id as teacher_id FROM student_managers sm JOIN users u ON sm.user_id = u.id WHERE sm.username = $1',
+      [username]
+    );
+
+    if (managerResult.rows.length > 0) {
+      const manager = managerResult.rows[0];
+      const isMatch = await bcrypt.compare(password, manager.password);
+      
+      if (isMatch) {
+        const allowedRuleIds = manager.allowed_rule_ids ? JSON.parse(manager.allowed_rule_ids) : [];
+        
+        const token = jwt.sign(
+          { managerId: manager.id, userId: manager.teacher_id, role: 'student_manager' }, 
+          process.env.JWT_SECRET, 
+          { expiresIn: '30d' }
+        );
+
+        return res.json({
+          message: '로그인 성공',
+          token,
+          user: {
+            id: manager.id,
+            username: manager.username,
+            displayName: manager.display_name,
+            role: 'student_manager',
+            allowedRuleIds,
+            teacherId: manager.teacher_id
+          }
+        });
+      }
+    }
+
+    // 일치하는 계정 없음
+    return res.status(401).json({ error: '사용자명 또는 비밀번호가 일치하지 않습니다.' });
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ error: '로그인 중 오류가 발생했습니다.' });
