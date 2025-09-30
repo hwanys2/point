@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { 
   Award, UserPlus, ListOrdered, Loader2, AlertTriangle, Plus, Calendar, 
-  Shirt, BookOpenCheck, Sparkles, Armchair, Smile, Lightbulb, HandHeart, 
+  Shirt, BookOpenCheck, Sparkles, Armchair, Smile, Lightbulb,
   Feather, ShieldCheck, Settings, BarChart3, FileText, Trash2, Edit, Save, 
   ClipboardPlus, X, BarChart, Palette, LogOut, Clock, CheckSquare, XSquare 
 } from 'lucide-react';
@@ -21,7 +21,6 @@ const ICON_OPTIONS = [
   { id: 'Armchair', icon: Armchair },
   { id: 'Smile', icon: Smile },
   { id: 'Lightbulb', icon: Lightbulb },
-  { id: 'HandHeart', icon: HandHeart },
   { id: 'Feather', icon: Feather },
   { id: 'ShieldCheck', icon: ShieldCheck },
   { id: 'UserPlus', icon: UserPlus },
