@@ -477,6 +477,7 @@ const App = () => {
 
   const handleLogin = (userData) => {
     setUser(userData);
+    setActiveTab('leaderboard');
     setShowAuthModal(false);
     loadData();
   };
@@ -509,6 +510,15 @@ const App = () => {
     if (!user) return [];
     return TABS.filter(tab => tab.roles.includes(user.role));
   }, [user]);
+
+  // Ensure active tab is valid for current role
+  useEffect(() => {
+    if (visibleTabs.length === 0) return;
+    const isValid = visibleTabs.some(tab => tab.id === activeTab);
+    if (!isValid) {
+      setActiveTab(visibleTabs[0].id);
+    }
+  }, [visibleTabs]);
 
   // 기간별 필터링된 학생 점수 계산
   const filteredStudentsWithScores = useMemo(() => {
@@ -814,7 +824,14 @@ const App = () => {
                     const enabled = e.target.checked;
                     setShareEnabled(enabled);
                     try {
-                      const response = await settingsAPI.update({ shareEnabled: enabled });
+                      const response = await settingsAPI.update({
+                        title: appSettings.title,
+                        subtitle: appSettings.subtitle,
+                        iconId: appSettings.iconId,
+                        iconColor: appSettings.iconColor,
+                        font: appSettings.font,
+                        shareEnabled: enabled,
+                      });
                       setShareToken(response.data.settings.shareToken);
                     } catch (err) {
                       setError('공유 설정 업데이트 중 오류가 발생했습니다.');
