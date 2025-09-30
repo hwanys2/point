@@ -6,6 +6,7 @@ import {
   ClipboardList, X, BarChart, Palette, LogOut, Clock, CheckSquare, XSquare 
 } from 'lucide-react';
 import Auth from './components/Auth';
+import LandingPage from './components/LandingPage';
 import { studentsAPI, rulesAPI, scoresAPI, settingsAPI } from './services/api';
 
 // Helper functions
@@ -409,6 +410,10 @@ const App = () => {
   const [periodFilter, setPeriodFilter] = useState('all'); // 'all', 'daily', 'weekly', 'monthly', 'custom'
   const [customStartDate, setCustomStartDate] = useState(getTodayDate());
   const [customEndDate, setCustomEndDate] = useState(getTodayDate());
+  
+  // Auth 모달 상태
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authMode, setAuthMode] = useState('login'); // 'login' or 'register'
 
   // 초기 로드: 토큰 확인
   useEffect(() => {
@@ -446,7 +451,13 @@ const App = () => {
 
   const handleLogin = (userData) => {
     setUser(userData);
+    setShowAuthModal(false);
     loadData();
+  };
+  
+  const handleShowAuth = (mode) => {
+    setAuthMode(mode);
+    setShowAuthModal(true);
   };
 
   const handleLogout = () => {
@@ -1195,7 +1206,18 @@ const App = () => {
   );
 
   if (!user) {
-    return <Auth onLogin={handleLogin} />;
+    return (
+      <>
+        <LandingPage onShowAuth={handleShowAuth} />
+        {showAuthModal && (
+          <Auth 
+            onLogin={handleLogin} 
+            onClose={() => setShowAuthModal(false)}
+            initialMode={authMode}
+          />
+        )}
+      </>
+    );
   }
 
   if (isLoading && students.length === 0) {

@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { LogIn, UserPlus, Loader2, Award } from 'lucide-react';
+import { LogIn, UserPlus, Loader2, Award, X } from 'lucide-react';
 import { authAPI } from '../services/api';
 
-const Auth = ({ onLogin }) => {
-  const [isLogin, setIsLogin] = useState(true);
+const Auth = ({ onLogin, onClose, initialMode = 'login' }) => {
+  const [isLogin, setIsLogin] = useState(initialMode === 'login');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   
@@ -55,8 +55,16 @@ const Auth = ({ onLogin }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md relative">
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition"
+          >
+            <X className="w-6 h-6" />
+          </button>
+        )}
         <div className="text-center mb-8">
           <Award className="w-16 h-16 mx-auto text-indigo-600 mb-4" />
           <h1 className="text-3xl font-bold text-gray-800">학급 관리 시스템</h1>
