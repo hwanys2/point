@@ -67,7 +67,8 @@ router.get('/leaderboard/:token', async (req, res) => {
       SELECT s.student_id, s.rule_id, s.value, s.date, r.name as rule_name, r.color as rule_color, r.icon_id as rule_icon
       FROM daily_scores s
       JOIN rules r ON s.rule_id = r.id
-      WHERE s.user_id = $1 ${dateFilter}
+      JOIN students st ON s.student_id = st.id
+      WHERE st.user_id = $1 ${dateFilter}
       ORDER BY s.date DESC, s.student_id
     `;
 
