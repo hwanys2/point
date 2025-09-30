@@ -17,8 +17,15 @@ const PublicLeaderboard = ({ token }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [periodFilter, setPeriodFilter] = useState('all');
-  const [customStartDate, setCustomStartDate] = useState(new Date().toISOString().split('T')[0]);
-  const [customEndDate, setCustomEndDate] = useState(new Date().toISOString().split('T')[0]);
+  const getLocalToday = () => {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
+  const [customStartDate, setCustomStartDate] = useState(getLocalToday());
+  const [customEndDate, setCustomEndDate] = useState(getLocalToday());
 
   useEffect(() => {
     const run = async () => {
@@ -191,7 +198,7 @@ const PublicLeaderboard = ({ token }) => {
                     value={customEndDate}
                     onChange={(e) => setCustomEndDate(e.target.value)}
                     min={customStartDate}
-                    max={new Date().toISOString().split('T')[0]}
+                    max={getLocalToday()}
                     className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
