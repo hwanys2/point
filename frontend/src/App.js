@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import Auth from './components/Auth';
 import LandingPage from './components/LandingPage';
-import { studentsAPI, rulesAPI, scoresAPI, settingsAPI } from './services/api';
+import { studentsAPI, rulesAPI, scoresAPI, settingsAPI, studentManagersAPI } from './services/api';
 
 // Helper functions
 const getTodayDate = () => new Date().toISOString().split('T')[0];
@@ -416,10 +416,11 @@ const App = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState('login'); // 'login' or 'register'
   
-  // 학생 관리자 관리
+  // 학생 관리자 관리 (교사만)
+  // eslint-disable-next-line no-unused-vars
   const [managers, setManagers] = useState([]);
+  // eslint-disable-next-line no-unused-vars
   const [newManager, setNewManager] = useState({ username: '', password: '', displayName: '', allowedRuleIds: [] });
-  const [editingManager, setEditingManager] = useState(null);
 
   // 초기 로드: 토큰 확인
   useEffect(() => {
@@ -438,15 +439,28 @@ const App = () => {
   const loadData = async () => {
     try {
       setIsLoading(true);
-      const [studentsRes, rulesRes, settingsRes] = await Promise.all([
+      const savedUser = JSON.parse(localStorage.getItem('user') || '{}');
+      
+      const promises = [
         studentsAPI.getAll(),
         rulesAPI.getAll(),
         settingsAPI.get(),
-      ]);
+      ];
+      
+      // 교사인 경우에만 학생 관리자 목록도 로드
+      if (savedUser.role === 'teacher') {
+        promises.push(studentManagersAPI.getAll());
+      }
+      
+      const results = await Promise.all(promises);
 
-      setStudents(studentsRes.data);
-      setRules(rulesRes.data);
-      setAppSettings({ ...defaultSettings, ...settingsRes.data });
+      setStudents(results[0].data);
+      setRules(results[1].data);
+      setAppSettings({ ...defaultSettings, ...results[2].data });
+      
+      if (savedUser.role === 'teacher' && results[3]) {
+        setManagers(results[3].data);
+      }
     } catch (err) {
       console.error('Load data error:', err);
       setError('데이터를 불러오는 중 오류가 발생했습니다.');
@@ -1331,17 +1345,162 @@ const App = () => {
           {activeTab === 'scoring' && renderScoring()}
           {activeTab === 'management' && renderManagement()}
           {activeTab === 'rules' && renderRules()}
-          {activeTab === 'managers' && user?.role === 'teacher' && <div className="bg-white p-6 rounded-xl shadow-2xl border border-gray-100 min-h-[70vh]">
-            <h2 className="text-3xl font-bold text-gray-800 mb-6 flex items-center">
-              <UserPlus className="w-7 h-7 mr-2 text-indigo-500" /> 학생 관리자 관리
-            </h2>
-            <p className="text-gray-600 mb-6">학생들이 직접 점수를 체크할 수 있도록 제한된 권한의 계정을 만들어주세요.</p>
-            <div className="text-center p-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-              <UserPlus className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-              <p className="text-lg text-gray-500">학생 관리자 기능은 곧 추가됩니다!</p>
-              <p className="text-sm text-gray-400 mt-2">학생에게 특정 규칙에 대한 점수 체크 권한을 부여할 수 있습니다.</p>
+          {activeTab === 'managers' && user?.role === 'teacher' && (
+            <div className="bg-white p-6 rounded-xl shadow-2xl border border-gray-100 min-h-[70vh] space-y-8">
+              <h2 className="text-3xl font-bold text-gray-800 flex items-center">
+                <UserPlus className="w-7 h-7 mr-2 text-indigo-500" /> 학생 관리자 관리
+              </h2>
+              <p className="text-gray-600">학생들이 직접 점수를 체크할 수 있도록 제한된 권한의 계정을 만들어주세요.</p>
+
+              {/* 새 학생 관리자 추가 폼 */}
+              <div className="border p-4 rounded-lg bg-indigo-50">
+                <h3 className="text-xl font-semibold text-indigo-700 mb-3 flex items-center">
+                  <UserPlus className="w-5 h-5 mr-2" /> 새 학생 관리자 계정 생성
+                </h3>
+                <form className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <input
+                      type="text"
+                      placeholder="사용자명 (로그인 ID)"
+                      value={newManager.username}
+                      onChange={(e) => setNewManager(prev => ({ ...prev, username: e.target.value }))}
+                      className="px-3 py-2 border border-gray-300 rounded-lg"
+                      required
+                    />
+                    <input
+                      type="password"
+                      placeholder="비밀번호 (4자 이상)"
+                      value={newManager.password}
+                      onChange={(e) => setNewManager(prev => ({ ...prev, password: e.target.value }))}
+                      className="px-3 py-2 border border-gray-300 rounded-lg"
+                      required
+                    />
+                    <input
+                      type="text"
+                      placeholder="표시 이름 (학생 이름)"
+                      value={newManager.displayName}
+                      onChange={(e) => setNewManager(prev => ({ ...prev, displayName: e.target.value }))}
+                      className="px-3 py-2 border border-gray-300 rounded-lg"
+                      required
+                    />
+                  </div>
+                  
+                  <div className="p-3 bg-white rounded-lg border">
+                    <p className="text-sm font-semibold text-gray-700 mb-2">체크 권한 부여할 규칙 선택:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {rules.map(rule => {
+                        const RuleIcon = getIconComponent(rule.iconId);
+                        const isSelected = newManager.allowedRuleIds.includes(rule.id);
+                        return (
+                          <button
+                            key={rule.id}
+                            type="button"
+                            onClick={() => {
+                              setNewManager(prev => ({
+                                ...prev,
+                                allowedRuleIds: isSelected
+                                  ? prev.allowedRuleIds.filter(id => id !== rule.id)
+                                  : [...prev.allowedRuleIds, rule.id]
+                              }));
+                            }}
+                            className={`px-3 py-2 rounded-lg transition flex items-center ${
+                              isSelected
+                                ? 'bg-indigo-600 text-white shadow-md'
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            }`}
+                          >
+                            <RuleIcon className="w-4 h-4 mr-1" style={{ color: isSelected ? 'white' : rule.color }} />
+                            {rule.name}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (!newManager.username || !newManager.password || !newManager.displayName) {
+                        alert('모든 필드를 입력하세요.');
+                        return;
+                      }
+                      if (newManager.allowedRuleIds.length === 0) {
+                        alert('최소 1개 이상의 규칙을 선택하세요.');
+                        return;
+                      }
+                      try {
+                        setIsLoading(true);
+                        await studentManagersAPI.create(newManager);
+                        setNewManager({ username: '', password: '', displayName: '', allowedRuleIds: [] });
+                        await loadData();
+                        alert('학생 관리자가 생성되었습니다!');
+                      } catch (err) {
+                        setError(err.response?.data?.error || '학생 관리자 생성 중 오류가 발생했습니다.');
+                      } finally {
+                        setIsLoading(false);
+                      }
+                    }}
+                    className="w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700 transition font-semibold flex items-center justify-center"
+                    disabled={isLoading}
+                  >
+                    <Plus className="w-5 h-5 mr-2" /> 학생 관리자 계정 생성
+                  </button>
+                </form>
+              </div>
+
+              {/* 기존 학생 관리자 목록 */}
+              <div>
+                <h3 className="text-xl font-semibold text-gray-700 mb-4">등록된 학생 관리자 목록</h3>
+                {managers.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">등록된 학생 관리자가 없습니다.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {managers.map(manager => (
+                      <div key={manager.id} className="border p-4 rounded-lg bg-gray-50 hover:bg-gray-100 transition">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <p className="font-bold text-lg text-gray-900">{manager.displayName}</p>
+                            <p className="text-sm text-gray-600">로그인 ID: <code className="bg-gray-200 px-2 py-1 rounded">{manager.username}</code></p>
+                            <div className="flex flex-wrap gap-1 mt-2">
+                              {manager.allowedRuleIds.map(ruleId => {
+                                const rule = rules.find(r => r.id === ruleId);
+                                if (!rule) return null;
+                                const RuleIcon = getIconComponent(rule.iconId);
+                                return (
+                                  <span key={ruleId} className="inline-flex items-center px-2 py-1 bg-white text-xs rounded-lg border" style={{ color: rule.color }}>
+                                    <RuleIcon className="w-3 h-3 mr-1" />
+                                    {rule.name}
+                                  </span>
+                                );
+                              })}
+                            </div>
+                          </div>
+                          <button
+                            onClick={async () => {
+                              if (!window.confirm(`${manager.displayName} 계정을 삭제하시겠습니까?`)) return;
+                              try {
+                                setIsLoading(true);
+                                await studentManagersAPI.delete(manager.id);
+                                await loadData();
+                              } catch (err) {
+                                setError('학생 관리자 삭제 중 오류가 발생했습니다.');
+                              } finally {
+                                setIsLoading(false);
+                              }
+                            }}
+                            className="text-red-500 hover:text-red-700 p-1"
+                            title="삭제"
+                          >
+                            <Trash2 className="w-5 h-5" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>}
+          )}
         </div>
       </div>
     </div>
