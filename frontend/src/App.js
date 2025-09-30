@@ -307,10 +307,10 @@ const RuleScoreBar = ({ student, rules, studentRuleScores }) => {
 
 const AllStudentsRuleComparison = ({ students, rules, studentRuleScores }) => {
   const maxScore = useMemo(() => {
-    return Math.max(1, ...students.map(s => s.score));
+    return Math.max(1, ...students.map(s => s.periodScore || s.score));
   }, [students]);
 
-  if (students.length === 0 || rules.length === 0 || students.every(s => s.score === 0)) {
+  if (students.length === 0 || rules.length === 0 || students.every(s => (s.periodScore || s.score) === 0)) {
     return (
       <div className="text-center p-8 text-gray-500 bg-white rounded-xl shadow-lg h-full flex items-center justify-center border border-gray-100">
         <p>등록된 학생이 없거나 규칙/점수가 부여되지 않았습니다.</p>
@@ -318,7 +318,7 @@ const AllStudentsRuleComparison = ({ students, rules, studentRuleScores }) => {
     );
   }
   
-  const sortedStudents = [...students].sort((a, b) => b.score - a.score);
+  const sortedStudents = [...students].sort((a, b) => (b.periodScore || b.score) - (a.periodScore || a.score));
 
   return (
     <div className="bg-white p-6 rounded-xl shadow-2xl border border-gray-100 h-full max-h-[80vh] overflow-y-auto">
@@ -339,7 +339,7 @@ const AllStudentsRuleComparison = ({ students, rules, studentRuleScores }) => {
       <div className="space-y-6">
         {sortedStudents.map(student => {
           const scores = studentRuleScores[student.id] || {};
-          const totalScore = student.score || 0;
+          const totalScore = student.periodScore || student.score || 0;
           
           if (totalScore === 0) return null;
           
@@ -404,6 +404,11 @@ const App = () => {
   const [editingRuleId, setEditingRuleId] = useState(null);
   const [appSettings, setAppSettings] = useState(defaultSettings);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  
+  // 순위표 기간 필터
+  const [periodFilter, setPeriodFilter] = useState('all'); // 'all', 'daily', 'weekly', 'monthly', 'custom'
+  const [customStartDate, setCustomStartDate] = useState(getTodayDate());
+  const [customEndDate, setCustomEndDate] = useState(getTodayDate());
 
   // 초기 로드: 토큰 확인
   useEffect(() => {
@@ -452,14 +457,78 @@ const App = () => {
     setRules([]);
   };
 
+  // 기간별 필터링된 학생 점수 계산
+  const filteredStudentsWithScores = useMemo(() => {
+    const getDateRange = () => {
+      const today = new Date();
+      const todayStr = getTodayDate();
+      
+      switch (periodFilter) {
+        case 'daily':
+          return [todayStr];
+        case 'weekly': {
+          const dates = [];
+          for (let i = 0; i < 7; i++) {
+            const d = new Date(today);
+            d.setDate(d.getDate() - i);
+            dates.push(d.toISOString().split('T')[0]);
+          }
+          return dates;
+        }
+        case 'monthly': {
+          const dates = [];
+          for (let i = 0; i < 30; i++) {
+            const d = new Date(today);
+            d.setDate(d.getDate() - i);
+            dates.push(d.toISOString().split('T')[0]);
+          }
+          return dates;
+        }
+        case 'custom': {
+          const dates = [];
+          const start = new Date(customStartDate);
+          const end = new Date(customEndDate);
+          for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+            dates.push(d.toISOString().split('T')[0]);
+          }
+          return dates;
+        }
+        default: // 'all'
+          return null;
+      }
+    };
+
+    const dateRange = getDateRange();
+
+    return students.map(student => {
+      let periodScore = 0;
+      
+      if (dateRange === null) {
+        // 전체 기간
+        periodScore = student.score;
+      } else {
+        // 특정 기간
+        dateRange.forEach(date => {
+          if (student.dailyScores[date]) {
+            Object.values(student.dailyScores[date]).forEach(value => {
+              if (value === 1) periodScore++;
+            });
+          }
+        });
+      }
+
+      return { ...student, periodScore };
+    });
+  }, [students, periodFilter, customStartDate, customEndDate]);
+
   const sortedStudents = useMemo(() => {
-    return [...students].sort((a, b) => {
-      if (b.score !== a.score) return b.score - a.score;
+    return [...filteredStudentsWithScores].sort((a, b) => {
+      if (b.periodScore !== a.periodScore) return b.periodScore - a.periodScore;
       if (a.grade !== b.grade) return a.grade - b.grade;
       if (a.classNum !== b.classNum) return a.classNum - b.classNum;
       return a.studentNum - b.studentNum;
     });
-  }, [students]);
+  }, [filteredStudentsWithScores]);
 
   const numberedStudents = useMemo(() => {
     return [...students].sort((a, b) => {
@@ -679,6 +748,89 @@ const App = () => {
         <h2 className="text-3xl font-bold text-gray-800 mb-6 flex items-center">
           <ListOrdered className="w-7 h-7 mr-2 text-indigo-500" /> 종합 순위표
         </h2>
+        
+        {/* 기간 필터 */}
+        <div className="mb-6 p-4 bg-gray-50 rounded-lg border">
+          <div className="flex flex-wrap items-center gap-2 mb-3">
+            <button
+              onClick={() => setPeriodFilter('all')}
+              className={`px-4 py-2 rounded-lg font-semibold transition ${
+                periodFilter === 'all'
+                  ? 'bg-indigo-600 text-white shadow-md'
+                  : 'bg-white text-gray-700 hover:bg-indigo-50 border'
+              }`}
+            >
+              전체
+            </button>
+            <button
+              onClick={() => setPeriodFilter('daily')}
+              className={`px-4 py-2 rounded-lg font-semibold transition ${
+                periodFilter === 'daily'
+                  ? 'bg-indigo-600 text-white shadow-md'
+                  : 'bg-white text-gray-700 hover:bg-indigo-50 border'
+              }`}
+            >
+              오늘
+            </button>
+            <button
+              onClick={() => setPeriodFilter('weekly')}
+              className={`px-4 py-2 rounded-lg font-semibold transition ${
+                periodFilter === 'weekly'
+                  ? 'bg-indigo-600 text-white shadow-md'
+                  : 'bg-white text-gray-700 hover:bg-indigo-50 border'
+              }`}
+            >
+              최근 7일
+            </button>
+            <button
+              onClick={() => setPeriodFilter('monthly')}
+              className={`px-4 py-2 rounded-lg font-semibold transition ${
+                periodFilter === 'monthly'
+                  ? 'bg-indigo-600 text-white shadow-md'
+                  : 'bg-white text-gray-700 hover:bg-indigo-50 border'
+              }`}
+            >
+              최근 30일
+            </button>
+            <button
+              onClick={() => setPeriodFilter('custom')}
+              className={`px-4 py-2 rounded-lg font-semibold transition ${
+                periodFilter === 'custom'
+                  ? 'bg-indigo-600 text-white shadow-md'
+                  : 'bg-white text-gray-700 hover:bg-indigo-50 border'
+              }`}
+            >
+              기간 선택
+            </button>
+          </div>
+          
+          {periodFilter === 'custom' && (
+            <div className="flex flex-wrap items-center gap-3 mt-3">
+              <div>
+                <label className="text-sm text-gray-600 mr-2">시작일:</label>
+                <input
+                  type="date"
+                  value={customStartDate}
+                  onChange={(e) => setCustomStartDate(e.target.value)}
+                  max={customEndDate}
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+              <span className="text-gray-500">~</span>
+              <div>
+                <label className="text-sm text-gray-600 mr-2">종료일:</label>
+                <input
+                  type="date"
+                  value={customEndDate}
+                  onChange={(e) => setCustomEndDate(e.target.value)}
+                  min={customStartDate}
+                  max={getTodayDate()}
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+            </div>
+          )}
+        </div>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead>
@@ -698,7 +850,7 @@ const App = () => {
                     <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900">{student.studentNum}</td>
                     <td className="px-3 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{student.name}</td>
                     <td className="px-3 py-4 whitespace-nowrap text-2xl font-extrabold text-right text-indigo-700">
-                      {student.score}
+                      {student.periodScore}
                     </td>
                     <td className="px-3 py-4 whitespace-nowrap text-sm text-center">
                       <RuleScoreBar student={student} rules={rules} studentRuleScores={studentRuleScores} />
