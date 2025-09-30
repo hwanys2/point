@@ -1,5 +1,5 @@
 import React from 'react';
-import { Award, ListOrdered, Plus, Settings, ClipboardList, BarChart3, Calendar, CheckSquare, Sparkles, Zap, Shield, Users } from 'lucide-react';
+import { Award, ListOrdered, Plus, ClipboardList, BarChart3, Calendar, CheckSquare, Sparkles, Zap, Shield, Users } from 'lucide-react';
 
 const LandingPage = ({ onShowAuth }) => {
   // 샘플 데이터
