@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const { initDatabase } = require('./config/database');
 
 const app = express();
@@ -20,14 +21,28 @@ app.use('/api/rules', require('./routes/rules'));
 app.use('/api/scores', require('./routes/scores'));
 app.use('/api/settings', require('./routes/settings'));
 
+// In production, serve frontend build as static files
+if (process.env.NODE_ENV === 'production') {
+  const buildPath = path.join(__dirname, '..', 'frontend', 'build');
+  app.use(express.static(buildPath));
+}
+
 // Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', message: '서버가 정상 작동 중입니다.' });
 });
 
-// 404 handler
-app.use((req, res) => {
-  res.status(404).json({ error: '요청한 리소스를 찾을 수 없습니다.' });
+// SPA fallback: serve index.html for non-API routes in production
+if (process.env.NODE_ENV === 'production') {
+  const buildPath = path.join(__dirname, '..', 'frontend', 'build');
+  app.get(/^(?!\/api).*/, (req, res) => {
+    res.sendFile(path.join(buildPath, 'index.html'));
+  });
+}
+
+// 404 handler for API routes only
+app.use('/api', (req, res) => {
+  res.status(404).json({ error: '요청한 API 리소스를 찾을 수 없습니다.' });
 });
 
 // Error handler

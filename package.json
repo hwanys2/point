@@ -5,9 +5,10 @@
   "main": "backend/server.js",
   "scripts": {
     "start": "node backend/server.js",
+    "postinstall": "npm run build",
     "dev": "nodemon backend/server.js",
     "client": "cd frontend && npm start",
-    "build": "cd frontend && npm run build",
+    "build": "cd frontend && npm install && npm run build",
     "install-all": "npm install && cd frontend && npm install"
   },
   "keywords": ["student", "management", "education"],
