@@ -10,7 +10,6 @@ import { studentsAPI, rulesAPI, scoresAPI, settingsAPI } from './services/api';
 
 // Helper functions
 const getTodayDate = () => new Date().toISOString().split('T')[0];
-const createStudentDocId = (grade, classNum, studentNum) => `${grade}-${classNum}-${studentNum}`;
 
 // 아이콘 옵션
 const ICON_OPTIONS = [
@@ -328,15 +327,13 @@ const AllStudentsRuleComparison = ({ students, rules, studentRuleScores }) => {
       </h3>
       
       <div className="flex flex-wrap gap-x-4 gap-y-2 mb-6 p-2 rounded-lg border bg-gray-50">
-        {rules.map(rule => {
-          const RuleIcon = getIconComponent(rule.iconId);
-          return (
+        {rules.map(rule => (
             <span key={rule.id} className="flex items-center text-xs font-medium text-gray-600">
               <div className="w-3 h-3 rounded-full mr-1" style={{ backgroundColor: rule.color }}></div>
               {rule.name}
             </span>
           )
-        })}
+        )}
       </div>
       
       <div className="space-y-6">
@@ -419,6 +416,7 @@ const App = () => {
     } else {
       setIsLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadData = async () => {
@@ -561,6 +559,7 @@ const App = () => {
       console.error('Toggle score error:', err);
       setError('점수 업데이트 중 오류가 발생했습니다.');
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rules]);
   
   const handleCsvUpload = async (e) => {
