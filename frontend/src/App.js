@@ -1421,18 +1421,7 @@ const App = () => {
       
       {isSettingsModalOpen && <AppHeaderSettingsModal currentSettings={appSettings} onClose={() => setIsSettingsModalOpen(false)} onSave={handleSaveSettings} />}
 
-      <header className="text-center mb-8 relative">
-        {/* 로그아웃 버튼 - 오른쪽 상단 */}
-        <div className="absolute top-0 right-0">
-          <button
-            onClick={handleLogout}
-            className="inline-flex items-center px-3 py-1.5 text-sm text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
-            title="로그아웃"
-          >
-            <LogOut className="w-4 h-4 mr-1" /> {user.username}
-          </button>
-        </div>
-
+      <header className="text-center mb-8">
         <div className="flex flex-col items-center justify-center">
           <h1 className="text-4xl font-extrabold flex items-center justify-center gap-3 relative" style={{ fontFamily: appSettings.font, color: appSettings.iconColor }}>
             <HeaderIconComponent className="w-8 h-8 sm:w-10 sm:h-10" style={{ color: appSettings.iconColor }} />
@@ -1451,6 +1440,16 @@ const App = () => {
       </header>
 
       <div className="max-w-7xl mx-auto">
+        {/* 로그아웃 버튼 - 콘텐츠 영역 오른쪽 정렬 */}
+        <div className="flex justify-end mb-4">
+          <button
+            onClick={handleLogout}
+            className="inline-flex items-center px-3 py-1.5 text-sm text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+            title="로그아웃"
+          >
+            <LogOut className="w-4 h-4 mr-1" /> {user.username}
+          </button>
+        </div>
         <div className="flex border-b border-gray-200 mb-6 sticky top-0 bg-white z-10 shadow-sm rounded-t-xl">
           {visibleTabs.map(tab => {
             const TabIcon = tab.icon;
