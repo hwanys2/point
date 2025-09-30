@@ -25,10 +25,14 @@ router.get('/', auth, async (req, res) => {
 
       const dailyScores = {};
       scoresResult.rows.forEach(score => {
-        if (!dailyScores[score.date]) {
-          dailyScores[score.date] = {};
+        // PostgreSQL DATE를 YYYY-MM-DD 문자열로 변환
+        const dateStr = score.date instanceof Date 
+          ? score.date.toISOString().split('T')[0] 
+          : score.date;
+        if (!dailyScores[dateStr]) {
+          dailyScores[dateStr] = {};
         }
-        dailyScores[score.date][score.rule_id] = score.value;
+        dailyScores[dateStr][score.rule_id] = score.value;
       });
 
       return {
