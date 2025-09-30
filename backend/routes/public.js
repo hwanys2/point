@@ -41,10 +41,10 @@ router.get('/leaderboard/:token', async (req, res) => {
 
     // 학생 목록 조회
     const studentsResult = await pool.query(
-      `SELECT id, name, grade, class_number, student_number, created_at 
+      `SELECT id, name, grade, class_num, student_num, created_at 
        FROM students 
        WHERE user_id = $1 
-       ORDER BY grade, class_number, student_number`,
+       ORDER BY grade, class_num, student_num`,
       [userId]
     );
 
@@ -55,8 +55,8 @@ router.get('/leaderboard/:token', async (req, res) => {
         id: student.id,
         name: student.name,
         grade: student.grade,
-        classNumber: student.class_number,
-        studentNumber: student.student_number,
+        classNumber: student.class_num,
+        studentNumber: student.student_num,
         totalScore: 0,
         dailyScores: {}
       };
