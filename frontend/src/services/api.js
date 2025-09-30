@@ -83,8 +83,7 @@ export const studentManagersAPI = {
 // Public API (no auth required)
 export const publicAPI = {
   getLeaderboard: (token, params = {}) => {
-    const queryString = new URLSearchParams(params).toString();
-    return axios.get(`${API_BASE_URL}/public/leaderboard/${token}${queryString ? `?${queryString}` : ''}`);
+    return api.get(`/public/leaderboard/${token}`, { params });
   },
 };
 
