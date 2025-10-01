@@ -62,6 +62,7 @@ const initDatabase = async () => {
       CREATE TABLE IF NOT EXISTS student_managers (
         id SERIAL PRIMARY KEY,
         user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        classroom_id INTEGER REFERENCES classrooms(id) ON DELETE CASCADE,
         username VARCHAR(50) UNIQUE NOT NULL,
         password VARCHAR(255) NOT NULL,
         display_name VARCHAR(100) NOT NULL,
@@ -75,6 +76,7 @@ const initDatabase = async () => {
       CREATE INDEX IF NOT EXISTS idx_daily_scores_student ON daily_scores(student_id);
       CREATE INDEX IF NOT EXISTS idx_daily_scores_date ON daily_scores(date);
       CREATE INDEX IF NOT EXISTS idx_student_managers_user_id ON student_managers(user_id);
+      CREATE INDEX IF NOT EXISTS idx_student_managers_classroom_id ON student_managers(classroom_id);
     `);
     
     // 기존 데이터베이스를 위한 마이그레이션 쿼리
@@ -144,9 +146,37 @@ const initDatabase = async () => {
         END $$;
       `);
       
-      // 5. 인덱스 생성
+      // 6. student_managers 테이블에 classroom_id 추가
+      await pool.query(`ALTER TABLE student_managers ADD COLUMN IF NOT EXISTS classroom_id INTEGER;`);
+      
+      // 7. 기존 student_managers의 classroom_id를 해당 사용자의 기본 학급으로 설정
+      await pool.query(`
+        UPDATE student_managers sm
+        SET classroom_id = (
+          SELECT c.id FROM classrooms c 
+          WHERE c.user_id = sm.user_id AND c.is_default = true 
+          LIMIT 1
+        )
+        WHERE sm.classroom_id IS NULL
+      `);
+      
+      // 8. student_managers의 외래 키 제약 조건 추가
+      await pool.query(`
+        DO $$ 
+        BEGIN
+          IF NOT EXISTS (
+            SELECT 1 FROM pg_constraint WHERE conname = 'student_managers_classroom_id_fkey'
+          ) THEN
+            ALTER TABLE student_managers ADD CONSTRAINT student_managers_classroom_id_fkey 
+            FOREIGN KEY (classroom_id) REFERENCES classrooms(id) ON DELETE CASCADE;
+          END IF;
+        END $$;
+      `);
+      
+      // 9. 인덱스 생성
       await pool.query(`CREATE INDEX IF NOT EXISTS idx_students_classroom_id ON students(classroom_id);`);
       await pool.query(`CREATE INDEX IF NOT EXISTS idx_rules_classroom_id ON rules(classroom_id);`);
+      await pool.query(`CREATE INDEX IF NOT EXISTS idx_student_managers_classroom_id ON student_managers(classroom_id);`);
       
       console.log('✅ Database migration completed successfully');
     } catch (migrationError) {

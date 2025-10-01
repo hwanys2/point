@@ -6,12 +6,28 @@ const auth = require('../middleware/auth');
 
 const router = express.Router();
 
-// 모든 학생 관리자 조회 (교사만)
+// 모든 학생 관리자 조회 (교사만, 특정 학급)
 router.get('/', auth, async (req, res) => {
   try {
+    const { classroomId } = req.query;
+    
+    if (!classroomId) {
+      return res.status(400).json({ error: '학급 ID가 필요합니다.' });
+    }
+    
+    // 학급 소유권 확인
+    const classroomCheck = await pool.query(
+      'SELECT id FROM classrooms WHERE id = $1 AND user_id = $2',
+      [classroomId, req.userId]
+    );
+
+    if (classroomCheck.rows.length === 0) {
+      return res.status(403).json({ error: '해당 학급에 접근할 수 없습니다.' });
+    }
+    
     const result = await pool.query(
-      'SELECT id, username, display_name, allowed_rule_ids, created_at FROM student_managers WHERE user_id = $1 ORDER BY created_at DESC',
-      [req.userId]
+      'SELECT id, username, display_name, allowed_rule_ids, classroom_id, created_at FROM student_managers WHERE user_id = $1 AND classroom_id = $2 ORDER BY created_at DESC',
+      [req.userId, classroomId]
     );
 
     const managers = result.rows.map(manager => ({
@@ -19,6 +35,7 @@ router.get('/', auth, async (req, res) => {
       username: manager.username,
       displayName: manager.display_name,
       allowedRuleIds: manager.allowed_rule_ids ? JSON.parse(manager.allowed_rule_ids) : [],
+      classroomId: manager.classroom_id,
       createdAt: manager.created_at
     }));
 
@@ -34,7 +51,8 @@ router.post('/', auth, [
   body('username').trim().isLength({ min: 3, max: 50 }).withMessage('사용자명은 3-50자여야 합니다.'),
   body('password').isLength({ min: 4 }).withMessage('비밀번호는 최소 4자 이상이어야 합니다.'),
   body('displayName').trim().notEmpty().withMessage('표시 이름을 입력하세요.'),
-  body('allowedRuleIds').isArray().withMessage('허용된 규칙 ID 배열을 제공하세요.')
+  body('allowedRuleIds').isArray().withMessage('허용된 규칙 ID 배열을 제공하세요.'),
+  body('classroomId').isInt().withMessage('학급 ID가 필요합니다.')
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -42,7 +60,17 @@ router.post('/', auth, [
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { username, password, displayName, allowedRuleIds } = req.body;
+    const { username, password, displayName, allowedRuleIds, classroomId } = req.body;
+
+    // 학급 소유권 확인
+    const classroomCheck = await pool.query(
+      'SELECT id FROM classrooms WHERE id = $1 AND user_id = $2',
+      [classroomId, req.userId]
+    );
+
+    if (classroomCheck.rows.length === 0) {
+      return res.status(403).json({ error: '해당 학급에 접근할 수 없습니다.' });
+    }
 
     // 중복 확인
     const existingManager = await pool.query(
@@ -59,8 +87,8 @@ router.post('/', auth, [
 
     // 학생 관리자 생성
     const result = await pool.query(
-      'INSERT INTO student_managers (user_id, username, password, display_name, allowed_rule_ids) VALUES ($1, $2, $3, $4, $5) RETURNING id, username, display_name, allowed_rule_ids, created_at',
-      [req.userId, username, hashedPassword, displayName, JSON.stringify(allowedRuleIds)]
+      'INSERT INTO student_managers (user_id, classroom_id, username, password, display_name, allowed_rule_ids) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, username, display_name, allowed_rule_ids, classroom_id, created_at',
+      [req.userId, classroomId, username, hashedPassword, displayName, JSON.stringify(allowedRuleIds)]
     );
 
     const manager = result.rows[0];
@@ -72,6 +100,7 @@ router.post('/', auth, [
         username: manager.username,
         displayName: manager.display_name,
         allowedRuleIds: JSON.parse(manager.allowed_rule_ids),
+        classroomId: manager.classroom_id,
         createdAt: manager.created_at
       }
     });

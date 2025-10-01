@@ -556,32 +556,50 @@ const App = () => {
       setIsLoading(true);
       const savedUser = JSON.parse(localStorage.getItem('user') || '{}');
       
-      // 학급 목록 먼저 로드
-      const classroomsResponse = await classroomsAPI.getAll();
-      const classroomsList = classroomsResponse.data;
-      setClassrooms(classroomsList);
-      
-      // 저장된 마지막 선택 학급 또는 기본 학급 찾기
-      const savedClassroomId = localStorage.getItem('selectedClassroomId');
       let selectedClassroom = null;
       
-      if (savedClassroomId) {
-        // 저장된 학급 ID로 학급 찾기
-        selectedClassroom = classroomsList.find(c => c.id === parseInt(savedClassroomId));
+      // 학생 관리자인 경우: classroomId를 user 객체에서 직접 가져옴
+      if (savedUser.role === 'student_manager') {
+        if (!savedUser.classroomId) {
+          setError('학급 정보가 없습니다. 관리자에게 문의하세요.');
+          setIsLoading(false);
+          return;
+        }
+        // 학생 관리자는 단일 학급만 접근 가능
+        selectedClassroom = { 
+          id: savedUser.classroomId, 
+          name: '담당 학급',
+          user_id: savedUser.teacherId 
+        };
+        setClassrooms([selectedClassroom]);
+        setCurrentClassroom(selectedClassroom);
+      } else {
+        // 교사인 경우: 학급 목록 로드
+        const classroomsResponse = await classroomsAPI.getAll();
+        const classroomsList = classroomsResponse.data;
+        setClassrooms(classroomsList);
+        
+        // 저장된 마지막 선택 학급 또는 기본 학급 찾기
+        const savedClassroomId = localStorage.getItem('selectedClassroomId');
+        
+        if (savedClassroomId) {
+          // 저장된 학급 ID로 학급 찾기
+          selectedClassroom = classroomsList.find(c => c.id === parseInt(savedClassroomId));
+        }
+        
+        // 저장된 학급이 없거나 삭제된 경우, 기본 학급 또는 첫 번째 학급 선택
+        if (!selectedClassroom) {
+          selectedClassroom = classroomsList.find(c => c.is_default) || classroomsList[0];
+        }
+        
+        if (!selectedClassroom) {
+          setError('학급이 없습니다. 학급을 먼저 생성해주세요.');
+          setIsLoading(false);
+          return;
+        }
+        
+        setCurrentClassroom(selectedClassroom);
       }
-      
-      // 저장된 학급이 없거나 삭제된 경우, 기본 학급 또는 첫 번째 학급 선택
-      if (!selectedClassroom) {
-        selectedClassroom = classroomsList.find(c => c.is_default) || classroomsList[0];
-      }
-      
-      if (!selectedClassroom) {
-        setError('학급이 없습니다. 학급을 먼저 생성해주세요.');
-        setIsLoading(false);
-        return;
-      }
-      
-      setCurrentClassroom(selectedClassroom);
       
       const promises = [
         studentsAPI.getAll({ params: { classroomId: selectedClassroom.id } }),
@@ -591,7 +609,7 @@ const App = () => {
       
       // 교사인 경우에만 학생 관리자 목록도 로드
       if (savedUser.role === 'teacher') {
-        promises.push(studentManagersAPI.getAll());
+        promises.push(studentManagersAPI.getAll({ params: { classroomId: selectedClassroom.id } }));
       }
       
       const results = await Promise.all(promises);
@@ -1870,8 +1888,8 @@ const App = () => {
           />
         </div>
         
-        {/* 학급 선택 탭 */}
-        {classrooms.length > 0 && (
+        {/* 학급 선택 탭 (교사만, 학급이 2개 이상일 때) */}
+        {user?.role === 'teacher' && classrooms.length > 1 && (
           <div className="mt-4 flex justify-center">
             <div className="flex flex-wrap gap-2 bg-white rounded-lg p-1 shadow-md border">
               {classrooms.map(classroom => (
@@ -2078,7 +2096,13 @@ const App = () => {
                       }
                       try {
                         setIsLoading(true);
-                        await studentManagersAPI.create({ username: newManager.username, password: newManager.password, displayName: newManager.displayName, allowedRuleIds: newManager.allowedRuleIds });
+                        await studentManagersAPI.create({ 
+                          username: newManager.username, 
+                          password: newManager.password, 
+                          displayName: newManager.displayName, 
+                          allowedRuleIds: newManager.allowedRuleIds,
+                          classroomId: currentClassroom.id
+                        });
                         setNewManager({ username: '', password: '', confirmPassword: '', displayName: '', allowedRuleIds: [] });
                         await loadData();
                         alert('학생 관리자가 생성되었습니다!');

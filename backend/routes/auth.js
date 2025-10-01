@@ -126,7 +126,7 @@ router.post('/login', [
         const allowedRuleIds = manager.allowed_rule_ids ? JSON.parse(manager.allowed_rule_ids) : [];
         
         const token = jwt.sign(
-          { managerId: manager.id, userId: manager.teacher_id, role: 'student_manager' }, 
+          { managerId: manager.id, userId: manager.teacher_id, classroomId: manager.classroom_id, role: 'student_manager' }, 
           process.env.JWT_SECRET, 
           { expiresIn: '30d' }
         );
@@ -140,7 +140,8 @@ router.post('/login', [
             displayName: manager.display_name,
             role: 'student_manager',
             allowedRuleIds,
-            teacherId: manager.teacher_id
+            teacherId: manager.teacher_id,
+            classroomId: manager.classroom_id
           }
         });
       }
