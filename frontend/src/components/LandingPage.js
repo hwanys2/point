@@ -1,5 +1,5 @@
 import React from 'react';
-import { Award, ListOrdered, Plus, ClipboardList, BarChart3, Calendar, CheckSquare, Sparkles, Zap, Shield, Users, KeySquare } from 'lucide-react';
+import { Award, ListOrdered, Plus, ClipboardList, BarChart3, Calendar, CheckSquare, Sparkles, Zap, Users, KeySquare } from 'lucide-react';
 
 const LandingPage = ({ onShowAuth }) => {
   // 샘플 데이터
@@ -18,7 +18,6 @@ const LandingPage = ({ onShowAuth }) => {
     { icon: Users, title: 'CSV 일괄 등록', desc: '학생 명단을 CSV로 한 번에 업로드', color: 'text-orange-500' },
     { icon: Calendar, title: '기간별 분석', desc: '오늘/주간/월간/사용자 지정 기간별 통계', color: 'text-pink-500' },
     { icon: KeySquare, title: '학생 관리자 권한', desc: '학생에게 특정 규칙만 체크 권한을 부여 (교사 관리)', color: 'text-emerald-600' },
-    { icon: Shield, title: '안전한 데이터', desc: '개인별 데이터 보호 및 안전한 클라우드 저장', color: 'text-indigo-500' },
   ];
 
   return (
@@ -28,18 +27,18 @@ const LandingPage = ({ onShowAuth }) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <div className="flex items-center space-x-2">
             <Award className="w-8 h-8 text-indigo-600" />
-            <span className="text-2xl font-bold text-gray-900">학급 관리 시스템</span>
+            <span className="text-xl sm:text-2xl font-bold text-gray-900">학급 관리 시스템</span>
           </div>
-          <div className="flex gap-3">
+          <div className="flex gap-2 sm:gap-3">
             <button
               onClick={() => onShowAuth('login')}
-              className="px-4 py-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition font-semibold"
+              className="px-3 sm:px-4 py-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition font-semibold"
             >
               로그인
             </button>
             <button
               onClick={() => onShowAuth('register')}
-              className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-semibold shadow-md"
+              className="hidden md:block px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-semibold shadow-md"
             >
               무료로 시작하기
             </button>
@@ -128,33 +127,22 @@ const LandingPage = ({ onShowAuth }) => {
             <div className="bg-green-100 w-12 h-12 rounded-lg flex items-center justify-center mb-4">
               <CheckSquare className="w-6 h-6 text-green-600" />
             </div>
-            <h4 className="font-bold text-gray-900 mb-2">클릭 한 번으로 점수 부여</h4>
-            <p className="text-sm text-gray-600">체크박스를 클릭하면 즉시 점수가 반영됩니다</p>
+            <h4 className="font-bold text-gray-900 mb-2">실시간 점수 관리</h4>
+            <p className="text-sm text-gray-600">클릭 한 번으로 점수 부여 및 즉시 반영</p>
           </div>
           <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 hover:shadow-xl transition">
             <div className="bg-purple-100 w-12 h-12 rounded-lg flex items-center justify-center mb-4">
               <BarChart3 className="w-6 h-6 text-purple-600" />
             </div>
-            <h4 className="font-bold text-gray-900 mb-2">규칙별 득점 분석</h4>
-            <p className="text-sm text-gray-600">어떤 규칙에서 점수를 많이 받았는지 차트로 확인</p>
+            <h4 className="font-bold text-gray-900 mb-2">규칙별 분석 & 기간별 순위</h4>
+            <p className="text-sm text-gray-600">규칙별 득점 차트와 일/주/월간 순위 확인</p>
           </div>
           <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 hover:shadow-xl transition">
-            <div className="bg-blue-100 w-12 h-12 rounded-lg flex items-center justify-center mb-4">
-              <Calendar className="w-6 h-6 text-blue-600" />
-            </div>
-            <h4 className="font-bold text-gray-900 mb-2">기간별 순위</h4>
-            <p className="text-sm text-gray-600">일간/주간/월간 또는 원하는 기간 선택 가능</p>
-          </div>
-          <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 hover:shadow-xl transition md:col-span-3">
-            <div className="flex items-center gap-3 mb-2">
+            <div className="bg-emerald-100 w-12 h-12 rounded-lg flex items-center justify-center mb-4">
               <KeySquare className="w-6 h-6 text-emerald-600" />
-              <h4 className="font-bold text-gray-900">학생 관리자(제한 권한) 워크플로우</h4>
             </div>
-            <ol className="list-decimal list-inside text-sm text-gray-600 space-y-1">
-              <li>교사가 학생 관리자 계정 생성 (로그인 ID/비밀번호, 허용 규칙 선택)</li>
-              <li>학생은 본인 계정으로 로그인 → 허용된 규칙만 체크 가능</li>
-              <li>교사는 언제든 권한을 변경/회수 가능</li>
-            </ol>
+            <h4 className="font-bold text-gray-900 mb-2">학생 관리자 권한</h4>
+            <p className="text-sm text-gray-600">학생에게 제한된 규칙만 체크할 수 있는 권한 부여</p>
           </div>
         </div>
       </section>
