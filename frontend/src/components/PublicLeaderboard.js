@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { ListOrdered, Calendar, Award, Clock, Shirt, BookOpenCheck, Sparkles, Armchair, Smile, Lightbulb, Feather, ShieldCheck, UserPlus, Trash2, Palette, BarChart3 } from 'lucide-react';
 import { publicAPI } from '../services/api';
+import Footer from './Footer';
 
 // 아이콘 매핑
 const ICON_MAP = {
@@ -365,6 +366,8 @@ const PublicLeaderboard = ({ token }) => {
           )}
         </div>
       </div>
+
+      <Footer />
     </div>
   );
 };

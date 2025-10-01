@@ -1,5 +1,6 @@
 import React from 'react';
 import { Award, ListOrdered, Plus, ClipboardList, BarChart3, Calendar, CheckSquare, Sparkles, Zap, Users, KeySquare } from 'lucide-react';
+import Footer from './Footer';
 
 const LandingPage = ({ onShowAuth }) => {
   // 샘플 데이터
@@ -183,17 +184,7 @@ const LandingPage = ({ onShowAuth }) => {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-gray-900 text-gray-400 py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="flex items-center justify-center mb-4">
-            <Award className="w-6 h-6 text-indigo-400 mr-2" />
-            <span className="text-lg font-semibold text-white">학급 관리 시스템</span>
-          </div>
-          <p className="text-sm">© 2025 학급 관리 시스템. All rights reserved.</p>
-          <p className="text-sm mt-2">선생님을 위한 스마트한 학급 관리 솔루션</p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };

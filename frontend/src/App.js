@@ -9,6 +9,8 @@ import {
 import Auth from './components/Auth';
 import LandingPage from './components/LandingPage';
 import PublicLeaderboard from './components/PublicLeaderboard';
+import PrivacyPolicy from './components/PrivacyPolicy';
+import TermsOfService from './components/TermsOfService';
 import { classroomsAPI, studentsAPI, rulesAPI, scoresAPI, settingsAPI, studentManagersAPI } from './services/api';
 
 // Helper functions
@@ -1605,13 +1607,21 @@ const App = () => {
     </div>
   );
 
-  // 공개 리더보드 라우트 처리
+  // 라우팅 처리
   const currentPath = window.location.hash;
   const shareMatch = currentPath.match(/#\/share\/([a-f0-9]+)/);
   
   if (shareMatch) {
     const shareToken = shareMatch[1];
     return <PublicLeaderboard token={shareToken} />;
+  }
+
+  if (currentPath === '#/privacy-policy') {
+    return <PrivacyPolicy />;
+  }
+
+  if (currentPath === '#/terms-of-service') {
+    return <TermsOfService />;
   }
 
   if (!user) {
