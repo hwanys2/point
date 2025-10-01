@@ -421,6 +421,7 @@ const App = () => {
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [shareEnabled, setShareEnabled] = useState(false);
   const [shareToken, setShareToken] = useState(null);
+  const [currentRoute, setCurrentRoute] = useState(window.location.hash);
   
   // 순위표 기간 필터
   const [periodFilter, setPeriodFilter] = useState('all'); // 'all', 'daily', 'weekly', 'monthly', 'custom'
@@ -441,6 +442,16 @@ const App = () => {
   const [showImportModal, setShowImportModal] = useState(false);
   const [selectedSourceClassroom, setSelectedSourceClassroom] = useState('');
   const [isImporting, setIsImporting] = useState(false);
+
+  // 해시 변경 감지
+  useEffect(() => {
+    const handleHashChange = () => {
+      setCurrentRoute(window.location.hash);
+    };
+    
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
 
   // 초기 로드: 토큰 확인
   useEffect(() => {
@@ -1608,19 +1619,18 @@ const App = () => {
   );
 
   // 라우팅 처리
-  const currentPath = window.location.hash;
-  const shareMatch = currentPath.match(/#\/share\/([a-f0-9]+)/);
+  const shareMatch = currentRoute.match(/#\/share\/([a-f0-9]+)/);
   
   if (shareMatch) {
-    const shareToken = shareMatch[1];
-    return <PublicLeaderboard token={shareToken} />;
+    const token = shareMatch[1];
+    return <PublicLeaderboard token={token} />;
   }
 
-  if (currentPath === '#/privacy-policy') {
+  if (currentRoute === '#/privacy-policy') {
     return <PrivacyPolicy />;
   }
 
-  if (currentPath === '#/terms-of-service') {
+  if (currentRoute === '#/terms-of-service') {
     return <TermsOfService />;
   }
 
