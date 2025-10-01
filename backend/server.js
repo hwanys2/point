@@ -31,23 +31,18 @@ console.log('✅ 허용된 origins:', allowedOrigins);
 
 app.use(cors({
   origin: function (origin, callback) {
-    console.log('🔍 CORS 요청 origin:', origin);
-    
     // origin이 undefined인 경우 (예: 모바일 앱, Postman 등) 허용
     if (!origin) {
-      console.log('⚠️ Origin이 없음 - 허용');
       return callback(null, true);
     }
     
     // 개발 환경에서 localhost 모든 포트 허용
     if (isDevelopment && (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:'))) {
-      console.log('✅ 개발 환경 localhost 허용:', origin);
       return callback(null, true);
     }
     
     // 정확히 일치하는 origin이 있으면 허용
     if (allowedOrigins.includes(origin)) {
-      console.log('✅ 정확히 일치하는 origin 허용:', origin);
       return callback(null, true);
     }
     
@@ -56,7 +51,6 @@ app.use(cors({
     const allowedWithoutSlash = allowedOrigins.map(o => o.replace(/\/$/, ''));
     
     if (allowedWithoutSlash.includes(originWithoutSlash)) {
-      console.log('✅ 슬래시 제거 후 일치하는 origin 허용:', originWithoutSlash);
       return callback(null, true);
     }
     
@@ -65,10 +59,10 @@ app.use(cors({
     const allowedWithoutWww = allowedOrigins.map(o => o.replace(/^https?:\/\/(www\.)?/, 'https://'));
     
     if (allowedWithoutWww.includes(originWithoutWww)) {
-      console.log('✅ www 제거 후 일치하는 origin 허용:', originWithoutWww);
       return callback(null, true);
     }
     
+    // 차단된 경우에만 로그 출력
     console.log('❌ CORS 차단된 origin:', origin);
     console.log('❌ 허용된 origins:', allowedOrigins);
     callback(new Error('CORS 정책에 의해 차단되었습니다.'));
