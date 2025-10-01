@@ -71,10 +71,14 @@ const AppHeaderSettingsModal = ({ currentSettings, onClose, onSave }) => {
   const IconComponent = getIconComponent(iconId);
 
   const fontOptions = [
-    { value: "'Inter', sans-serif", name: 'Inter (기본/깔끔)' },
-    { value: "'Gochi Hand', cursive", name: 'Gochi Hand (활동적/손글씨)' },
-    { value: "'Noto Serif KR', serif", name: 'Noto Serif KR (단정함/신뢰)' },
+    { value: "'Noto Sans KR', sans-serif", name: 'Noto Sans KR (기본/깔끔)' },
     { value: "'Pretendard', sans-serif", name: 'Pretendard (현대적/깔끔)' },
+    { value: "'Noto Serif KR', serif", name: 'Noto Serif KR (단정함/신뢰)' },
+    { value: "'Nanum Gothic', sans-serif", name: '나눔고딕 (친근함/가독성)' },
+    { value: "'Nanum Myeongjo', serif", name: '나눔명조 (우아함/전통적)' },
+    { value: "'BM Hanna Pro', sans-serif", name: 'BM Hanna Pro (활동적/친근)' },
+    { value: "'BM Jua', sans-serif", name: 'BM Jua (둥글고/귀여움)' },
+    { value: "'BM Kirang Haerang', sans-serif", name: 'BM Kirang Haerang (개성적/유니크)' },
   ];
 
   const handleSubmit = async (e) => {
@@ -486,7 +490,7 @@ const App = () => {
     subtitle: '학년/반/번호 기반 관리 및 실시간 점수 순위표',
     iconId: 'Award',
     iconColor: '#4f46e5',
-    font: "'Inter', sans-serif",
+    font: "'Noto Sans KR', sans-serif",
   };
 
   const [user, setUser] = useState(null);
