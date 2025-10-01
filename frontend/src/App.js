@@ -4,7 +4,7 @@ import {
   Shirt, BookOpenCheck, Sparkles, Armchair, Smile, Lightbulb,
   Feather, ShieldCheck, Settings, BarChart3, FileText, Trash2, Edit, Save, 
   ClipboardList, X, BarChart, Palette, LogOut, Clock, CheckSquare, XSquare,
-  Star, Download
+  Star, Download, Users
 } from 'lucide-react';
 import Auth from './components/Auth';
 import LandingPage from './components/LandingPage';
@@ -45,7 +45,7 @@ const ICON_OPTIONS = [
 const TABS = [
   { id: 'leaderboard', name: '순위표', icon: ListOrdered, roles: ['teacher', 'student_manager'] },
   { id: 'scoring', name: '점수 부여', icon: Plus, roles: ['teacher', 'student_manager'] },
-  { id: 'management', name: '학생 관리', icon: Settings, roles: ['teacher'] },
+  { id: 'management', name: '학생 관리', icon: Users, roles: ['teacher'] },
   { id: 'rules', name: '규칙', icon: ClipboardList, roles: ['teacher'] },
   { id: 'managers', name: '학생 관리자', icon: UserPlus, roles: ['teacher'] },
 ];
@@ -1437,7 +1437,7 @@ const App = () => {
   const renderManagement = () => (
     <div className="bg-white p-6 rounded-xl shadow-2xl border border-gray-100 min-h-[70vh] space-y-8">
       <h2 className="text-3xl font-bold text-gray-800 flex items-center">
-        <Settings className="w-7 h-7 mr-2 text-indigo-500" /> 학생 관리
+        <Users className="w-7 h-7 mr-2 text-indigo-500" /> 학생 관리
       </h2>
 
       <div className="border p-4 rounded-lg bg-indigo-50">
