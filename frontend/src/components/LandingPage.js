@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Award, ListOrdered, Plus, ClipboardList, BarChart3, Calendar, CheckSquare, Sparkles, Zap, Users, KeySquare } from 'lucide-react';
 import Footer from './Footer';
 
 const LandingPage = ({ onShowAuth }) => {
+  const [randomLogo] = useState(() => Math.random() < 0.5 ? 'logo.png' : 'logo2.png');
+  
   // 샘플 데이터
   const sampleStudents = [
     { rank: 1, name: '김민준', grade: 5, class: 2, number: 15, score: 147 },
@@ -28,7 +30,7 @@ const LandingPage = ({ onShowAuth }) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex justify-between items-center">
           <div className="flex items-center">
             <img 
-              src="/logo.png" 
+              src={`/${randomLogo}`}
               alt="학급 관리 시스템 로고" 
               className="h-10 sm:h-12 md:h-14 w-auto object-contain"
             />

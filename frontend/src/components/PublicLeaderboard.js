@@ -13,6 +13,44 @@ const getIconComponent = (iconId) => {
   return ICON_MAP[iconId] || ListOrdered;
 };
 
+// 규칙별 점수 막대 그래프 컴포넌트
+const RuleScoreBar = ({ student, rules }) => {
+  const totalScore = student.totalScore || 0;
+  if (totalScore === 0) return <div className="h-2 w-full bg-gray-200 rounded-full"></div>;
+  
+  // 학생의 규칙별 점수 계산
+  const ruleScores = {};
+  Object.values(student.dailyScores || {}).forEach(dayScores => {
+    Object.values(dayScores).forEach(scoreEntry => {
+      const rule = rules.find(r => r.name === scoreEntry.ruleName);
+      if (rule) {
+        ruleScores[rule.id] = (ruleScores[rule.id] || 0) + scoreEntry.value;
+      }
+    });
+  });
+  
+  return (
+    <div className="flex w-full h-2 rounded-full overflow-hidden shadow-inner cursor-pointer" title={`총점: ${totalScore}점`}>
+      {rules.map((rule) => {
+        const score = ruleScores[rule.id] || 0;
+        const percentage = (score / totalScore) * 100;
+        
+        if (percentage > 0) {
+          return (
+            <div 
+              key={rule.id} 
+              className={`h-full`}
+              style={{ width: `${percentage}%`, backgroundColor: rule.color }}
+              title={`${rule.name}: ${score}점 (${percentage.toFixed(0)}%)`}
+            />
+          );
+        }
+        return null;
+      })}
+    </div>
+  );
+};
+
 // 규칙별 득점 비교 차트 컴포넌트
 const PublicRuleComparison = ({ students, rules }) => {
   const maxScore = useMemo(() => {
@@ -111,6 +149,7 @@ const PublicLeaderboard = ({ token }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [periodFilter, setPeriodFilter] = useState('all');
+  const [randomLogo] = useState(() => Math.random() < 0.5 ? 'logo.png' : 'logo2.png');
   const getLocalToday = () => {
     const d = new Date();
     const y = d.getFullYear();
@@ -191,7 +230,7 @@ const PublicLeaderboard = ({ token }) => {
         <div className="max-w-7xl mx-auto px-4 py-6">
           <div className="flex flex-col items-center justify-center">
             <img 
-              src="/logo.png" 
+              src={`/${randomLogo}`}
               alt="학급 관리 시스템 로고" 
               className="h-16 sm:h-20 md:h-24 w-auto object-contain mb-3"
             />
@@ -311,7 +350,7 @@ const PublicLeaderboard = ({ token }) => {
                   <th className="px-1 sm:px-2 md:px-3 py-2 sm:py-3 text-left text-[10px] sm:text-xs font-semibold text-gray-600 uppercase tracking-wider w-8 sm:w-12">번호</th>
                   <th className="px-1 sm:px-2 md:px-3 py-2 sm:py-3 text-left text-[10px] sm:text-xs font-semibold text-gray-600 uppercase tracking-wider">이름</th>
                   <th className="px-1 sm:px-2 md:px-3 py-2 sm:py-3 text-right text-[10px] sm:text-xs font-semibold text-gray-600 uppercase tracking-wider w-12 sm:w-24">총점</th>
-                  <th className="hidden md:table-cell px-3 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider w-40">규칙별 점수</th>
+                  <th className="px-1 sm:px-2 md:px-3 py-2 sm:py-3 text-center text-[10px] sm:text-xs font-semibold text-gray-600 uppercase tracking-wider w-16 sm:w-32 md:w-40"><span className="md:hidden">분포</span><span className="hidden md:inline">규칙별 점수 분포</span></th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-100">
@@ -329,22 +368,9 @@ const PublicLeaderboard = ({ token }) => {
                     <td className="px-1 sm:px-2 md:px-3 py-2 sm:py-4 whitespace-nowrap text-base sm:text-xl md:text-2xl font-extrabold text-right text-indigo-700">
                       {student.totalScore}
                     </td>
-                    <td className="hidden md:table-cell px-3 py-4 whitespace-nowrap text-sm text-center">
-                      <div className="flex flex-wrap gap-1 justify-center">
-                        {rules.map(rule => {
-                          const RuleIcon = getIconComponent(rule.icon_id);
-                          const score = Object.values(student.dailyScores || {})
-                            .flatMap(day => Object.values(day))
-                            .filter(s => s.ruleName === rule.name)
-                            .reduce((sum, s) => sum + s.value, 0);
-                          
-                          return (
-                            <span key={rule.id} className="inline-flex items-center px-2 py-1 bg-gray-100 text-xs rounded-lg" style={{ color: rule.color }}>
-                              <RuleIcon className="w-3 h-3 mr-1" />
-                              {score}
-                            </span>
-                          );
-                        })}
+                    <td className="px-1 sm:px-2 md:px-3 py-2 sm:py-4 whitespace-nowrap text-sm text-center">
+                      <div className="w-12 sm:w-24 md:w-32 lg:w-40 mx-auto">
+                        <RuleScoreBar student={student} rules={rules} />
                       </div>
                     </td>
                   </tr>
