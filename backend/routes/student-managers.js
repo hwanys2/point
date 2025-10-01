@@ -10,10 +10,8 @@ const router = express.Router();
 router.get('/', auth, async (req, res) => {
   try {
     const { classroomId } = req.query;
-    console.log('Student managers GET request - classroomId:', classroomId, 'query:', req.query);
     
     if (!classroomId) {
-      console.log('Missing classroomId in request');
       return res.status(400).json({ error: '학급 ID가 필요합니다.' });
     }
     

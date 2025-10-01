@@ -619,7 +619,6 @@ const App = () => {
       // 교사인 경우에만 학생 관리자 목록도 로드 (별도 처리로 실패해도 앱 작동)
       if (savedUser.role === 'teacher') {
         try {
-          console.log('Loading student managers for classroom:', selectedClassroom.id);
           const managersResult = await studentManagersAPI.getAll({ params: { classroomId: selectedClassroom.id } });
           setManagers(managersResult.data);
         } catch (managersError) {
