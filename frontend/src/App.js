@@ -4,7 +4,7 @@ import {
   Shirt, BookOpenCheck, Sparkles, Armchair, Smile, Lightbulb,
   Feather, ShieldCheck, Settings, BarChart3, FileText, Trash2, Edit, Save, 
   ClipboardList, X, BarChart, Palette, LogOut, Clock, CheckSquare, XSquare,
-  Star, Download, Users
+  Star, Download, Users, Mail, ExternalLink, ChevronDown
 } from 'lucide-react';
 import Auth from './components/Auth';
 import LandingPage from './components/LandingPage';
@@ -376,6 +376,78 @@ const EditClassroomModal = ({ classroom, onClose, onUpdate, onDelete }) => {
         </form>
       </div>
     </div>
+  );
+};
+
+const Footer = () => {
+  const [showOtherSites, setShowOtherSites] = useState(false);
+
+  const otherSites = [
+    { name: '교사들을 위한 웹사이트', url: 'https://foreducator.com' },
+    { name: '수학하는 즐거움', url: 'https://pimath.kr' },
+    { name: '한국어 단축주소 서비스', url: 'https://숏.한국' },
+    { name: '실시간 OX 응답 서비스', url: 'https://oxit.run' }
+  ];
+
+  // 외부 클릭 시 드롭다운 닫기
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showOtherSites && !event.target.closest('.footer-dropdown')) {
+        setShowOtherSites(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showOtherSites]);
+
+  return (
+    <footer className="mt-12 pt-8 pb-6 border-t border-gray-200">
+      <div className="max-w-7xl mx-auto px-4 text-center">
+        <div className="flex flex-col items-center space-y-4">
+          {/* Contact */}
+          <div className="flex items-center text-gray-500 text-sm">
+            <Mail className="w-4 h-4 mr-2" />
+            <a 
+              href="mailto:hwanys2@naver.com" 
+              className="hover:text-gray-700 transition-colors"
+            >
+              Contact: hwanys2@naver.com
+            </a>
+          </div>
+          
+          {/* Other Sites Dropdown */}
+          <div className="relative footer-dropdown">
+            <button
+              onClick={() => setShowOtherSites(!showOtherSites)}
+              className="flex items-center text-gray-500 text-sm hover:text-gray-700 transition-colors"
+            >
+              <span>개발자의 다른 사이트</span>
+              <ChevronDown className={`w-4 h-4 ml-1 transition-transform ${showOtherSites ? 'rotate-180' : ''}`} />
+            </button>
+            
+            {showOtherSites && (
+              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-10">
+                {otherSites.map((site, index) => (
+                  <a
+                    key={index}
+                    href={site.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span>{site.name}</span>
+                      <ExternalLink className="w-3 h-3 text-gray-400" />
+                    </div>
+                  </a>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </footer>
   );
 };
 
@@ -2164,6 +2236,9 @@ const App = () => {
           )}
         </div>
       </div>
+      
+      {/* Footer */}
+      <Footer />
     </div>
   );
 };
