@@ -977,64 +977,15 @@ const App = () => {
 
   const renderLeaderboard = () => (
     <div className="max-w-7xl mx-auto space-y-8">
-      <div className="bg-white p-6 rounded-xl shadow-2xl border border-gray-100">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-3xl font-bold text-gray-800 flex items-center">
-            <ListOrdered className="w-7 h-7 mr-2 text-indigo-500" /> 종합 순위표
-          </h2>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* 종합 순위표 */}
+        <div className="bg-white p-6 rounded-xl shadow-2xl border border-gray-100">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl lg:text-3xl font-bold text-gray-800 flex items-center">
+              <ListOrdered className="w-6 h-6 lg:w-7 lg:h-7 mr-2 text-indigo-500" /> 종합 순위표
+            </h2>
           
-          {/* 공유 설정 (교사만) */}
-          {user?.role === 'teacher' && (
-            <div className="flex items-center gap-3">
-              <label className="flex items-center gap-2 text-sm text-gray-600">
-                <input
-                  type="checkbox"
-                  checked={shareEnabled}
-                  onChange={async (e) => {
-                    const enabled = e.target.checked;
-                    setShareEnabled(enabled);
-                    try {
-                      const response = await settingsAPI.update({
-                        title: appSettings.title,
-                        subtitle: appSettings.subtitle,
-                        iconId: appSettings.iconId,
-                        iconColor: appSettings.iconColor,
-                        font: appSettings.font,
-                        shareEnabled: enabled,
-                      });
-                      setShareToken(response.data.settings.shareToken);
-                    } catch (err) {
-                      setError('공유 설정 업데이트 중 오류가 발생했습니다.');
-                      setShareEnabled(!enabled); // 롤백
-                    }
-                  }}
-                  className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                />
-                공개 링크 활성화
-              </label>
-              
-              {shareEnabled && shareToken && (
-                <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    value={`${window.location.origin}/#/share/${shareToken}`}
-                    readOnly
-                    className="px-3 py-1 text-sm border border-gray-300 rounded bg-gray-50 text-gray-600 w-64"
-                  />
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(`${window.location.origin}/#/share/${shareToken}`);
-                      alert('링크가 클립보드에 복사되었습니다!');
-                    }}
-                    className="px-3 py-1 text-sm bg-indigo-600 text-white rounded hover:bg-indigo-700 transition"
-                  >
-                    복사
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+          </div>
         
         {/* 기간 필터 */}
         <div className="mb-6 p-3 sm:p-4 bg-gray-50 rounded-lg border">
@@ -1151,11 +1102,70 @@ const App = () => {
             <p className="text-center text-gray-500 py-8">학생 관리 탭에서 학생을 먼저 등록해주세요.</p>
           )}
         </div>
+        </div>
+
+        {/* 규칙별 득점 비교 차트 */}
+        <div className="bg-white p-6 rounded-xl shadow-2xl border border-gray-100">
+          <AllStudentsRuleComparison students={filteredStudentsWithScores} rules={rules} studentRuleScores={studentRuleScores} />
+        </div>
       </div>
 
-      <div>
-        <AllStudentsRuleComparison students={filteredStudentsWithScores} rules={rules} studentRuleScores={studentRuleScores} />
-      </div>
+      {/* 공유 설정 (교사만) - 전체 페이지 하단에 배치 */}
+      {user?.role === 'teacher' && (
+        <div className="bg-white p-6 rounded-xl shadow-2xl border border-gray-100">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <h3 className="text-lg font-semibold text-gray-800">공유 설정</h3>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full sm:w-auto">
+              <label className="flex items-center gap-2 text-sm text-gray-600">
+                <input
+                  type="checkbox"
+                  checked={shareEnabled}
+                  onChange={async (e) => {
+                    const enabled = e.target.checked;
+                    setShareEnabled(enabled);
+                    try {
+                      const response = await settingsAPI.update({
+                        title: appSettings.title,
+                        subtitle: appSettings.subtitle,
+                        iconId: appSettings.iconId,
+                        iconColor: appSettings.iconColor,
+                        font: appSettings.font,
+                        shareEnabled: enabled,
+                      });
+                      setShareToken(response.data.settings.shareToken);
+                    } catch (err) {
+                      setError('공유 설정 업데이트 중 오류가 발생했습니다.');
+                      setShareEnabled(!enabled); // 롤백
+                    }
+                  }}
+                  className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                />
+                공개 링크 활성화
+              </label>
+              
+              {shareEnabled && shareToken && (
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full sm:w-auto">
+                  <input
+                    type="text"
+                    value={`${window.location.origin}/#/share/${shareToken}`}
+                    readOnly
+                    className="px-3 py-1 text-sm border border-gray-300 rounded bg-gray-50 text-gray-600 w-full sm:w-64"
+                  />
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(`${window.location.origin}/#/share/${shareToken}`);
+                      alert('링크가 클립보드에 복사되었습니다!');
+                    }}
+                    className="px-3 py-1 text-sm bg-indigo-600 text-white rounded hover:bg-indigo-700 transition w-full sm:w-auto"
+                  >
+                    복사
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 

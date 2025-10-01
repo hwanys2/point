@@ -206,98 +206,17 @@ const PublicLeaderboard = ({ token }) => {
 
       {/* 메인 콘텐츠 */}
       <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
-        <div className="bg-white rounded-xl shadow-2xl border border-gray-100 p-6">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-            <ListOrdered className="w-6 h-6 mr-2 text-indigo-500" /> 
-            {periodFilter === 'all' ? '전체' : 
-             periodFilter === 'daily' ? '오늘' :
-             periodFilter === 'weekly' ? '최근 7일' :
-             periodFilter === 'monthly' ? '최근 30일' :
-             '선택한 기간'} 순위표
-          </h2>
-          
-          {/* 기간 필터 */}
-          <div className="mb-6 p-3 sm:p-4 bg-gray-50 rounded-lg border">
-            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-3">
-              <button
-                onClick={() => setPeriodFilter('all')}
-                className={`px-2 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm md:text-base font-semibold transition ${
-                  periodFilter === 'all'
-                    ? 'bg-indigo-600 text-white shadow-md'
-                    : 'bg-white text-gray-700 hover:bg-indigo-50 border'
-                }`}
-              >
-                전체
-              </button>
-              <button
-                onClick={() => setPeriodFilter('daily')}
-                className={`px-2 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm md:text-base font-semibold transition ${
-                  periodFilter === 'daily'
-                    ? 'bg-indigo-600 text-white shadow-md'
-                    : 'bg-white text-gray-700 hover:bg-indigo-50 border'
-                }`}
-              >
-                오늘
-              </button>
-              <button
-                onClick={() => setPeriodFilter('weekly')}
-                className={`px-2 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm md:text-base font-semibold transition ${
-                  periodFilter === 'weekly'
-                    ? 'bg-indigo-600 text-white shadow-md'
-                    : 'bg-white text-gray-700 hover:bg-indigo-50 border'
-                }`}
-              >
-                <span className="hidden sm:inline">최근 </span>7일
-              </button>
-              <button
-                onClick={() => setPeriodFilter('monthly')}
-                className={`px-2 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm md:text-base font-semibold transition ${
-                  periodFilter === 'monthly'
-                    ? 'bg-indigo-600 text-white shadow-md'
-                    : 'bg-white text-gray-700 hover:bg-indigo-50 border'
-                }`}
-              >
-                <span className="hidden sm:inline">최근 </span>30일
-              </button>
-              <button
-                onClick={() => setPeriodFilter('custom')}
-                className={`px-2 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm md:text-base font-semibold transition ${
-                  periodFilter === 'custom'
-                    ? 'bg-indigo-600 text-white shadow-md'
-                    : 'bg-white text-gray-700 hover:bg-indigo-50 border'
-                }`}
-              >
-                기간<span className="hidden sm:inline"> 선택</span>
-              </button>
-            </div>
-            
-            {periodFilter === 'custom' && (
-              <div className="flex flex-wrap items-center gap-3 mt-3">
-                <div>
-                  <label className="text-sm text-gray-600 mr-2">시작일:</label>
-                  <input
-                    type="date"
-                    value={customStartDate}
-                    onChange={(e) => setCustomStartDate(e.target.value)}
-                    max={customEndDate}
-                    className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
-                <span className="text-gray-500">~</span>
-                <div>
-                  <label className="text-sm text-gray-600 mr-2">종료일:</label>
-                  <input
-                    type="date"
-                    value={customEndDate}
-                    onChange={(e) => setCustomEndDate(e.target.value)}
-                    min={customStartDate}
-                    max={getLocalToday()}
-                    className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
-              </div>
-            )}
-          </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* 종합 순위표 */}
+          <div className="bg-white rounded-xl shadow-2xl border border-gray-100 p-6">
+            <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+              <ListOrdered className="w-6 h-6 mr-2 text-indigo-500" /> 
+              {periodFilter === 'all' ? '전체' : 
+               periodFilter === 'daily' ? '오늘' :
+               periodFilter === 'weekly' ? '최근 7일' :
+               periodFilter === 'monthly' ? '최근 30일' :
+               '선택한 기간'} 순위표
+            </h2>
 
           {/* 순위표 */}
           <div className="overflow-x-auto">
@@ -355,10 +274,96 @@ const PublicLeaderboard = ({ token }) => {
               <p className="text-center text-gray-500 py-8">순위표 데이터가 없습니다.</p>
             )}
           </div>
+          </div>
+
+          {/* 규칙별 득점 비교 차트 */}
+          <div className="bg-white rounded-xl shadow-2xl border border-gray-100 p-6">
+            <PublicRuleComparison students={data.leaderboard || []} rules={rules || []} />
+          </div>
         </div>
 
-        {/* 규칙별 득점 비교 차트 */}
-        <PublicRuleComparison students={data.leaderboard || []} rules={rules || []} />
+        {/* 기간 필터 - 전체 페이지 하단에 배치 */}
+        <div className="bg-white rounded-xl shadow-2xl border border-gray-100 p-6">
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-3">
+            <button
+              onClick={() => setPeriodFilter('all')}
+              className={`px-2 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm md:text-base font-semibold transition ${
+                periodFilter === 'all'
+                  ? 'bg-indigo-600 text-white shadow-md'
+                  : 'bg-gray-100 text-gray-700 hover:bg-indigo-50 border'
+              }`}
+            >
+              전체
+            </button>
+            <button
+              onClick={() => setPeriodFilter('daily')}
+              className={`px-2 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm md:text-base font-semibold transition ${
+                periodFilter === 'daily'
+                  ? 'bg-indigo-600 text-white shadow-md'
+                  : 'bg-gray-100 text-gray-700 hover:bg-indigo-50 border'
+              }`}
+            >
+              오늘
+            </button>
+            <button
+              onClick={() => setPeriodFilter('weekly')}
+              className={`px-2 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm md:text-base font-semibold transition ${
+                periodFilter === 'weekly'
+                  ? 'bg-indigo-600 text-white shadow-md'
+                  : 'bg-gray-100 text-gray-700 hover:bg-indigo-50 border'
+              }`}
+            >
+              <span className="hidden sm:inline">최근 </span>7일
+            </button>
+            <button
+              onClick={() => setPeriodFilter('monthly')}
+              className={`px-2 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm md:text-base font-semibold transition ${
+                periodFilter === 'monthly'
+                  ? 'bg-indigo-600 text-white shadow-md'
+                  : 'bg-gray-100 text-gray-700 hover:bg-indigo-50 border'
+              }`}
+            >
+              <span className="hidden sm:inline">최근 </span>30일
+            </button>
+            <button
+              onClick={() => setPeriodFilter('custom')}
+              className={`px-2 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm md:text-base font-semibold transition ${
+                periodFilter === 'custom'
+                  ? 'bg-indigo-600 text-white shadow-md'
+                  : 'bg-gray-100 text-gray-700 hover:bg-indigo-50 border'
+              }`}
+            >
+              기간<span className="hidden sm:inline"> 선택</span>
+            </button>
+          </div>
+          
+          {periodFilter === 'custom' && (
+            <div className="flex flex-wrap items-center gap-3 mt-3">
+              <div>
+                <label className="text-sm text-gray-600 mr-2">시작일:</label>
+                <input
+                  type="date"
+                  value={customStartDate}
+                  onChange={(e) => setCustomStartDate(e.target.value)}
+                  max={customEndDate}
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+              <span className="text-gray-500">~</span>
+              <div>
+                <label className="text-sm text-gray-600 mr-2">종료일:</label>
+                <input
+                  type="date"
+                  value={customEndDate}
+                  onChange={(e) => setCustomEndDate(e.target.value)}
+                  min={customStartDate}
+                  max={getLocalToday()}
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
