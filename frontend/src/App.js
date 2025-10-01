@@ -522,7 +522,14 @@ const App = () => {
     const savedUser = localStorage.getItem('user');
     
     if (token && savedUser) {
-      setUser(JSON.parse(savedUser));
+      const parsedUser = JSON.parse(savedUser);
+      setUser(parsedUser);
+      
+      // 학생 관리자는 점수 부여 탭을 기본으로 표시
+      if (parsedUser.role === 'student_manager') {
+        setActiveTab('scoring');
+      }
+      
       loadData();
     } else {
       setIsLoading(false);
