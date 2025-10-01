@@ -10,17 +10,44 @@ const app = express();
 const allowedOrigins = [
   'https://classpoint.kr',
   'https://classpoint.kr/',
+  'https://www.classpoint.kr',
+  'https://www.classpoint.kr/',
   'http://localhost:3000',
-  process.env.FRONTEND_URL
+  'http://localhost:3001',
+  process.env.FRONTEND_URL,
+  process.env.CLIENT_URL,
+  process.env.CLIENT_ORIGIN
 ].filter(Boolean); // undefined 값 제거
+
+// 개발 환경에서는 localhost 모든 포트 허용
+const isDevelopment = process.env.NODE_ENV !== 'production';
+
+console.log('🌍 환경:', isDevelopment ? 'development' : 'production');
+console.log('🔧 환경 변수:');
+console.log('  - FRONTEND_URL:', process.env.FRONTEND_URL);
+console.log('  - CLIENT_URL:', process.env.CLIENT_URL);
+console.log('  - CLIENT_ORIGIN:', process.env.CLIENT_ORIGIN);
+console.log('✅ 허용된 origins:', allowedOrigins);
 
 app.use(cors({
   origin: function (origin, callback) {
+    console.log('🔍 CORS 요청 origin:', origin);
+    
     // origin이 undefined인 경우 (예: 모바일 앱, Postman 등) 허용
-    if (!origin) return callback(null, true);
+    if (!origin) {
+      console.log('⚠️ Origin이 없음 - 허용');
+      return callback(null, true);
+    }
+    
+    // 개발 환경에서 localhost 모든 포트 허용
+    if (isDevelopment && (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:'))) {
+      console.log('✅ 개발 환경 localhost 허용:', origin);
+      return callback(null, true);
+    }
     
     // 정확히 일치하는 origin이 있으면 허용
     if (allowedOrigins.includes(origin)) {
+      console.log('✅ 정확히 일치하는 origin 허용:', origin);
       return callback(null, true);
     }
     
@@ -29,9 +56,21 @@ app.use(cors({
     const allowedWithoutSlash = allowedOrigins.map(o => o.replace(/\/$/, ''));
     
     if (allowedWithoutSlash.includes(originWithoutSlash)) {
+      console.log('✅ 슬래시 제거 후 일치하는 origin 허용:', originWithoutSlash);
       return callback(null, true);
     }
     
+    // www 없는 버전과 비교 (https://classpoint.kr <-> https://www.classpoint.kr)
+    const originWithoutWww = origin.replace(/^https?:\/\/(www\.)?/, 'https://');
+    const allowedWithoutWww = allowedOrigins.map(o => o.replace(/^https?:\/\/(www\.)?/, 'https://'));
+    
+    if (allowedWithoutWww.includes(originWithoutWww)) {
+      console.log('✅ www 제거 후 일치하는 origin 허용:', originWithoutWww);
+      return callback(null, true);
+    }
+    
+    console.log('❌ CORS 차단된 origin:', origin);
+    console.log('❌ 허용된 origins:', allowedOrigins);
     callback(new Error('CORS 정책에 의해 차단되었습니다.'));
   },
   credentials: true
