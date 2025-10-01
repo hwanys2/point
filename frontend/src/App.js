@@ -545,6 +545,11 @@ const App = () => {
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
+  // editingClassroom 상태 디버깅
+  useEffect(() => {
+    console.log('editingClassroom state changed:', editingClassroom);
+  }, [editingClassroom]);
+
   // 초기 로드: 토큰 확인
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -1523,7 +1528,10 @@ const App = () => {
         )}
       </div>
       {editingStudent && <EditStudentModal student={editingStudent} onClose={() => setEditingStudent(null)} onSave={handleSaveStudent} />}
-      {editingClassroom && <EditClassroomModal classroom={editingClassroom} onClose={() => setEditingClassroom(null)} onUpdate={handleUpdateClassroom} onDelete={handleDeleteClassroom} />}
+      {editingClassroom && (() => {
+        console.log('Rendering EditClassroomModal with classroom:', editingClassroom);
+        return <EditClassroomModal classroom={editingClassroom} onClose={() => setEditingClassroom(null)} onUpdate={handleUpdateClassroom} onDelete={handleDeleteClassroom} />;
+      })()}
     </div>
   );
   
@@ -1899,6 +1907,7 @@ const App = () => {
                           e.stopPropagation();
                           console.log('Settings button clicked for classroom:', classroom);
                           setEditingClassroom(classroom);
+                          console.log('editingClassroom state set to:', classroom);
                         }}
                         className="opacity-70 hover:opacity-100 transition-opacity text-gray-500 hover:text-gray-700 p-1 rounded hover:bg-gray-200"
                         title="학급 관리"
