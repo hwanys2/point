@@ -404,9 +404,9 @@ const Footer = () => {
   return (
     <footer className="mt-12 pt-8 pb-6 border-t border-gray-200">
       <div className="max-w-7xl mx-auto px-4 text-center">
-        <div className="flex flex-col items-center space-y-4">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 text-gray-500 text-sm">
           {/* Contact */}
-          <div className="flex items-center text-gray-500 text-sm">
+          <div className="flex items-center">
             <Mail className="w-4 h-4 mr-2" />
             <a 
               href="mailto:hwanys2@naver.com" 
@@ -416,11 +416,14 @@ const Footer = () => {
             </a>
           </div>
           
+          {/* Separator */}
+          <div className="hidden sm:block text-gray-300">•</div>
+          
           {/* Other Sites Dropdown */}
           <div className="relative footer-dropdown">
             <button
               onClick={() => setShowOtherSites(!showOtherSites)}
-              className="flex items-center text-gray-500 text-sm hover:text-gray-700 transition-colors"
+              className="flex items-center hover:text-gray-700 transition-colors"
             >
               <span>개발자의 다른 사이트</span>
               <ChevronDown className={`w-4 h-4 ml-1 transition-transform ${showOtherSites ? 'rotate-180' : ''}`} />
