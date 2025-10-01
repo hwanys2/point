@@ -183,24 +183,21 @@ const PublicLeaderboard = ({ token }) => {
   }
 
   const { settings, rules } = data;
-  const IconComponent = getIconComponent(settings.iconId);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50">
       {/* 헤더 */}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="flex items-center justify-center">
-            <IconComponent className="w-8 h-8 mr-3" style={{ color: settings.iconColor }} />
-            <div className="text-center">
-              <h1 className="text-3xl font-bold text-gray-800" style={{ fontFamily: settings.font }}>
-                {settings.title}
-              </h1>
-              <p className="text-gray-600 mt-1">{settings.subtitle}</p>
-              <p className="text-sm text-gray-500 mt-2">
-                {settings.schoolName} • {settings.teacherName} 선생님
-              </p>
-            </div>
+          <div className="flex flex-col items-center justify-center">
+            <img 
+              src="/logo.png" 
+              alt="학급 관리 시스템 로고" 
+              className="h-16 sm:h-20 md:h-24 w-auto object-contain mb-3"
+            />
+            <p className="text-sm text-gray-500">
+              {settings.schoolName} • {settings.teacherName} 선생님
+            </p>
           </div>
         </div>
       </div>
