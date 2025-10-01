@@ -2089,7 +2089,7 @@ const App = () => {
                   <UserPlus className="w-5 h-5 mr-2" /> 새 학생 관리자 계정 생성
                 </h3>
                 <form className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
                     <input
                       type="text"
                       placeholder="사용자명 (로그인 ID)"
