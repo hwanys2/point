@@ -4,7 +4,7 @@ import {
   Shirt, BookOpenCheck, Sparkles, Armchair, Smile, Lightbulb,
   Feather, ShieldCheck, Settings, BarChart3, FileText, Trash2, Edit, Save, 
   ClipboardList, X, BarChart, Palette, LogOut, Clock, CheckSquare, XSquare,
-  Star, Download, Users, Mail, ExternalLink, ChevronDown, RefreshCw
+  Star, Download, Users, Mail, ExternalLink, ChevronDown
 } from 'lucide-react';
 import Auth from './components/Auth';
 import LandingPage from './components/LandingPage';
@@ -473,7 +473,7 @@ const App = () => {
   const [currentRule, setCurrentRule] = useState({ name: '', iconId: 'Clock', color: '#4f46e5' });
   const [editingRuleId, setEditingRuleId] = useState(null);
   const [appSettings, setAppSettings] = useState(defaultSettings);
-  const [currentLogo, setCurrentLogo] = useState(() => localStorage.getItem('currentLogo') || 'logo.png');
+  const [currentLogo] = useState(() => Math.random() < 0.5 ? 'logo.png' : 'logo2.png');
   const [shareEnabled, setShareEnabled] = useState(false);
   const [shareToken, setShareToken] = useState(null);
   const [currentRoute, setCurrentRoute] = useState(window.location.hash);
@@ -798,12 +798,6 @@ const App = () => {
     });
     return scores;
   }, [students, rules, periodFilter, customStartDate, customEndDate]);
-
-  const handleToggleLogo = () => {
-    const newLogo = currentLogo === 'logo.png' ? 'logo2.png' : 'logo.png';
-    setCurrentLogo(newLogo);
-    localStorage.setItem('currentLogo', newLogo);
-  };
   
   const handleAddStudent = async (e) => {
     e.preventDefault();
@@ -1830,21 +1824,11 @@ const App = () => {
 
       <header className="text-center mb-4 sm:mb-8">
         <div className="flex flex-col items-center justify-center pt-4 sm:pt-6">
-          <div className="relative">
-            <img 
-              src={`/${currentLogo}`} 
-              alt="학급 관리 시스템 로고" 
-              className="h-24 sm:h-32 md:h-40 lg:h-48 w-auto object-contain mx-auto"
-            />
-            
-            <button 
-              onClick={handleToggleLogo}
-              className="absolute top-0 right-0 sm:-right-8 p-1 text-gray-500 hover:text-indigo-600 transition"
-              title="로고 변경"
-            >
-              <RefreshCw className="w-4 h-4 sm:w-5 sm:h-5" />
-            </button>
-          </div>
+          <img 
+            src={`/${currentLogo}`} 
+            alt="학급 관리 시스템 로고" 
+            className="h-24 sm:h-32 md:h-40 lg:h-48 w-auto object-contain mx-auto"
+          />
         </div>
         
         {/* 학급 선택 탭 */}
