@@ -6,6 +6,7 @@ const Auth = ({ onLogin, onClose, initialMode = 'login' }) => {
   const [isLogin, setIsLogin] = useState(initialMode === 'login');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [randomLogo] = useState(() => Math.random() < 0.5 ? 'logo.png' : 'logo2.png');
   
   const [formData, setFormData] = useState({
     username: '',
@@ -74,7 +75,7 @@ const Auth = ({ onLogin, onClose, initialMode = 'login' }) => {
         )}
         <div className="text-center mb-8">
           <img 
-            src={isLogin ? "/logo.png" : "/logo2.png"}
+            src={`/${randomLogo}`}
             alt="학급 관리 시스템 로고" 
             className="h-20 sm:h-24 w-auto object-contain mx-auto"
           />
