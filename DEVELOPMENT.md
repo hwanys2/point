@@ -59,12 +59,12 @@ DATABASE_URL=postgresql://postgres:postgres@localhost:5432/student_management
 JWT_SECRET=your_development_secret
 PORT=5000
 NODE_ENV=development
-FRONTEND_URL=http://localhost:3000
+FRONTEND_URL=https://classpoint.kr
 ```
 
 #### 프론트엔드 `frontend/.env` 파일
 ```env
-REACT_APP_API_URL=http://localhost:5000/api
+REACT_APP_API_URL=https://classpoint.kr/api
 ```
 
 ### 5. 개발 서버 실행

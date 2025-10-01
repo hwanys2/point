@@ -108,7 +108,7 @@ vercel
 ```
 
 환경 변수 설정:
-- `REACT_APP_API_URL`: Railway 백엔드 URL (예: https://your-app.railway.app/api)
+- `REACT_APP_API_URL`: Railway 백엔드 URL (예: https://classpoint.kr/api)
 
 #### Netlify 배포:
 1. Netlify Dashboard에서 "New site from Git" 클릭

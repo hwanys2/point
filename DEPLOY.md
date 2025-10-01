@@ -61,7 +61,7 @@ DATABASE_URL=${{Postgres.DATABASE_URL}}
 # 수동 추가 필요
 JWT_SECRET=<랜덤 문자열 생성>
 NODE_ENV=production
-FRONTEND_URL=https://your-frontend-domain.vercel.app
+FRONTEND_URL=https://classpoint.kr
 PORT=${{PORT}}
 ```
 
@@ -112,7 +112,7 @@ vercel --prod
 Vercel 대시보드 → 프로젝트 → Settings → Environment Variables:
 
 ```env
-REACT_APP_API_URL=https://your-backend.railway.app/api
+REACT_APP_API_URL=https://classpoint.kr/api
 ```
 
 ### 3단계: 재배포
@@ -142,7 +142,7 @@ vercel --prod
 Site settings → Environment → Environment variables:
 
 ```env
-REACT_APP_API_URL=https://your-backend.railway.app/api
+REACT_APP_API_URL=https://classpoint.kr/api
 ```
 
 ### 3단계: 재배포
@@ -158,7 +158,7 @@ REACT_APP_API_URL=https://your-backend.railway.app/api
 1. Railway 대시보드 → 백엔드 서비스 → Variables
 2. `FRONTEND_URL` 값을 실제 프론트엔드 URL로 업데이트:
    ```env
-   FRONTEND_URL=https://your-frontend-domain.vercel.app
+   FRONTEND_URL=https://classpoint.kr
    ```
 3. 저장 후 자동 재배포됨
 
@@ -166,8 +166,8 @@ REACT_APP_API_URL=https://your-backend.railway.app/api
 
 ## ✅ 배포 확인 체크리스트
 
-- [ ] 백엔드 Health Check: `https://your-backend.railway.app/health`
-- [ ] 프론트엔드 접속: `https://your-frontend.vercel.app`
+- [ ] 백엔드 Health Check: `https://classpoint.kr/health`
+- [ ] 프론트엔드 접속: `https://classpoint.kr`
 - [ ] 회원가입 테스트
 - [ ] 로그인 테스트
 - [ ] 학생 추가 테스트
