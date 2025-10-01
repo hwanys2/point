@@ -204,84 +204,9 @@ const PublicLeaderboard = ({ token }) => {
 
       {/* 메인 콘텐츠 */}
       <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* 종합 순위표 */}
-          <div className="bg-white rounded-xl shadow-2xl border border-gray-100 p-6">
-            <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-              <ListOrdered className="w-6 h-6 mr-2 text-indigo-500" /> 
-              {periodFilter === 'all' ? '전체' : 
-               periodFilter === 'daily' ? '오늘' :
-               periodFilter === 'weekly' ? '최근 7일' :
-               periodFilter === 'monthly' ? '최근 30일' :
-               '선택한 기간'} 순위표
-            </h2>
-
-          {/* 순위표 */}
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-1 sm:px-2 md:px-3 py-2 sm:py-3 text-center text-[10px] sm:text-xs font-semibold text-gray-600 uppercase tracking-wider w-8 sm:w-16">순위</th>
-                  <th className="px-1 sm:px-2 md:px-3 py-2 sm:py-3 text-left text-[10px] sm:text-xs font-semibold text-gray-600 uppercase tracking-wider w-8 sm:w-12">학년</th>
-                  <th className="px-1 sm:px-2 md:px-3 py-2 sm:py-3 text-left text-[10px] sm:text-xs font-semibold text-gray-600 uppercase tracking-wider w-8 sm:w-12">반</th>
-                  <th className="px-1 sm:px-2 md:px-3 py-2 sm:py-3 text-left text-[10px] sm:text-xs font-semibold text-gray-600 uppercase tracking-wider w-8 sm:w-12">번호</th>
-                  <th className="px-1 sm:px-2 md:px-3 py-2 sm:py-3 text-left text-[10px] sm:text-xs font-semibold text-gray-600 uppercase tracking-wider">이름</th>
-                  <th className="px-1 sm:px-2 md:px-3 py-2 sm:py-3 text-right text-[10px] sm:text-xs font-semibold text-gray-600 uppercase tracking-wider w-12 sm:w-24">총점</th>
-                  <th className="hidden md:table-cell px-3 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider w-40">규칙별 점수</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-100">
-                {sortedStudents.map((student, index) => (
-                  <tr key={student.id} className={`transition duration-150 ease-in-out ${index % 2 === 0 ? 'hover:bg-gray-50' : 'hover:bg-indigo-50'} ${index < 3 ? 'bg-yellow-50/50 font-bold' : ''}`}>
-                    <td className="px-1 sm:px-2 md:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-center">
-                      <span className={`text-sm sm:text-lg md:text-xl ${index === 0 ? 'text-yellow-500' : index === 1 ? 'text-gray-500' : index === 2 ? 'text-yellow-900' : 'text-gray-600'}`}>
-                        #{index + 1}
-                      </span>
-                    </td>
-                    <td className="px-1 sm:px-2 md:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">{student.grade}</td>
-                    <td className="px-1 sm:px-2 md:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">{student.classNumber}</td>
-                    <td className="px-1 sm:px-2 md:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">{student.studentNumber}</td>
-                    <td className="px-1 sm:px-2 md:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">{student.name}</td>
-                    <td className="px-1 sm:px-2 md:px-3 py-2 sm:py-4 whitespace-nowrap text-base sm:text-xl md:text-2xl font-extrabold text-right text-indigo-700">
-                      {student.totalScore}
-                    </td>
-                    <td className="hidden md:table-cell px-3 py-4 whitespace-nowrap text-sm text-center">
-                      <div className="flex flex-wrap gap-1 justify-center">
-                        {rules.map(rule => {
-                          const RuleIcon = getIconComponent(rule.icon_id);
-                          const score = Object.values(student.dailyScores || {})
-                            .flatMap(day => Object.values(day))
-                            .filter(s => s.ruleName === rule.name)
-                            .reduce((sum, s) => sum + s.value, 0);
-                          
-                          return (
-                            <span key={rule.id} className="inline-flex items-center px-2 py-1 bg-gray-100 text-xs rounded-lg" style={{ color: rule.color }}>
-                              <RuleIcon className="w-3 h-3 mr-1" />
-                              {score}
-                            </span>
-                          );
-                        })}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            
-            {sortedStudents.length === 0 && (
-              <p className="text-center text-gray-500 py-8">순위표 데이터가 없습니다.</p>
-            )}
-          </div>
-          </div>
-
-          {/* 규칙별 득점 비교 차트 */}
-          <div className="bg-white rounded-xl shadow-2xl border border-gray-100 p-6">
-            <PublicRuleComparison students={data.leaderboard || []} rules={rules || []} />
-          </div>
-        </div>
-
-        {/* 기간 필터 - 전체 페이지 하단에 배치 */}
-        <div className="bg-white rounded-xl shadow-2xl border border-gray-100 p-6">
+        {/* 기간 필터 */}
+        <div className="bg-white rounded-xl shadow-2xl border border-gray-100 p-4 sm:p-6">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">기간 선택</h3>
           <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-3">
             <button
               onClick={() => setPeriodFilter('all')}
@@ -361,6 +286,82 @@ const PublicLeaderboard = ({ token }) => {
               </div>
             </div>
           )}
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* 종합 순위표 */}
+          <div className="bg-white rounded-xl shadow-2xl border border-gray-100 p-6">
+            <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+              <ListOrdered className="w-6 h-6 mr-2 text-indigo-500" /> 
+              {periodFilter === 'all' ? '전체' : 
+               periodFilter === 'daily' ? '오늘' :
+               periodFilter === 'weekly' ? '최근 7일' :
+               periodFilter === 'monthly' ? '최근 30일' :
+               '선택한 기간'} 순위표
+            </h2>
+
+          {/* 순위표 */}
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-1 sm:px-2 md:px-3 py-2 sm:py-3 text-center text-[10px] sm:text-xs font-semibold text-gray-600 uppercase tracking-wider w-8 sm:w-16">순위</th>
+                  <th className="px-1 sm:px-2 md:px-3 py-2 sm:py-3 text-left text-[10px] sm:text-xs font-semibold text-gray-600 uppercase tracking-wider w-8 sm:w-12">학년</th>
+                  <th className="px-1 sm:px-2 md:px-3 py-2 sm:py-3 text-left text-[10px] sm:text-xs font-semibold text-gray-600 uppercase tracking-wider w-8 sm:w-12">반</th>
+                  <th className="px-1 sm:px-2 md:px-3 py-2 sm:py-3 text-left text-[10px] sm:text-xs font-semibold text-gray-600 uppercase tracking-wider w-8 sm:w-12">번호</th>
+                  <th className="px-1 sm:px-2 md:px-3 py-2 sm:py-3 text-left text-[10px] sm:text-xs font-semibold text-gray-600 uppercase tracking-wider">이름</th>
+                  <th className="px-1 sm:px-2 md:px-3 py-2 sm:py-3 text-right text-[10px] sm:text-xs font-semibold text-gray-600 uppercase tracking-wider w-12 sm:w-24">총점</th>
+                  <th className="hidden md:table-cell px-3 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider w-40">규칙별 점수</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-100">
+                {sortedStudents.map((student, index) => (
+                  <tr key={student.id} className={`transition duration-150 ease-in-out ${index % 2 === 0 ? 'hover:bg-gray-50' : 'hover:bg-indigo-50'} ${index < 3 ? 'bg-yellow-50/50 font-bold' : ''}`}>
+                    <td className="px-1 sm:px-2 md:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-center">
+                      <span className={`text-sm sm:text-lg md:text-xl ${index === 0 ? 'text-yellow-500' : index === 1 ? 'text-gray-500' : index === 2 ? 'text-yellow-900' : 'text-gray-600'}`}>
+                        #{index + 1}
+                      </span>
+                    </td>
+                    <td className="px-1 sm:px-2 md:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">{student.grade}</td>
+                    <td className="px-1 sm:px-2 md:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">{student.classNumber}</td>
+                    <td className="px-1 sm:px-2 md:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">{student.studentNumber}</td>
+                    <td className="px-1 sm:px-2 md:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">{student.name}</td>
+                    <td className="px-1 sm:px-2 md:px-3 py-2 sm:py-4 whitespace-nowrap text-base sm:text-xl md:text-2xl font-extrabold text-right text-indigo-700">
+                      {student.totalScore}
+                    </td>
+                    <td className="hidden md:table-cell px-3 py-4 whitespace-nowrap text-sm text-center">
+                      <div className="flex flex-wrap gap-1 justify-center">
+                        {rules.map(rule => {
+                          const RuleIcon = getIconComponent(rule.icon_id);
+                          const score = Object.values(student.dailyScores || {})
+                            .flatMap(day => Object.values(day))
+                            .filter(s => s.ruleName === rule.name)
+                            .reduce((sum, s) => sum + s.value, 0);
+                          
+                          return (
+                            <span key={rule.id} className="inline-flex items-center px-2 py-1 bg-gray-100 text-xs rounded-lg" style={{ color: rule.color }}>
+                              <RuleIcon className="w-3 h-3 mr-1" />
+                              {score}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            
+            {sortedStudents.length === 0 && (
+              <p className="text-center text-gray-500 py-8">순위표 데이터가 없습니다.</p>
+            )}
+          </div>
+          </div>
+
+          {/* 규칙별 득점 비교 차트 */}
+          <div className="bg-white rounded-xl shadow-2xl border border-gray-100 p-6">
+            <PublicRuleComparison students={data.leaderboard || []} rules={rules || []} />
+          </div>
         </div>
       </div>
 
