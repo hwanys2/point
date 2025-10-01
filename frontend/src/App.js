@@ -4,7 +4,7 @@ import {
   Shirt, BookOpenCheck, Sparkles, Armchair, Smile, Lightbulb,
   Feather, ShieldCheck, Settings, BarChart3, FileText, Trash2, Edit, Save, 
   ClipboardList, X, BarChart, Palette, LogOut, Clock, CheckSquare, XSquare,
-  Star, Download, Users, Mail, ExternalLink, ChevronDown
+  Star, Download, Users, Mail, ExternalLink, ChevronDown, RefreshCw
 } from 'lucide-react';
 import Auth from './components/Auth';
 import LandingPage from './components/LandingPage';
@@ -602,7 +602,7 @@ const App = () => {
   const [currentRule, setCurrentRule] = useState({ name: '', iconId: 'Clock', color: '#4f46e5' });
   const [editingRuleId, setEditingRuleId] = useState(null);
   const [appSettings, setAppSettings] = useState(defaultSettings);
-  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [currentLogo, setCurrentLogo] = useState(() => localStorage.getItem('currentLogo') || 'logo.png');
   const [shareEnabled, setShareEnabled] = useState(false);
   const [shareToken, setShareToken] = useState(null);
   const [currentRoute, setCurrentRoute] = useState(window.location.hash);
@@ -928,18 +928,10 @@ const App = () => {
     return scores;
   }, [students, rules, periodFilter, customStartDate, customEndDate]);
 
-  const handleSaveSettings = async (newSettings) => {
-    try {
-      setIsLoading(true);
-      await settingsAPI.update(newSettings);
-      setAppSettings(newSettings);
-      setIsSettingsModalOpen(false);
-    } catch (err) {
-      console.error('Save settings error:', err);
-      setError('설정 저장 중 오류가 발생했습니다.');
-    } finally {
-      setIsLoading(false);
-    }
+  const handleToggleLogo = () => {
+    const newLogo = currentLogo === 'logo.png' ? 'logo2.png' : 'logo.png';
+    setCurrentLogo(newLogo);
+    localStorage.setItem('currentLogo', newLogo);
   };
   
   const handleAddStudent = async (e) => {
@@ -1949,7 +1941,6 @@ const App = () => {
         </div>
       )}
       
-      {isSettingsModalOpen && <AppHeaderSettingsModal currentSettings={appSettings} onClose={() => setIsSettingsModalOpen(false)} onSave={handleSaveSettings} />}
       {editingClassroom && (() => {
         console.log('Rendering EditClassroomModal with classroom:', editingClassroom);
         return <EditClassroomModal classroom={editingClassroom} onClose={() => setEditingClassroom(null)} onUpdate={handleUpdateClassroom} onDelete={handleDeleteClassroom} />;
@@ -1959,17 +1950,17 @@ const App = () => {
         <div className="flex flex-col items-center justify-center pt-4 sm:pt-6">
           <div className="relative">
             <img 
-              src="/logo.png" 
+              src={`/${currentLogo}`} 
               alt="학급 관리 시스템 로고" 
               className="h-24 sm:h-32 md:h-40 lg:h-48 w-auto object-contain mx-auto"
             />
             
             <button 
-              onClick={() => setIsSettingsModalOpen(true)}
+              onClick={handleToggleLogo}
               className="absolute top-0 right-0 sm:-right-8 p-1 text-gray-500 hover:text-indigo-600 transition"
-              title="앱 설정 수정"
+              title="로고 변경"
             >
-              <Settings className="w-4 h-4 sm:w-5 sm:h-5" />
+              <RefreshCw className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
           </div>
         </div>
