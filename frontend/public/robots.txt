@@ -1,0 +1,23 @@
+User-agent: *
+Allow: /
+
+# 주요 페이지들
+Allow: /#/share/
+Allow: /#/privacy-policy
+Allow: /#/terms-of-service
+
+# 정적 리소스
+Allow: /static/
+Allow: /favicon.ico
+Allow: /manifest.json
+
+# 크롤링 금지 (API 엔드포인트 등)
+Disallow: /api/
+Disallow: /admin/
+Disallow: /private/
+
+# 사이트맵 위치
+Sitemap: https://classpoint.kr/sitemap.xml
+
+# 크롤링 지연 (선택사항)
+Crawl-delay: 1

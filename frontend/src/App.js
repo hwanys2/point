@@ -11,6 +11,7 @@ import LandingPage from './components/LandingPage';
 import PublicLeaderboard from './components/PublicLeaderboard';
 import PrivacyPolicy from './components/PrivacyPolicy';
 import TermsOfService from './components/TermsOfService';
+import SEOHead from './components/SEOHead';
 import { classroomsAPI, studentsAPI, rulesAPI, scoresAPI, settingsAPI, studentManagersAPI } from './services/api';
 
 // Helper functions
@@ -1637,6 +1638,12 @@ const App = () => {
   if (!user) {
     return (
       <>
+        <SEOHead 
+          title="학급 관리 시스템 - 무료 학생 점수 관리 도구"
+          description="교사와 학생을 위한 스마트한 학급 관리 시스템. 학생 점수 부여, 실시간 순위표, 규칙별 관리 기능을 제공하는 무료 온라인 도구입니다. 회원가입 후 바로 사용하세요!"
+          keywords="학급관리, 학생관리, 점수관리, 순위표, 학급점수, 학생점수, 교실관리, 교육도구, 학급운영, 학생평가, 포인트시스템, 학급순위, 교육관리, 무료, 온라인"
+          url="https://classpoint.kr"
+        />
         <LandingPage onShowAuth={handleShowAuth} />
         {showAuthModal && (
           <Auth 
@@ -1661,6 +1668,11 @@ const App = () => {
   
   return (
     <div className="min-h-screen bg-gray-50 p-2 sm:p-4 md:p-6 lg:p-8" style={{ fontFamily: appSettings.font }}>
+      <SEOHead 
+        title={appSettings.title || '학급 관리 시스템'}
+        description={`${appSettings.subtitle || '학년/반/번호 기반 관리 및 실시간 점수 순위표'} - ${appSettings.title || '학급 관리 시스템'}`}
+        url={`https://classpoint.kr${currentRoute === '#/' ? '' : currentRoute}`}
+      />
       {error && (
         <div className="fixed top-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg shadow-lg z-50">
           <div className="flex items-center justify-between">
