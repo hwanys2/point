@@ -595,20 +595,31 @@ const App = () => {
       const classroomsList = classroomsResponse.data;
       setClassrooms(classroomsList);
       
-      // 기본 학급 찾기 또는 첫 번째 학급 선택
-      const defaultClassroom = classroomsList.find(c => c.is_default) || classroomsList[0];
+      // 저장된 마지막 선택 학급 또는 기본 학급 찾기
+      const savedClassroomId = localStorage.getItem('selectedClassroomId');
+      let selectedClassroom = null;
       
-      if (!defaultClassroom) {
+      if (savedClassroomId) {
+        // 저장된 학급 ID로 학급 찾기
+        selectedClassroom = classroomsList.find(c => c.id === parseInt(savedClassroomId));
+      }
+      
+      // 저장된 학급이 없거나 삭제된 경우, 기본 학급 또는 첫 번째 학급 선택
+      if (!selectedClassroom) {
+        selectedClassroom = classroomsList.find(c => c.is_default) || classroomsList[0];
+      }
+      
+      if (!selectedClassroom) {
         setError('학급이 없습니다. 학급을 먼저 생성해주세요.');
         setIsLoading(false);
         return;
       }
       
-      setCurrentClassroom(defaultClassroom);
+      setCurrentClassroom(selectedClassroom);
       
       const promises = [
-        studentsAPI.getAll({ params: { classroomId: defaultClassroom.id } }),
-        rulesAPI.getAll({ params: { classroomId: defaultClassroom.id } }),
+        studentsAPI.getAll({ params: { classroomId: selectedClassroom.id } }),
+        rulesAPI.getAll({ params: { classroomId: selectedClassroom.id } }),
         settingsAPI.get(),
       ];
       
@@ -1120,6 +1131,13 @@ const App = () => {
     try {
       setIsLoading(true);
       await classroomsAPI.delete(classroomId);
+      
+      // 삭제된 학급이 현재 선택된 학급인 경우 localStorage에서 제거
+      const savedClassroomId = localStorage.getItem('selectedClassroomId');
+      if (savedClassroomId === classroomId.toString()) {
+        localStorage.removeItem('selectedClassroomId');
+      }
+      
       await loadData();
       setEditingClassroom(null);
     } catch (err) {
@@ -1872,7 +1890,10 @@ const App = () => {
               {classrooms.map(classroom => (
                 <div key={classroom.id} className="relative group">
                   <button
-                    onClick={() => setCurrentClassroom(classroom)}
+                    onClick={() => {
+                      setCurrentClassroom(classroom);
+                      localStorage.setItem('selectedClassroomId', classroom.id.toString());
+                    }}
                     className={`flex items-center gap-2 px-3 py-2 rounded-md transition-all ${
                       currentClassroom?.id === classroom.id
                         ? 'bg-indigo-500 text-white shadow-md'
