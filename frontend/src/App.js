@@ -873,6 +873,35 @@ const App = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rules]);
   
+  const handleDownloadSampleCsv = () => {
+    // 샘플 CSV 데이터 생성
+    const sampleData = [
+      ['학년', '반', '번호', '이름'],
+      ['5', '2', '1', '김민준'],
+      ['5', '2', '2', '이서윤'],
+      ['5', '2', '3', '박지호'],
+      ['5', '2', '4', '최예은'],
+      ['5', '2', '5', '정하윤']
+    ];
+    
+    // CSV 문자열로 변환
+    const csvContent = sampleData.map(row => row.join(',')).join('\n');
+    
+    // BOM 추가 (한글 깨짐 방지)
+    const bom = '\uFEFF';
+    const blob = new Blob([bom + csvContent], { type: 'text/csv;charset=utf-8;' });
+    
+    // 다운로드 링크 생성 및 클릭
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', '학생명단_샘플.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+  
   const handleCsvUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -1453,9 +1482,19 @@ const App = () => {
       </div>
 
       <div className="border p-4 rounded-lg bg-gray-50">
-        <h3 className="text-xl font-semibold text-gray-700 mb-3 flex items-center">
-          <FileText className="w-5 h-5 mr-2" /> CSV 일괄 업데이트
-        </h3>
+        <div className="flex justify-between items-start mb-3">
+          <h3 className="text-xl font-semibold text-gray-700 flex items-center">
+            <FileText className="w-5 h-5 mr-2" /> CSV 일괄 업데이트
+          </h3>
+          <button
+            onClick={handleDownloadSampleCsv}
+            className="flex items-center px-3 py-1.5 bg-green-500 text-white rounded-lg hover:bg-green-600 transition text-sm font-semibold shadow-sm"
+            title="샘플 CSV 파일 다운로드"
+          >
+            <Download className="w-4 h-4 mr-1" />
+            샘플 다운로드
+          </button>
+        </div>
         <p className="text-sm text-gray-600 mb-2">업로드 시 기존 점수는 유지되며, 학생 정보만 업데이트됩니다.</p>
         <p className="text-xs text-red-500 mb-3">파일 형식: **학년,반,번호,이름** (첫 줄 헤더 제외)</p>
         <input
