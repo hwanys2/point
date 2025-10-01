@@ -10,7 +10,7 @@ router.get('/', auth, async (req, res) => {
   try {
     const result = await pool.query(
       'SELECT id, name, is_default, created_at FROM classrooms WHERE user_id = $1 ORDER BY is_default DESC, created_at ASC',
-      [req.user.userId]
+      [req.userId]
     );
     res.json(result.rows);
   } catch (error) {
@@ -37,7 +37,7 @@ router.post(
       
       const result = await pool.query(
         'INSERT INTO classrooms (user_id, name, is_default) VALUES ($1, $2, $3) RETURNING id, name, is_default, created_at',
-        [req.user.userId, name, false]
+        [req.userId, name, false]
       );
       
       res.status(201).json(result.rows[0]);
@@ -68,7 +68,7 @@ router.put(
       // 권한 확인
       const checkResult = await pool.query(
         'SELECT id FROM classrooms WHERE id = $1 AND user_id = $2',
-        [id, req.user.userId]
+        [id, req.userId]
       );
       
       if (checkResult.rows.length === 0) {
@@ -77,7 +77,7 @@ router.put(
       
       const result = await pool.query(
         'UPDATE classrooms SET name = $1 WHERE id = $2 AND user_id = $3 RETURNING id, name, is_default, created_at',
-        [name, id, req.user.userId]
+        [name, id, req.userId]
       );
       
       res.json(result.rows[0]);
@@ -96,7 +96,7 @@ router.delete('/:id', auth, async (req, res) => {
     // 권한 확인
     const checkResult = await pool.query(
       'SELECT id, is_default FROM classrooms WHERE id = $1 AND user_id = $2',
-      [id, req.user.userId]
+      [id, req.userId]
     );
     
     if (checkResult.rows.length === 0) {
@@ -107,7 +107,7 @@ router.delete('/:id', auth, async (req, res) => {
       return res.status(400).json({ error: '기본 학급은 삭제할 수 없습니다. 먼저 다른 학급을 기본으로 설정해주세요.' });
     }
     
-    await pool.query('DELETE FROM classrooms WHERE id = $1 AND user_id = $2', [id, req.user.userId]);
+    await pool.query('DELETE FROM classrooms WHERE id = $1 AND user_id = $2', [id, req.userId]);
     
     res.json({ message: '학급이 삭제되었습니다.' });
   } catch (error) {
@@ -124,7 +124,7 @@ router.patch('/:id/set-default', auth, async (req, res) => {
     // 권한 확인
     const checkResult = await pool.query(
       'SELECT id FROM classrooms WHERE id = $1 AND user_id = $2',
-      [id, req.user.userId]
+      [id, req.userId]
     );
     
     if (checkResult.rows.length === 0) {
@@ -138,13 +138,13 @@ router.patch('/:id/set-default', auth, async (req, res) => {
       // 기존 기본 학급 해제
       await client.query(
         'UPDATE classrooms SET is_default = false WHERE user_id = $1',
-        [req.user.userId]
+        [req.userId]
       );
       
       // 새로운 기본 학급 설정
       const result = await client.query(
         'UPDATE classrooms SET is_default = true WHERE id = $1 AND user_id = $2 RETURNING id, name, is_default, created_at',
-        [id, req.user.userId]
+        [id, req.userId]
       );
       
       await client.query('COMMIT');
