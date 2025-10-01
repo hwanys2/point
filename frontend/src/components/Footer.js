@@ -18,24 +18,21 @@ const Footer = () => {
           {/* 법적 문서 링크 */}
           <div className="text-center">
             <h3 className="text-white font-semibold mb-4">정책 및 약관</h3>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <a 
-                  href="/#/privacy-policy" 
-                  className="hover:text-indigo-400 transition"
-                >
-                  개인정보처리방침
-                </a>
-              </li>
-              <li>
-                <a 
-                  href="/#/terms-of-service" 
-                  className="hover:text-indigo-400 transition"
-                >
-                  이용약관
-                </a>
-              </li>
-            </ul>
+            <div className="flex items-center justify-center gap-3 text-sm">
+              <a 
+                href="/#/privacy-policy" 
+                className="hover:text-indigo-400 transition"
+              >
+                개인정보처리방침
+              </a>
+              <span className="text-gray-600">•</span>
+              <a 
+                href="/#/terms-of-service" 
+                className="hover:text-indigo-400 transition"
+              >
+                이용약관
+              </a>
+            </div>
           </div>
 
           {/* 연락처 */}

@@ -404,7 +404,7 @@ const Footer = () => {
   return (
     <footer className="mt-12 pt-8 pb-6 border-t border-gray-200">
       <div className="max-w-7xl mx-auto px-4 text-center">
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 text-gray-500 text-sm">
+        <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 text-gray-500 text-sm">
           {/* Contact */}
           <div className="flex items-center">
             <Mail className="w-4 h-4 mr-2" />
@@ -413,6 +413,26 @@ const Footer = () => {
               className="hover:text-gray-700 transition-colors"
             >
               Contact: hwanys2@naver.com
+            </a>
+          </div>
+          
+          {/* Separator */}
+          <div className="hidden sm:block text-gray-300">•</div>
+          
+          {/* Privacy Policy & Terms */}
+          <div className="flex items-center gap-3">
+            <a 
+              href="/#/privacy-policy" 
+              className="hover:text-gray-700 transition-colors"
+            >
+              개인정보처리방침
+            </a>
+            <span className="text-gray-300">•</span>
+            <a 
+              href="/#/terms-of-service" 
+              className="hover:text-gray-700 transition-colors"
+            >
+              이용약관
             </a>
           </div>
           
@@ -1911,8 +1931,6 @@ const App = () => {
     );
   }
 
-  const HeaderIconComponent = getIconComponent(appSettings.iconId);
-  
   return (
     <div className="min-h-screen bg-gray-50 p-2 sm:p-4 md:p-6 lg:p-8" style={{ fontFamily: appSettings.font }}>
       <SEOHead 
