@@ -1,17 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { ListOrdered, Calendar, Award, Clock, Shirt, BookOpenCheck, Sparkles, Armchair, Smile, Lightbulb, Feather, ShieldCheck, UserPlus, Trash2, Palette, BarChart3 } from 'lucide-react';
+import { ListOrdered, BarChart3 } from 'lucide-react';
 import { publicAPI } from '../services/api';
 import Footer from './Footer';
-
-// 아이콘 매핑
-const ICON_MAP = {
-  Clock, Shirt, BookOpenCheck, Sparkles, Armchair, Smile, Lightbulb, 
-  Feather, ShieldCheck, UserPlus, Trash2, Palette, Award, Calendar, BarChart3
-};
-
-const getIconComponent = (iconId) => {
-  return ICON_MAP[iconId] || ListOrdered;
-};
 
 // 규칙별 점수 막대 그래프 컴포넌트
 const RuleScoreBar = ({ student, rules }) => {
