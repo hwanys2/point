@@ -1115,7 +1115,7 @@ const App = () => {
       <th className="px-1 sm:px-2 md:px-3 py-2 sm:py-3 text-left text-[10px] sm:text-xs font-semibold text-indigo-600 uppercase tracking-wider w-8 sm:w-12">번호</th>
       <th className="px-1 sm:px-2 md:px-3 py-2 sm:py-3 text-left text-[10px] sm:text-xs font-semibold text-indigo-600 uppercase tracking-wider">이름</th>
       {showScore && <th className="px-1 sm:px-2 md:px-3 py-2 sm:py-3 text-right text-[10px] sm:text-xs font-semibold text-indigo-600 uppercase tracking-wider w-12 sm:w-24">총점</th>}
-      {showRuleBar && <th className="hidden md:table-cell px-3 py-3 text-center text-xs font-semibold text-indigo-600 uppercase tracking-wider w-40">규칙별 점수 분포</th>}
+      {showRuleBar && <th className="px-1 sm:px-2 md:px-3 py-2 sm:py-3 text-center text-[10px] sm:text-xs font-semibold text-indigo-600 uppercase tracking-wider w-16 sm:w-32 md:w-40"><span className="md:hidden">분포</span><span className="hidden md:inline">규칙별 점수 분포</span></th>}
     </tr>
   );
 
@@ -1234,8 +1234,10 @@ const App = () => {
                     <td className="px-1 sm:px-2 md:px-3 py-2 sm:py-4 whitespace-nowrap text-base sm:text-xl md:text-2xl font-extrabold text-right text-indigo-700">
                       {student.periodScore}
                     </td>
-                    <td className="hidden md:table-cell px-3 py-4 whitespace-nowrap text-sm text-center">
-                      <RuleScoreBar student={student} rules={rules} studentRuleScores={studentRuleScores} />
+                    <td className="px-1 sm:px-2 md:px-3 py-2 sm:py-4 whitespace-nowrap text-sm text-center">
+                      <div className="w-12 sm:w-24 md:w-32 lg:w-40 mx-auto">
+                        <RuleScoreBar student={student} rules={rules} studentRuleScores={studentRuleScores} />
+                      </div>
                     </td>
                   </tr>
                 );
