@@ -1346,18 +1346,18 @@ const App = () => {
           </p>
         </div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 border border-gray-200 rounded-lg">
-            <thead>
-              <tr className="bg-gray-100">
-                <th className="px-3 py-3 text-left text-sm font-semibold text-gray-700 w-12">학년</th>
-                <th className="px-3 py-3 text-left text-sm font-semibold text-gray-700 w-12">반</th>
-                <th className="px-3 py-3 text-left text-sm font-semibold text-gray-700 w-12">번호</th>
-                <th className="px-3 py-3 text-left text-sm font-semibold text-gray-700 w-24">이름</th>
+        <div className="overflow-x-auto max-h-[60vh] overflow-y-auto border border-gray-200 rounded-lg">
+          <table className="min-w-full divide-y divide-gray-200 relative">
+            <thead className="bg-gray-100 sticky top-0 z-10">
+              <tr>
+                <th className="px-3 py-3 text-left text-sm font-semibold text-gray-700 w-12 bg-gray-100">학년</th>
+                <th className="px-3 py-3 text-left text-sm font-semibold text-gray-700 w-12 bg-gray-100">반</th>
+                <th className="px-3 py-3 text-left text-sm font-semibold text-gray-700 w-12 bg-gray-100">번호</th>
+                <th className="px-3 py-3 text-left text-sm font-semibold text-gray-700 w-24 bg-gray-100">이름</th>
                 {allowedRules.map((rule) => {
                   const RuleIcon = getIconComponent(rule.iconId);
                   return (
-                    <th key={rule.id} className="px-3 py-3 text-center text-xs font-semibold text-gray-600 whitespace-nowrap">
+                    <th key={rule.id} className="px-3 py-3 text-center text-xs font-semibold text-gray-600 whitespace-nowrap bg-gray-100">
                       <RuleIcon className={`w-5 h-5 mx-auto mb-1`} style={{ color: rule.color }} title={rule.name} />
                       {rule.name}
                     </th>
