@@ -330,9 +330,10 @@ const AllStudentsRuleComparison = ({ students, rules, studentRuleScores }) => {
   const sortedStudents = [...students].sort((a, b) => (b.periodScore || b.score) - (a.periodScore || a.score));
 
   return (
-    <div className="bg-white p-6 rounded-xl shadow-2xl border border-gray-100 h-full max-h-[80vh] overflow-y-auto">
-      <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-        <BarChart3 className="w-6 h-6 mr-2 text-indigo-500" /> 규칙별 득점 비교 차트
+    <div className="bg-white p-3 sm:p-4 md:p-6 rounded-xl shadow-2xl border border-gray-100">
+      <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-800 mb-4 sm:mb-6 flex items-center">
+        <BarChart3 className="w-5 h-5 sm:w-6 sm:h-6 mr-2 text-indigo-500" /> 
+        <span>규칙별 득점 비교 차트</span>
       </h3>
       
       <div className="flex flex-wrap gap-x-4 gap-y-2 mb-6 p-2 rounded-lg border bg-gray-50">
@@ -844,19 +845,19 @@ const App = () => {
 
   const TableHeader = ({ showScore = true, showRuleBar = false }) => (
     <tr className="bg-indigo-50">
-      <th className="px-3 py-3 text-left text-xs font-semibold text-indigo-600 uppercase tracking-wider w-12">순위</th>
-      <th className="px-3 py-3 text-left text-xs font-semibold text-indigo-600 uppercase tracking-wider w-16">학년</th>
-      <th className="px-3 py-3 text-left text-xs font-semibold text-indigo-600 uppercase tracking-wider w-12">반</th>
-      <th className="px-3 py-3 text-left text-xs font-semibold text-indigo-600 uppercase tracking-wider w-12">번호</th>
-      <th className="px-3 py-3 text-left text-xs font-semibold text-indigo-600 uppercase tracking-wider">이름</th>
-      {showScore && <th className="px-3 py-3 text-right text-xs font-semibold text-indigo-600 uppercase tracking-wider w-24">총점</th>}
-      {showRuleBar && <th className="px-3 py-3 text-center text-xs font-semibold text-indigo-600 uppercase tracking-wider w-40">규칙별 점수 분포</th>}
+      <th className="px-1 sm:px-2 md:px-3 py-2 sm:py-3 text-left text-[10px] sm:text-xs font-semibold text-indigo-600 uppercase tracking-wider w-8 sm:w-12">순위</th>
+      <th className="px-1 sm:px-2 md:px-3 py-2 sm:py-3 text-left text-[10px] sm:text-xs font-semibold text-indigo-600 uppercase tracking-wider w-10 sm:w-16">학년</th>
+      <th className="px-1 sm:px-2 md:px-3 py-2 sm:py-3 text-left text-[10px] sm:text-xs font-semibold text-indigo-600 uppercase tracking-wider w-8 sm:w-12">반</th>
+      <th className="px-1 sm:px-2 md:px-3 py-2 sm:py-3 text-left text-[10px] sm:text-xs font-semibold text-indigo-600 uppercase tracking-wider w-8 sm:w-12">번호</th>
+      <th className="px-1 sm:px-2 md:px-3 py-2 sm:py-3 text-left text-[10px] sm:text-xs font-semibold text-indigo-600 uppercase tracking-wider">이름</th>
+      {showScore && <th className="px-1 sm:px-2 md:px-3 py-2 sm:py-3 text-right text-[10px] sm:text-xs font-semibold text-indigo-600 uppercase tracking-wider w-12 sm:w-24">총점</th>}
+      {showRuleBar && <th className="hidden md:table-cell px-3 py-3 text-center text-xs font-semibold text-indigo-600 uppercase tracking-wider w-40">규칙별 점수 분포</th>}
     </tr>
   );
 
   const renderLeaderboard = () => (
-    <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
-      <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-2xl border border-gray-100 h-fit">
+    <div className="max-w-7xl mx-auto space-y-8">
+      <div className="bg-white p-6 rounded-xl shadow-2xl border border-gray-100">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-3xl font-bold text-gray-800 flex items-center">
             <ListOrdered className="w-7 h-7 mr-2 text-indigo-500" /> 종합 순위표
@@ -916,11 +917,11 @@ const App = () => {
         </div>
         
         {/* 기간 필터 */}
-        <div className="mb-6 p-4 bg-gray-50 rounded-lg border">
-          <div className="flex flex-wrap items-center gap-2 mb-3">
+        <div className="mb-6 p-3 sm:p-4 bg-gray-50 rounded-lg border">
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-3">
             <button
               onClick={() => setPeriodFilter('all')}
-              className={`px-4 py-2 rounded-lg font-semibold transition ${
+              className={`px-2 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm md:text-base font-semibold transition ${
                 periodFilter === 'all'
                   ? 'bg-indigo-600 text-white shadow-md'
                   : 'bg-white text-gray-700 hover:bg-indigo-50 border'
@@ -930,7 +931,7 @@ const App = () => {
             </button>
             <button
               onClick={() => setPeriodFilter('daily')}
-              className={`px-4 py-2 rounded-lg font-semibold transition ${
+              className={`px-2 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm md:text-base font-semibold transition ${
                 periodFilter === 'daily'
                   ? 'bg-indigo-600 text-white shadow-md'
                   : 'bg-white text-gray-700 hover:bg-indigo-50 border'
@@ -940,33 +941,33 @@ const App = () => {
             </button>
             <button
               onClick={() => setPeriodFilter('weekly')}
-              className={`px-4 py-2 rounded-lg font-semibold transition ${
+              className={`px-2 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm md:text-base font-semibold transition ${
                 periodFilter === 'weekly'
                   ? 'bg-indigo-600 text-white shadow-md'
                   : 'bg-white text-gray-700 hover:bg-indigo-50 border'
               }`}
             >
-              최근 7일
+              <span className="hidden sm:inline">최근 </span>7일
             </button>
             <button
               onClick={() => setPeriodFilter('monthly')}
-              className={`px-4 py-2 rounded-lg font-semibold transition ${
+              className={`px-2 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm md:text-base font-semibold transition ${
                 periodFilter === 'monthly'
                   ? 'bg-indigo-600 text-white shadow-md'
                   : 'bg-white text-gray-700 hover:bg-indigo-50 border'
               }`}
             >
-              최근 30일
+              <span className="hidden sm:inline">최근 </span>30일
             </button>
             <button
               onClick={() => setPeriodFilter('custom')}
-              className={`px-4 py-2 rounded-lg font-semibold transition ${
+              className={`px-2 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm md:text-base font-semibold transition ${
                 periodFilter === 'custom'
                   ? 'bg-indigo-600 text-white shadow-md'
                   : 'bg-white text-gray-700 hover:bg-indigo-50 border'
               }`}
             >
-              기간 선택
+              기간<span className="hidden sm:inline"> 선택</span>
             </button>
           </div>
           
@@ -1006,19 +1007,19 @@ const App = () => {
               {sortedStudents.map((student, index) => {
                 return (
                   <tr key={student.id} className={`transition duration-150 ease-in-out ${index % 2 === 0 ? 'hover:bg-gray-50' : 'hover:bg-indigo-50'} ${index < 3 ? 'bg-yellow-50/50 font-bold' : ''}`}>
-                    <td className="px-3 py-4 whitespace-nowrap text-sm text-center">
-                      <span className={`text-xl ${index === 0 ? 'text-yellow-500' : index === 1 ? 'text-gray-500' : index === 2 ? 'text-yellow-900' : 'text-gray-600'}`}>
+                    <td className="px-1 sm:px-2 md:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-center">
+                      <span className={`text-sm sm:text-lg md:text-xl ${index === 0 ? 'text-yellow-500' : index === 1 ? 'text-gray-500' : index === 2 ? 'text-yellow-900' : 'text-gray-600'}`}>
                         #{index + 1}
                       </span>
                     </td>
-                    <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900">{student.grade}</td>
-                    <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900">{student.classNum}</td>
-                    <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900">{student.studentNum}</td>
-                    <td className="px-3 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{student.name}</td>
-                    <td className="px-3 py-4 whitespace-nowrap text-2xl font-extrabold text-right text-indigo-700">
+                    <td className="px-1 sm:px-2 md:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">{student.grade}</td>
+                    <td className="px-1 sm:px-2 md:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">{student.classNum}</td>
+                    <td className="px-1 sm:px-2 md:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">{student.studentNum}</td>
+                    <td className="px-1 sm:px-2 md:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">{student.name}</td>
+                    <td className="px-1 sm:px-2 md:px-3 py-2 sm:py-4 whitespace-nowrap text-base sm:text-xl md:text-2xl font-extrabold text-right text-indigo-700">
                       {student.periodScore}
                     </td>
-                    <td className="px-3 py-4 whitespace-nowrap text-sm text-center">
+                    <td className="hidden md:table-cell px-3 py-4 whitespace-nowrap text-sm text-center">
                       <RuleScoreBar student={student} rules={rules} studentRuleScores={studentRuleScores} />
                     </td>
                   </tr>
@@ -1032,8 +1033,8 @@ const App = () => {
         </div>
       </div>
 
-      <div className="lg:col-span-1">
-        <AllStudentsRuleComparison students={students} rules={rules} studentRuleScores={studentRuleScores} />
+      <div>
+        <AllStudentsRuleComparison students={filteredStudentsWithScores} rules={rules} studentRuleScores={studentRuleScores} />
       </div>
     </div>
   );
@@ -1407,7 +1408,7 @@ const App = () => {
   const HeaderIconComponent = getIconComponent(appSettings.iconId);
   
   return (
-    <div className="min-h-screen bg-gray-50 p-4 sm:p-8" style={{ fontFamily: appSettings.font }}>
+    <div className="min-h-screen bg-gray-50 p-2 sm:p-4 md:p-6 lg:p-8" style={{ fontFamily: appSettings.font }}>
       {error && (
         <div className="fixed top-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg shadow-lg z-50">
           <div className="flex items-center justify-between">
@@ -1421,22 +1422,22 @@ const App = () => {
       
       {isSettingsModalOpen && <AppHeaderSettingsModal currentSettings={appSettings} onClose={() => setIsSettingsModalOpen(false)} onSave={handleSaveSettings} />}
 
-      <header className="text-center mb-8">
+      <header className="text-center mb-4 sm:mb-8">
         <div className="flex flex-col items-center justify-center">
-          <h1 className="text-4xl font-extrabold flex items-center justify-center gap-3 relative" style={{ fontFamily: appSettings.font, color: appSettings.iconColor }}>
-            <HeaderIconComponent className="w-8 h-8 sm:w-10 sm:h-10" style={{ color: appSettings.iconColor }} />
-            <span>{appSettings.title}</span>
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold flex items-center justify-center gap-2 sm:gap-3 relative px-8" style={{ fontFamily: appSettings.font, color: appSettings.iconColor }}>
+            <HeaderIconComponent className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10" style={{ color: appSettings.iconColor }} />
+            <span className="break-words">{appSettings.title}</span>
             
             <button 
               onClick={() => setIsSettingsModalOpen(true)}
-              className="absolute -right-8 top-1/2 transform -translate-y-1/2 p-1 text-gray-500 hover:text-indigo-600 transition"
+              className="absolute -right-0 sm:-right-8 top-1/2 transform -translate-y-1/2 p-1 text-gray-500 hover:text-indigo-600 transition"
               title="앱 설정 수정"
             >
-              <Settings className="w-5 h-5" />
+              <Settings className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
           </h1>
         </div>
-        <p className="text-gray-500 mt-2 text-lg">{appSettings.subtitle}</p>
+        <p className="text-gray-500 mt-2 text-sm sm:text-base md:text-lg px-4">{appSettings.subtitle}</p>
       </header>
 
       <div className="max-w-7xl mx-auto">
@@ -1450,7 +1451,7 @@ const App = () => {
             <LogOut className="w-4 h-4 mr-1" /> {user.username}
           </button>
         </div>
-        <div className="flex border-b border-gray-200 mb-6 sticky top-0 bg-white z-10 shadow-sm rounded-t-xl">
+        <div className="flex border-b border-gray-200 mb-6 sticky top-0 bg-white z-10 shadow-sm rounded-t-xl overflow-x-auto">
           {visibleTabs.map(tab => {
             const TabIcon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -1458,13 +1459,15 @@ const App = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex-1 flex items-center justify-center p-3 text-center text-lg font-semibold transition-colors duration-200 border-b-4 
+                className={`flex-1 flex flex-col sm:flex-row items-center justify-center p-2 sm:p-3 text-center text-xs sm:text-sm md:text-base lg:text-lg font-semibold transition-colors duration-200 border-b-4 whitespace-nowrap min-w-fit
                   ${isActive 
                     ? 'border-indigo-600 text-indigo-600 bg-indigo-50' 
                     : 'border-transparent text-gray-500 hover:text-indigo-500 hover:border-gray-300'}`
                 }
               >
-                <TabIcon className="w-5 h-5 mr-2" /> {tab.name}
+                <TabIcon className="w-4 h-4 sm:w-5 sm:h-5 sm:mr-2 mb-1 sm:mb-0" /> 
+                <span className="hidden sm:inline">{tab.name}</span>
+                <span className="sm:hidden text-xs">{tab.name.replace(' ', '')}</span>
               </button>
             );
           })}

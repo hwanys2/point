@@ -43,6 +43,12 @@ router.post('/register', [
 
     const user = result.rows[0];
 
+    // 기본 학급 생성
+    await pool.query(
+      'INSERT INTO classrooms (user_id, name, is_default) VALUES ($1, $2, $3)',
+      [user.id, '기본 학급', true]
+    );
+
     // JWT 토큰 생성
     const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '30d' });
 

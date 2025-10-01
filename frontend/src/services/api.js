@@ -43,6 +43,14 @@ export const authAPI = {
   getMe: () => api.get('/auth/me'),
 };
 
+// Classrooms API
+export const classroomsAPI = {
+  getAll: () => api.get('/classrooms'),
+  create: (data) => api.post('/classrooms', data),
+  update: (id, data) => api.put(`/classrooms/${id}`, data),
+  delete: (id) => api.delete(`/classrooms/${id}`),
+};
+
 // Students API
 export const studentsAPI = {
   getAll: () => api.get('/students'),
