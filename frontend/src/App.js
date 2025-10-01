@@ -4,7 +4,7 @@ import {
   Shirt, BookOpenCheck, Sparkles, Armchair, Smile, Lightbulb,
   Feather, ShieldCheck, Settings, BarChart3, FileText, Trash2, Edit, Save, 
   ClipboardList, X, BarChart, Palette, LogOut, Clock, CheckSquare, XSquare,
-  Star, ChevronDown, Download
+  Star, Download
 } from 'lucide-react';
 import Auth from './components/Auth';
 import LandingPage from './components/LandingPage';
@@ -291,6 +291,88 @@ const EditStudentModal = ({ student, onClose, onSave }) => {
   );
 };
 
+const EditClassroomModal = ({ classroom, onClose, onUpdate, onDelete }) => {
+  const [name, setName] = useState(classroom.name);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!name.trim() || name.trim() === classroom.name) {
+      onClose();
+      return;
+    }
+
+    setIsSaving(true);
+    await onUpdate(classroom.id, name.trim());
+    setIsSaving(false);
+  };
+
+  const handleDelete = async () => {
+    if (!window.confirm(`정말로 '${classroom.name}' 학급을 삭제하시겠습니까?`)) return;
+    
+    setIsSaving(true);
+    await onDelete(classroom.id);
+    setIsSaving(false);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md">
+        <h3 className="text-xl font-bold mb-4 flex items-center text-indigo-600">
+          <Settings className="w-5 h-5 mr-2" /> 학급 관리
+        </h3>
+        
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              학급 이름
+            </label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              placeholder="학급 이름을 입력하세요"
+              required
+            />
+          </div>
+          
+          <div className="flex gap-3 pt-4">
+            <button
+              type="button"
+              onClick={handleDelete}
+              className="flex-1 bg-red-500 text-white py-3 px-4 rounded-lg hover:bg-red-600 transition disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center"
+              disabled={isSaving || classroom.is_default}
+              title={classroom.is_default ? '기본 학급은 삭제할 수 없습니다' : '학급 삭제'}
+            >
+              <Trash2 className="w-5 h-5 mr-2" />
+              삭제
+            </button>
+            
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-3 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition disabled:bg-gray-200"
+              disabled={isSaving}
+            >
+              취소
+            </button>
+            
+            <button
+              type="submit"
+              className="flex-1 bg-indigo-500 text-white py-3 px-4 rounded-lg hover:bg-indigo-600 transition disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center"
+              disabled={isSaving || !name.trim() || name.trim() === classroom.name}
+            >
+              {isSaving ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <Save className="w-5 h-5 mr-2" />}
+              저장
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
 const RuleScoreBar = ({ student, rules, studentRuleScores }) => {
   const scores = studentRuleScores[student.id] || {};
   const totalScore = student.periodScore || student.score || 0;
@@ -443,6 +525,9 @@ const App = () => {
   const [showImportModal, setShowImportModal] = useState(false);
   const [selectedSourceClassroom, setSelectedSourceClassroom] = useState('');
   const [isImporting, setIsImporting] = useState(false);
+  
+  // 학급 관리 관련 상태
+  const [editingClassroom, setEditingClassroom] = useState(null);
 
   // 해시 변경 감지
   useEffect(() => {
@@ -975,6 +1060,64 @@ const App = () => {
     setCurrentRule({ name: rule.name, iconId: rule.iconId, color: rule.color });
   };
 
+  // 학급 관리 핸들러들
+  const handleAddClassroom = async () => {
+    const name = prompt('새 학급 이름을 입력하세요:');
+    if (name && name.trim()) {
+      try {
+        setIsLoading(true);
+        await classroomsAPI.create({ name: name.trim() });
+        await loadData();
+      } catch (err) {
+        setError('학급 생성 중 오류가 발생했습니다.');
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  };
+
+  const handleSetDefaultClassroom = async (classroomId) => {
+    try {
+      setIsLoading(true);
+      await classroomsAPI.setDefault(classroomId);
+      await loadData();
+    } catch (err) {
+      setError('기본 학급 설정 중 오류가 발생했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleUpdateClassroom = async (classroomId, newName) => {
+    try {
+      setIsLoading(true);
+      await classroomsAPI.update(classroomId, { name: newName.trim() });
+      await loadData();
+      setEditingClassroom(null);
+    } catch (err) {
+      setError('학급 이름 수정 중 오류가 발생했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDeleteClassroom = async (classroomId) => {
+    if (!window.confirm('정말로 이 학급을 삭제하시겠습니까? 관련된 모든 데이터(학생, 규칙, 점수)가 함께 삭제됩니다.')) {
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      await classroomsAPI.delete(classroomId);
+      await loadData();
+      setEditingClassroom(null);
+    } catch (err) {
+      setError(err.response?.data?.error || '학급 삭제 중 오류가 발생했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // --- Render Functions ---
 
   const TableHeader = ({ showScore = true, showRuleBar = false }) => (
@@ -1374,6 +1517,7 @@ const App = () => {
         )}
       </div>
       {editingStudent && <EditStudentModal student={editingStudent} onClose={() => setEditingStudent(null)} onSave={handleSaveStudent} />}
+      {editingClassroom && <EditClassroomModal classroom={editingClassroom} onClose={() => setEditingClassroom(null)} onUpdate={handleUpdateClassroom} onDelete={handleDeleteClassroom} />}
     </div>
   );
   
@@ -1703,67 +1847,70 @@ const App = () => {
         </div>
         <p className="text-gray-500 mt-2 text-sm sm:text-base md:text-lg px-4">{appSettings.subtitle}</p>
         
-        {/* 학급 선택 드롭다운 */}
-        {currentClassroom && classrooms.length > 0 && (
+        {/* 학급 선택 탭 */}
+        {classrooms.length > 0 && (
           <div className="mt-4 flex justify-center">
-            <div className="relative inline-block">
-              <select
-                value={currentClassroom.id}
-                onChange={async (e) => {
-                  const value = e.target.value;
-                  if (value === 'add') {
-                    const name = prompt('새 학급 이름을 입력하세요:');
-                    if (name && name.trim()) {
-                      try {
-                        await classroomsAPI.create({ name: name.trim() });
-                        await loadData();
-                      } catch (err) {
-                        setError('학급 생성 중 오류가 발생했습니다.');
-                      }
-                    }
-                  } else {
-                    const selected = classrooms.find(c => c.id === parseInt(value));
-                    setCurrentClassroom(selected);
-                  }
-                }}
-                className="appearance-none bg-white border-2 border-indigo-300 rounded-lg px-4 py-2 pr-10 text-sm sm:text-base font-semibold text-gray-700 hover:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition cursor-pointer"
-              >
-                {classrooms.map(classroom => (
-                  <option key={classroom.id} value={classroom.id}>
-                    {classroom.is_default ? '⭐ ' : ''}{classroom.name}
-                  </option>
-                ))}
-                {user?.role === 'teacher' && (
-                  <option value="add" className="text-indigo-600 font-semibold">
-                    ➕ 학급 추가
-                  </option>
-                )}
-              </select>
-              <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
-            </div>
-            
-            {/* 기본 학급 설정 버튼 (교사만) */}
-            {user?.role === 'teacher' && (
-              <div className="ml-2">
+            <div className="flex flex-wrap gap-2 bg-white rounded-lg p-1 shadow-md border">
+              {classrooms.map(classroom => (
+                <div key={classroom.id} className="relative group">
+                  <button
+                    onClick={() => setCurrentClassroom(classroom)}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-md transition-all ${
+                      currentClassroom?.id === classroom.id
+                        ? 'bg-indigo-500 text-white shadow-md'
+                        : 'bg-gray-50 text-gray-700 hover:bg-indigo-50 hover:text-indigo-600'
+                    }`}
+                  >
+                    {/* 기본 학급 별표 */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (!classroom.is_default) {
+                          handleSetDefaultClassroom(classroom.id);
+                        }
+                      }}
+                      className={`transition ${
+                        classroom.is_default 
+                          ? 'text-yellow-400 hover:text-yellow-300' 
+                          : 'text-gray-400 hover:text-yellow-500'
+                      }`}
+                      title={classroom.is_default ? '기본 학급' : '기본 학급으로 설정'}
+                    >
+                      <Star className={`w-4 h-4 ${classroom.is_default ? 'fill-current' : ''}`} />
+                    </button>
+                    
+                    {/* 학급 이름 */}
+                    <span className="font-medium">{classroom.name}</span>
+                    
+                    {/* 점세개 메뉴 */}
+                    {user?.role === 'teacher' && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditingClassroom(classroom);
+                        }}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-gray-600"
+                        title="학급 관리"
+                      >
+                        <Settings className="w-4 h-4" />
+                      </button>
+                    )}
+                  </button>
+                </div>
+              ))}
+              
+              {/* 학급 추가 버튼 (교사만) */}
+              {user?.role === 'teacher' && (
                 <button
-                  onClick={async () => {
-                    if (!currentClassroom.is_default) {
-                      try {
-                        await classroomsAPI.setDefault(currentClassroom.id);
-                        await loadData();
-                      } catch (err) {
-                        setError('기본 학급 설정 중 오류가 발생했습니다.');
-                      }
-                    }
-                  }}
-                  className={`p-2 rounded-lg transition ${currentClassroom.is_default ? 'text-yellow-500 bg-yellow-50' : 'text-gray-400 hover:text-yellow-500 hover:bg-yellow-50'}`}
-                  title={currentClassroom.is_default ? '기본 학급입니다' : '기본 학급으로 설정'}
-                  disabled={currentClassroom.is_default}
+                  onClick={handleAddClassroom}
+                  className="flex items-center gap-1 px-3 py-2 rounded-md bg-green-50 text-green-600 hover:bg-green-100 transition"
+                  title="새 학급 추가"
                 >
-                  <Star className={`w-5 h-5 ${currentClassroom.is_default ? 'fill-current' : ''}`} />
+                  <Plus className="w-4 h-4" />
+                  <span className="font-medium">추가</span>
                 </button>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         )}
       </header>
