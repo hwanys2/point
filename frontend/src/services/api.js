@@ -67,6 +67,7 @@ export const rulesAPI = {
   create: (data) => api.post('/rules', data),
   update: (id, data) => api.put(`/rules/${id}`, data),
   delete: (id) => api.delete(`/rules/${id}`),
+  import: (data) => api.post('/rules/import', data),
 };
 
 // Scores API

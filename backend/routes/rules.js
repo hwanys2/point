@@ -168,4 +168,100 @@ router.delete('/:id', auth, async (req, res) => {
   }
 });
 
+// 다른 학급에서 규칙 가져오기
+router.post('/import', auth, [
+  body('sourceClassroomId').isInt().withMessage('원본 학급 ID가 필요합니다.'),
+  body('targetClassroomId').isInt().withMessage('대상 학급 ID가 필요합니다.')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { sourceClassroomId, targetClassroomId } = req.body;
+
+    // 학급 소유권 확인
+    const classroomCheck = await pool.query(
+      'SELECT id FROM classrooms WHERE id IN ($1, $2) AND user_id = $3',
+      [sourceClassroomId, targetClassroomId, req.userId]
+    );
+
+    if (classroomCheck.rows.length !== 2) {
+      return res.status(400).json({ error: '유효하지 않은 학급입니다.' });
+    }
+
+    // 원본 학급의 규칙 조회
+    const sourceRules = await pool.query(
+      'SELECT name, icon_id, color FROM rules WHERE user_id = $1 AND classroom_id = $2',
+      [req.userId, sourceClassroomId]
+    );
+
+    if (sourceRules.rows.length === 0) {
+      return res.status(400).json({ error: '가져올 규칙이 없습니다.' });
+    }
+
+    // 대상 학급의 기존 규칙 조회 (중복 체크용)
+    const existingRules = await pool.query(
+      'SELECT name FROM rules WHERE user_id = $1 AND classroom_id = $2',
+      [req.userId, targetClassroomId]
+    );
+
+    const existingRuleNames = new Set(existingRules.rows.map(rule => rule.name));
+
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      const importedRules = [];
+      const skippedRules = [];
+      const duplicateRules = [];
+
+      for (const rule of sourceRules.rows) {
+        if (existingRuleNames.has(rule.name)) {
+          duplicateRules.push(rule.name);
+          continue;
+        }
+
+        try {
+          const result = await client.query(
+            'INSERT INTO rules (user_id, classroom_id, name, icon_id, color) VALUES ($1, $2, $3, $4, $5) RETURNING id, name, icon_id, color',
+            [req.userId, targetClassroomId, rule.name, rule.icon_id, rule.color]
+          );
+          
+          importedRules.push(result.rows[0]);
+        } catch (error) {
+          console.error(`Error importing rule ${rule.name}:`, error);
+          skippedRules.push({ name: rule.name, error: '가져오기 실패' });
+        }
+      }
+
+      await client.query('COMMIT');
+
+      res.json({
+        success: true,
+        imported: importedRules,
+        duplicates: duplicateRules,
+        skipped: skippedRules,
+        summary: {
+          total: sourceRules.rows.length,
+          imported: importedRules.length,
+          duplicates: duplicateRules.length,
+          skipped: skippedRules.length
+        }
+      });
+
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+
+  } catch (error) {
+    console.error('Import rules error:', error);
+    res.status(500).json({ error: '규칙 가져오기 중 오류가 발생했습니다.' });
+  }
+});
+
 module.exports = router;

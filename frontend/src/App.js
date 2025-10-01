@@ -4,7 +4,7 @@ import {
   Shirt, BookOpenCheck, Sparkles, Armchair, Smile, Lightbulb,
   Feather, ShieldCheck, Settings, BarChart3, FileText, Trash2, Edit, Save, 
   ClipboardList, X, BarChart, Palette, LogOut, Clock, CheckSquare, XSquare,
-  Star, ChevronDown
+  Star, ChevronDown, Download
 } from 'lucide-react';
 import Auth from './components/Auth';
 import LandingPage from './components/LandingPage';
@@ -434,6 +434,11 @@ const App = () => {
   const [managers, setManagers] = useState([]);
   // eslint-disable-next-line no-unused-vars
   const [newManager, setNewManager] = useState({ username: '', password: '', confirmPassword: '', displayName: '', allowedRuleIds: [] });
+  
+  // 규칙 가져오기 관련 상태
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [selectedSourceClassroom, setSelectedSourceClassroom] = useState('');
+  const [isImporting, setIsImporting] = useState(false);
 
   // 초기 로드: 토큰 확인
   useEffect(() => {
@@ -900,6 +905,56 @@ const App = () => {
       setIsLoading(false);
     }
   };
+
+  const handleImportRules = async () => {
+    if (!selectedSourceClassroom || !currentClassroom) {
+      setError('원본 학급을 선택해주세요.');
+      return;
+    }
+
+    if (selectedSourceClassroom === currentClassroom.id.toString()) {
+      setError('같은 학급에서는 규칙을 가져올 수 없습니다.');
+      return;
+    }
+
+    try {
+      setIsImporting(true);
+      const response = await rulesAPI.import({
+        sourceClassroomId: parseInt(selectedSourceClassroom),
+        targetClassroomId: currentClassroom.id
+      });
+
+      const { summary } = response.data;
+      
+      // 결과 메시지 생성
+      let message = `규칙 가져오기 완료!\n\n`;
+      message += `• 총 ${summary.total}개 규칙 중\n`;
+      message += `• ${summary.imported}개 성공적으로 가져옴\n`;
+      
+      if (summary.duplicates > 0) {
+        message += `• ${summary.duplicates}개 중복으로 건너뜀\n`;
+      }
+      
+      if (summary.skipped > 0) {
+        message += `• ${summary.skipped}개 오류로 건너뜀\n`;
+      }
+
+      alert(message);
+      
+      // 데이터 다시 로드
+      await loadData();
+      
+      // 모달 닫기
+      setShowImportModal(false);
+      setSelectedSourceClassroom('');
+      
+    } catch (err) {
+      console.error('Import rules error:', err);
+      setError('규칙 가져오기 중 오류가 발생했습니다.');
+    } finally {
+      setIsImporting(false);
+    }
+  };
   
   const handleStartEditRule = (rule) => {
     setEditingRuleId(rule.id);
@@ -1300,9 +1355,23 @@ const App = () => {
   
   const renderRules = () => (
     <div className="bg-white p-6 rounded-xl shadow-2xl border border-gray-100 min-h-[70vh] space-y-8">
-      <h2 className="text-3xl font-bold text-gray-800 mb-6 flex items-center">
-        <ClipboardList className="w-7 h-7 mr-2 text-indigo-500" /> 규칙 관리
-      </h2>
+      <div className="flex justify-between items-center">
+        <h2 className="text-3xl font-bold text-gray-800 flex items-center">
+          <ClipboardList className="w-7 h-7 mr-2 text-indigo-500" /> 규칙 관리
+        </h2>
+        
+        {/* 규칙 가져오기 버튼 */}
+        {user?.role === 'teacher' && classrooms.length > 1 && (
+          <button
+            onClick={() => setShowImportModal(true)}
+            className="flex items-center px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition shadow-md"
+            title="다른 학급에서 규칙 가져오기"
+          >
+            <Download className="w-5 h-5 mr-2" />
+            <span className="hidden sm:inline">규칙 가져오기</span>
+          </button>
+        )}
+      </div>
 
       <div className="border p-4 rounded-lg bg-indigo-50">
         <h3 className="text-xl font-semibold text-indigo-700 mb-3 flex items-center">
@@ -1435,6 +1504,94 @@ const App = () => {
           })}
         </div>
       )}
+      
+      {/* 규칙 가져오기 모달 */}
+      {showImportModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-bold text-gray-800 flex items-center">
+                  <Download className="w-6 h-6 mr-2 text-green-500" />
+                  규칙 가져오기
+                </h3>
+                <button
+                  onClick={() => {
+                    setShowImportModal(false);
+                    setSelectedSourceClassroom('');
+                  }}
+                  className="text-gray-400 hover:text-gray-600 transition"
+                  disabled={isImporting}
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    원본 학급 선택
+                  </label>
+                  <select
+                    value={selectedSourceClassroom}
+                    onChange={(e) => setSelectedSourceClassroom(e.target.value)}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    disabled={isImporting}
+                  >
+                    <option value="">학급을 선택하세요</option>
+                    {classrooms
+                      .filter(classroom => classroom.id !== currentClassroom.id)
+                      .map(classroom => (
+                        <option key={classroom.id} value={classroom.id}>
+                          {classroom.is_default ? '⭐ ' : ''}{classroom.name}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+                
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <h4 className="font-semibold text-blue-800 mb-2">가져오기 안내</h4>
+                  <ul className="text-sm text-blue-700 space-y-1">
+                    <li>• 같은 이름의 규칙은 중복으로 처리됩니다</li>
+                    <li>• 원본 규칙은 그대로 유지됩니다</li>
+                    <li>• 가져온 규칙은 현재 학급에 추가됩니다</li>
+                  </ul>
+                </div>
+                
+                <div className="flex gap-3 pt-4">
+                  <button
+                    onClick={handleImportRules}
+                    disabled={!selectedSourceClassroom || isImporting}
+                    className="flex-1 bg-green-500 text-white py-3 px-4 rounded-lg hover:bg-green-600 transition disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center"
+                  >
+                    {isImporting ? (
+                      <>
+                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                        가져오는 중...
+                      </>
+                    ) : (
+                      <>
+                        <Download className="w-5 h-5 mr-2" />
+                        가져오기
+                      </>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowImportModal(false);
+                      setSelectedSourceClassroom('');
+                    }}
+                    disabled={isImporting}
+                    className="px-4 py-3 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition disabled:bg-gray-200"
+                  >
+                    취소
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 
@@ -1510,9 +1667,22 @@ const App = () => {
             <div className="relative inline-block">
               <select
                 value={currentClassroom.id}
-                onChange={(e) => {
-                  const selected = classrooms.find(c => c.id === parseInt(e.target.value));
-                  setCurrentClassroom(selected);
+                onChange={async (e) => {
+                  const value = e.target.value;
+                  if (value === 'add') {
+                    const name = prompt('새 학급 이름을 입력하세요:');
+                    if (name && name.trim()) {
+                      try {
+                        await classroomsAPI.create({ name: name.trim() });
+                        await loadData();
+                      } catch (err) {
+                        setError('학급 생성 중 오류가 발생했습니다.');
+                      }
+                    }
+                  } else {
+                    const selected = classrooms.find(c => c.id === parseInt(value));
+                    setCurrentClassroom(selected);
+                  }
                 }}
                 className="appearance-none bg-white border-2 border-indigo-300 rounded-lg px-4 py-2 pr-10 text-sm sm:text-base font-semibold text-gray-700 hover:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition cursor-pointer"
               >
@@ -1521,13 +1691,18 @@ const App = () => {
                     {classroom.is_default ? '⭐ ' : ''}{classroom.name}
                   </option>
                 ))}
+                {user?.role === 'teacher' && (
+                  <option value="add" className="text-indigo-600 font-semibold">
+                    ➕ 학급 추가
+                  </option>
+                )}
               </select>
               <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
             </div>
             
-            {/* 학급 관리 버튼 (교사만) */}
+            {/* 기본 학급 설정 버튼 (교사만) */}
             {user?.role === 'teacher' && (
-              <div className="ml-2 flex gap-2">
+              <div className="ml-2">
                 <button
                   onClick={async () => {
                     if (!currentClassroom.is_default) {
@@ -1544,25 +1719,6 @@ const App = () => {
                   disabled={currentClassroom.is_default}
                 >
                   <Star className={`w-5 h-5 ${currentClassroom.is_default ? 'fill-current' : ''}`} />
-                </button>
-                
-                <button
-                  onClick={async () => {
-                    const name = prompt('새 학급 이름을 입력하세요:');
-                    if (name && name.trim()) {
-                      try {
-                        await classroomsAPI.create({ name: name.trim() });
-                        await loadData();
-                      } catch (err) {
-                        setError('학급 생성 중 오류가 발생했습니다.');
-                      }
-                    }
-                  }}
-                  className="px-3 py-2 bg-indigo-500 text-white text-sm rounded-lg hover:bg-indigo-600 transition flex items-center"
-                  title="학급 추가"
-                >
-                  <Plus className="w-4 h-4 mr-1" />
-                  <span className="hidden sm:inline">추가</span>
                 </button>
               </div>
             )}
