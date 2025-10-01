@@ -295,6 +295,8 @@ const EditClassroomModal = ({ classroom, onClose, onUpdate, onDelete }) => {
   const [name, setName] = useState(classroom.name);
   const [isSaving, setIsSaving] = useState(false);
 
+  console.log('EditClassroomModal rendered with classroom:', classroom);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!name.trim() || name.trim() === classroom.name) {
@@ -316,7 +318,7 @@ const EditClassroomModal = ({ classroom, onClose, onUpdate, onDelete }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-4">
       <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md">
         <h3 className="text-xl font-bold mb-4 flex items-center text-indigo-600">
           <Settings className="w-5 h-5 mr-2" /> 학급 관리
@@ -1834,7 +1836,9 @@ const App = () => {
         <div className="flex flex-col items-center justify-center">
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold flex items-center justify-center gap-2 sm:gap-3 relative px-8" style={{ fontFamily: appSettings.font, color: appSettings.iconColor }}>
             <HeaderIconComponent className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10" style={{ color: appSettings.iconColor }} />
-            <span className="break-words">{appSettings.title}</span>
+            <span className="break-words">
+              {currentClassroom ? `${currentClassroom.name} - ${appSettings.title}` : appSettings.title}
+            </span>
             
             <button 
               onClick={() => setIsSettingsModalOpen(true)}
@@ -1845,7 +1849,9 @@ const App = () => {
             </button>
           </h1>
         </div>
-        <p className="text-gray-500 mt-2 text-sm sm:text-base md:text-lg px-4">{appSettings.subtitle}</p>
+        <p className="text-gray-500 mt-2 text-sm sm:text-base md:text-lg px-4">
+          {currentClassroom ? `${currentClassroom.name} - ${appSettings.subtitle}` : appSettings.subtitle}
+        </p>
         
         {/* 학급 선택 탭 */}
         {classrooms.length > 0 && (
@@ -1887,9 +1893,10 @@ const App = () => {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
+                          console.log('Settings button clicked for classroom:', classroom);
                           setEditingClassroom(classroom);
                         }}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-gray-600"
+                        className="opacity-70 hover:opacity-100 transition-opacity text-gray-500 hover:text-gray-700 p-1 rounded hover:bg-gray-200"
                         title="학급 관리"
                       >
                         <Settings className="w-4 h-4" />
