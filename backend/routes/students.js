@@ -8,10 +8,19 @@ const router = express.Router();
 // 모든 학생 조회
 router.get('/', auth, async (req, res) => {
   try {
-    const result = await pool.query(
-      'SELECT * FROM students WHERE user_id = $1 ORDER BY grade, class_num, student_num',
-      [req.userId]
-    );
+    const { classroomId } = req.query;
+    
+    // classroom_id가 제공되면 해당 학급의 학생만, 아니면 모든 학생
+    let query, params;
+    if (classroomId) {
+      query = 'SELECT * FROM students WHERE user_id = $1 AND classroom_id = $2 ORDER BY grade, class_num, student_num';
+      params = [req.userId, classroomId];
+    } else {
+      query = 'SELECT * FROM students WHERE user_id = $1 ORDER BY grade, class_num, student_num';
+      params = [req.userId];
+    }
+    
+    const result = await pool.query(query, params);
 
     // 각 학생의 일별 점수 데이터 가져오기
     const students = await Promise.all(result.rows.map(async (student) => {
@@ -58,7 +67,8 @@ router.post('/', auth, [
   body('name').trim().notEmpty().withMessage('이름을 입력하세요.'),
   body('grade').isInt({ min: 1, max: 6 }).withMessage('학년은 1-6 사이의 숫자여야 합니다.'),
   body('classNum').isInt({ min: 1 }).withMessage('반은 1 이상의 숫자여야 합니다.'),
-  body('studentNum').isInt({ min: 1 }).withMessage('번호는 1 이상의 숫자여야 합니다.')
+  body('studentNum').isInt({ min: 1 }).withMessage('번호는 1 이상의 숫자여야 합니다.'),
+  body('classroomId').isInt().withMessage('학급 ID가 필요합니다.')
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -66,13 +76,23 @@ router.post('/', auth, [
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { name, grade, classNum, studentNum } = req.body;
-    const studentId = `${grade}-${classNum}-${studentNum}`;
+    const { name, grade, classNum, studentNum, classroomId } = req.body;
+    const studentId = `${classroomId}-${grade}-${classNum}-${studentNum}`;
+
+    // 학급 소유권 확인
+    const classroomCheck = await pool.query(
+      'SELECT id FROM classrooms WHERE id = $1 AND user_id = $2',
+      [classroomId, req.userId]
+    );
+
+    if (classroomCheck.rows.length === 0) {
+      return res.status(403).json({ error: '해당 학급에 접근할 수 없습니다.' });
+    }
 
     // 중복 확인
     const existing = await pool.query(
-      'SELECT * FROM students WHERE user_id = $1 AND grade = $2 AND class_num = $3 AND student_num = $4',
-      [req.userId, grade, classNum, studentNum]
+      'SELECT * FROM students WHERE classroom_id = $1 AND grade = $2 AND class_num = $3 AND student_num = $4',
+      [classroomId, grade, classNum, studentNum]
     );
 
     if (existing.rows.length > 0) {
@@ -80,8 +100,8 @@ router.post('/', auth, [
     }
 
     const result = await pool.query(
-      'INSERT INTO students (id, user_id, name, grade, class_num, student_num, score) VALUES ($1, $2, $3, $4, $5, $6, 0) RETURNING *',
-      [studentId, req.userId, name, grade, classNum, studentNum]
+      'INSERT INTO students (id, user_id, classroom_id, name, grade, class_num, student_num, score) VALUES ($1, $2, $3, $4, $5, $6, $7, 0) RETURNING *',
+      [studentId, req.userId, classroomId, name, grade, classNum, studentNum]
     );
 
     res.status(201).json({
@@ -203,10 +223,24 @@ router.delete('/:id', auth, async (req, res) => {
 // CSV 일괄 업로드
 router.post('/bulk-upload', auth, async (req, res) => {
   try {
-    const { students } = req.body;
+    const { students, classroomId } = req.body;
 
     if (!Array.isArray(students) || students.length === 0) {
       return res.status(400).json({ error: '유효한 학생 데이터를 제공하세요.' });
+    }
+
+    if (!classroomId) {
+      return res.status(400).json({ error: '학급 ID가 필요합니다.' });
+    }
+
+    // 학급 소유권 확인
+    const classroomCheck = await pool.query(
+      'SELECT id FROM classrooms WHERE id = $1 AND user_id = $2',
+      [classroomId, req.userId]
+    );
+
+    if (classroomCheck.rows.length === 0) {
+      return res.status(403).json({ error: '해당 학급에 접근할 수 없습니다.' });
     }
 
     const client = await pool.connect();
@@ -217,25 +251,25 @@ router.post('/bulk-upload', auth, async (req, res) => {
 
       for (const student of students) {
         const { name, grade, classNum, studentNum } = student;
-        const studentId = `${grade}-${classNum}-${studentNum}`;
+        const studentId = `${classroomId}-${grade}-${classNum}-${studentNum}`;
 
         // 기존 학생 확인
         const existing = await client.query(
-          'SELECT * FROM students WHERE id = $1 AND user_id = $2',
-          [studentId, req.userId]
+          'SELECT * FROM students WHERE id = $1 AND classroom_id = $2',
+          [studentId, classroomId]
         );
 
         if (existing.rows.length > 0) {
           // 기존 학생 업데이트 (이름만)
           await client.query(
-            'UPDATE students SET name = $1 WHERE id = $2 AND user_id = $3',
-            [name, studentId, req.userId]
+            'UPDATE students SET name = $1 WHERE id = $2 AND classroom_id = $3',
+            [name, studentId, classroomId]
           );
         } else {
           // 새 학생 추가
           await client.query(
-            'INSERT INTO students (id, user_id, name, grade, class_num, student_num, score) VALUES ($1, $2, $3, $4, $5, $6, 0)',
-            [studentId, req.userId, name, grade, classNum, studentNum]
+            'INSERT INTO students (id, user_id, classroom_id, name, grade, class_num, student_num, score) VALUES ($1, $2, $3, $4, $5, $6, $7, 0)',
+            [studentId, req.userId, classroomId, name, grade, classNum, studentNum]
           );
         }
         successCount++;

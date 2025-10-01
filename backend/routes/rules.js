@@ -8,10 +8,19 @@ const router = express.Router();
 // 모든 규칙 조회
 router.get('/', auth, async (req, res) => {
   try {
-    const result = await pool.query(
-      'SELECT * FROM rules WHERE user_id = $1 ORDER BY id',
-      [req.userId]
-    );
+    const { classroomId } = req.query;
+    
+    // classroom_id가 제공되면 해당 학급의 규칙만, 아니면 모든 규칙
+    let query, params;
+    if (classroomId) {
+      query = 'SELECT * FROM rules WHERE user_id = $1 AND classroom_id = $2 ORDER BY id';
+      params = [req.userId, classroomId];
+    } else {
+      query = 'SELECT * FROM rules WHERE user_id = $1 ORDER BY id';
+      params = [req.userId];
+    }
+    
+    const result = await pool.query(query, params);
 
     const rules = result.rows.map(rule => ({
       id: rule.id,
@@ -31,7 +40,8 @@ router.get('/', auth, async (req, res) => {
 router.post('/', auth, [
   body('name').trim().notEmpty().withMessage('규칙 이름을 입력하세요.'),
   body('iconId').notEmpty().withMessage('아이콘을 선택하세요.'),
-  body('color').matches(/^#[0-9A-F]{6}$/i).withMessage('유효한 색상 코드를 입력하세요.')
+  body('color').matches(/^#[0-9A-F]{6}$/i).withMessage('유효한 색상 코드를 입력하세요.'),
+  body('classroomId').isInt().withMessage('학급 ID가 필요합니다.')
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -39,11 +49,21 @@ router.post('/', auth, [
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { name, iconId, color } = req.body;
+    const { name, iconId, color, classroomId } = req.body;
+
+    // 학급 소유권 확인
+    const classroomCheck = await pool.query(
+      'SELECT id FROM classrooms WHERE id = $1 AND user_id = $2',
+      [classroomId, req.userId]
+    );
+
+    if (classroomCheck.rows.length === 0) {
+      return res.status(403).json({ error: '해당 학급에 접근할 수 없습니다.' });
+    }
 
     const result = await pool.query(
-      'INSERT INTO rules (user_id, name, icon_id, color) VALUES ($1, $2, $3, $4) RETURNING *',
-      [req.userId, name, iconId, color]
+      'INSERT INTO rules (user_id, classroom_id, name, icon_id, color) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+      [req.userId, classroomId, name, iconId, color]
     );
 
     res.status(201).json({

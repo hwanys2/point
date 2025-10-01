@@ -49,20 +49,21 @@ export const classroomsAPI = {
   create: (data) => api.post('/classrooms', data),
   update: (id, data) => api.put(`/classrooms/${id}`, data),
   delete: (id) => api.delete(`/classrooms/${id}`),
+  setDefault: (id) => api.patch(`/classrooms/${id}/set-default`),
 };
 
 // Students API
 export const studentsAPI = {
-  getAll: () => api.get('/students'),
+  getAll: (params) => api.get('/students', params),
   create: (data) => api.post('/students', data),
   update: (id, data) => api.put(`/students/${id}`, data),
   delete: (id) => api.delete(`/students/${id}`),
-  bulkUpload: (students) => api.post('/students/bulk-upload', { students }),
+  bulkUpload: (data) => api.post('/students/bulk-upload', data),
 };
 
 // Rules API
 export const rulesAPI = {
-  getAll: () => api.get('/rules'),
+  getAll: (params) => api.get('/rules', params),
   create: (data) => api.post('/rules', data),
   update: (id, data) => api.put(`/rules/${id}`, data),
   delete: (id) => api.delete(`/rules/${id}`),

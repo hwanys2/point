@@ -3,12 +3,13 @@ import {
   Award, UserPlus, ListOrdered, Loader2, AlertTriangle, Plus, Calendar, 
   Shirt, BookOpenCheck, Sparkles, Armchair, Smile, Lightbulb,
   Feather, ShieldCheck, Settings, BarChart3, FileText, Trash2, Edit, Save, 
-  ClipboardList, X, BarChart, Palette, LogOut, Clock, CheckSquare, XSquare 
+  ClipboardList, X, BarChart, Palette, LogOut, Clock, CheckSquare, XSquare,
+  Star, ChevronDown
 } from 'lucide-react';
 import Auth from './components/Auth';
 import LandingPage from './components/LandingPage';
 import PublicLeaderboard from './components/PublicLeaderboard';
-import { studentsAPI, rulesAPI, scoresAPI, settingsAPI, studentManagersAPI } from './services/api';
+import { classroomsAPI, studentsAPI, rulesAPI, scoresAPI, settingsAPI, studentManagersAPI } from './services/api';
 
 // Helper functions
 const getTodayDate = () => {
@@ -402,6 +403,8 @@ const App = () => {
   };
 
   const [user, setUser] = useState(null);
+  const [classrooms, setClassrooms] = useState([]);
+  const [currentClassroom, setCurrentClassroom] = useState(null);
   const [students, setStudents] = useState([]);
   const [rules, setRules] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -446,14 +449,51 @@ const App = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // 현재 학급이 변경되면 해당 학급의 학생과 규칙 다시 로드
+  useEffect(() => {
+    if (currentClassroom && user) {
+      const reloadClassroomData = async () => {
+        try {
+          const [studentsRes, rulesRes] = await Promise.all([
+            studentsAPI.getAll({ params: { classroomId: currentClassroom.id } }),
+            rulesAPI.getAll({ params: { classroomId: currentClassroom.id } })
+          ]);
+          setStudents(studentsRes.data);
+          setRules(rulesRes.data);
+        } catch (err) {
+          console.error('Reload classroom data error:', err);
+          setError('학급 데이터를 불러오는 중 오류가 발생했습니다.');
+        }
+      };
+      reloadClassroomData();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentClassroom?.id]);
+
   const loadData = async () => {
     try {
       setIsLoading(true);
       const savedUser = JSON.parse(localStorage.getItem('user') || '{}');
       
+      // 학급 목록 먼저 로드
+      const classroomsResponse = await classroomsAPI.getAll();
+      const classroomsList = classroomsResponse.data;
+      setClassrooms(classroomsList);
+      
+      // 기본 학급 찾기 또는 첫 번째 학급 선택
+      const defaultClassroom = classroomsList.find(c => c.is_default) || classroomsList[0];
+      
+      if (!defaultClassroom) {
+        setError('학급이 없습니다. 학급을 먼저 생성해주세요.');
+        setIsLoading(false);
+        return;
+      }
+      
+      setCurrentClassroom(defaultClassroom);
+      
       const promises = [
-        studentsAPI.getAll(),
-        rulesAPI.getAll(),
+        studentsAPI.getAll({ params: { classroomId: defaultClassroom.id } }),
+        rulesAPI.getAll({ params: { classroomId: defaultClassroom.id } }),
         settingsAPI.get(),
       ];
       
@@ -686,9 +726,20 @@ const App = () => {
     const { grade, classNum, studentNum, name } = newStudentInfo;
     if (!name.trim()) return;
 
+    if (!currentClassroom) {
+      setError('학급을 선택해주세요.');
+      return;
+    }
+
     try {
       setIsLoading(true);
-      const response = await studentsAPI.create({ name: name.trim(), grade, classNum, studentNum });
+      const response = await studentsAPI.create({ 
+        name: name.trim(), 
+        grade, 
+        classNum, 
+        studentNum,
+        classroomId: currentClassroom.id 
+      });
       setStudents([...students, response.data]);
       setNewStudentInfo({ grade: 1, classNum: 1, studentNum: 1, name: '' });
     } catch (err) {
@@ -771,9 +822,17 @@ const App = () => {
         return;
       }
 
+      if (!currentClassroom) {
+        setError('학급을 선택해주세요.');
+        return;
+      }
+
       try {
         setIsLoading(true);
-        const response = await studentsAPI.bulkUpload(newStudents);
+        const response = await studentsAPI.bulkUpload({ 
+          students: newStudents,
+          classroomId: currentClassroom.id 
+        });
         alert(response.data.message);
         await loadData();
       } catch (err) {
@@ -796,12 +855,18 @@ const App = () => {
       return;
     }
 
+    if (!currentClassroom) {
+      setError('학급을 선택해주세요.');
+      return;
+    }
+
     try {
       setIsLoading(true);
       const ruleData = {
         name: currentRule.name.trim(),
         iconId: currentRule.iconId,
         color: currentRule.color,
+        classroomId: currentClassroom.id,
       };
 
       if (editingRuleId) {
@@ -1438,6 +1503,71 @@ const App = () => {
           </h1>
         </div>
         <p className="text-gray-500 mt-2 text-sm sm:text-base md:text-lg px-4">{appSettings.subtitle}</p>
+        
+        {/* 학급 선택 드롭다운 */}
+        {currentClassroom && classrooms.length > 0 && (
+          <div className="mt-4 flex justify-center">
+            <div className="relative inline-block">
+              <select
+                value={currentClassroom.id}
+                onChange={(e) => {
+                  const selected = classrooms.find(c => c.id === parseInt(e.target.value));
+                  setCurrentClassroom(selected);
+                }}
+                className="appearance-none bg-white border-2 border-indigo-300 rounded-lg px-4 py-2 pr-10 text-sm sm:text-base font-semibold text-gray-700 hover:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition cursor-pointer"
+              >
+                {classrooms.map(classroom => (
+                  <option key={classroom.id} value={classroom.id}>
+                    {classroom.is_default ? '⭐ ' : ''}{classroom.name}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
+            </div>
+            
+            {/* 학급 관리 버튼 (교사만) */}
+            {user?.role === 'teacher' && (
+              <div className="ml-2 flex gap-2">
+                <button
+                  onClick={async () => {
+                    if (!currentClassroom.is_default) {
+                      try {
+                        await classroomsAPI.setDefault(currentClassroom.id);
+                        await loadData();
+                      } catch (err) {
+                        setError('기본 학급 설정 중 오류가 발생했습니다.');
+                      }
+                    }
+                  }}
+                  className={`p-2 rounded-lg transition ${currentClassroom.is_default ? 'text-yellow-500 bg-yellow-50' : 'text-gray-400 hover:text-yellow-500 hover:bg-yellow-50'}`}
+                  title={currentClassroom.is_default ? '기본 학급입니다' : '기본 학급으로 설정'}
+                  disabled={currentClassroom.is_default}
+                >
+                  <Star className={`w-5 h-5 ${currentClassroom.is_default ? 'fill-current' : ''}`} />
+                </button>
+                
+                <button
+                  onClick={async () => {
+                    const name = prompt('새 학급 이름을 입력하세요:');
+                    if (name && name.trim()) {
+                      try {
+                        await classroomsAPI.create({ name: name.trim() });
+                        await loadData();
+                      } catch (err) {
+                        setError('학급 생성 중 오류가 발생했습니다.');
+                      }
+                    }
+                  }}
+                  className="px-3 py-2 bg-indigo-500 text-white text-sm rounded-lg hover:bg-indigo-600 transition flex items-center"
+                  title="학급 추가"
+                >
+                  <Plus className="w-4 h-4 mr-1" />
+                  <span className="hidden sm:inline">추가</span>
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </header>
 
       <div className="max-w-7xl mx-auto">
