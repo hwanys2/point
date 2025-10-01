@@ -643,7 +643,8 @@ const App = () => {
 
   const handleLogin = (userData) => {
     setUser(userData);
-    setActiveTab('leaderboard');
+    // 학생 관리자는 점수 부여 탭을, 교사는 순위표 탭을 기본으로 표시
+    setActiveTab(userData.role === 'student_manager' ? 'scoring' : 'leaderboard');
     setShowAuthModal(false);
     loadData();
   };
