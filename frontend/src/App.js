@@ -1528,10 +1528,6 @@ const App = () => {
         )}
       </div>
       {editingStudent && <EditStudentModal student={editingStudent} onClose={() => setEditingStudent(null)} onSave={handleSaveStudent} />}
-      {editingClassroom && (() => {
-        console.log('Rendering EditClassroomModal with classroom:', editingClassroom);
-        return <EditClassroomModal classroom={editingClassroom} onClose={() => setEditingClassroom(null)} onUpdate={handleUpdateClassroom} onDelete={handleDeleteClassroom} />;
-      })()}
     </div>
   );
   
@@ -1843,6 +1839,10 @@ const App = () => {
       )}
       
       {isSettingsModalOpen && <AppHeaderSettingsModal currentSettings={appSettings} onClose={() => setIsSettingsModalOpen(false)} onSave={handleSaveSettings} />}
+      {editingClassroom && (() => {
+        console.log('Rendering EditClassroomModal with classroom:', editingClassroom);
+        return <EditClassroomModal classroom={editingClassroom} onClose={() => setEditingClassroom(null)} onUpdate={handleUpdateClassroom} onDelete={handleDeleteClassroom} />;
+      })()}
 
       <header className="text-center mb-4 sm:mb-8">
         <div className="flex flex-col items-center justify-center">
