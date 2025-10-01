@@ -25,10 +25,13 @@ const LandingPage = ({ onShowAuth }) => {
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
       {/* Header */}
       <header className="bg-white shadow-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <div className="flex items-center space-x-2">
-            <Award className="w-8 h-8 text-indigo-600" />
-            <span className="text-xl sm:text-2xl font-bold text-gray-900">학급 관리 시스템</span>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex justify-between items-center">
+          <div className="flex items-center">
+            <img 
+              src="/logo.png" 
+              alt="학급 관리 시스템 로고" 
+              className="h-10 sm:h-12 md:h-14 w-auto object-contain"
+            />
           </div>
           <div className="flex gap-2 sm:gap-3">
             <button

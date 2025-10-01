@@ -1938,25 +1938,23 @@ const App = () => {
       })()}
 
       <header className="text-center mb-4 sm:mb-8">
-        <div className="flex flex-col items-center justify-center">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold flex items-center justify-center gap-2 sm:gap-3 relative px-8" style={{ fontFamily: appSettings.font, color: appSettings.iconColor }}>
-            <HeaderIconComponent className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10" style={{ color: appSettings.iconColor }} />
-            <span className="break-words">
-              {currentClassroom ? `${currentClassroom.name} - ${appSettings.title}` : appSettings.title}
-            </span>
+        <div className="flex flex-col items-center justify-center pt-4 sm:pt-6">
+          <div className="relative">
+            <img 
+              src="/logo.png" 
+              alt="학급 관리 시스템 로고" 
+              className="h-24 sm:h-32 md:h-40 lg:h-48 w-auto object-contain mx-auto"
+            />
             
             <button 
               onClick={() => setIsSettingsModalOpen(true)}
-              className="absolute -right-0 sm:-right-8 top-1/2 transform -translate-y-1/2 p-1 text-gray-500 hover:text-indigo-600 transition"
+              className="absolute top-0 right-0 sm:-right-8 p-1 text-gray-500 hover:text-indigo-600 transition"
               title="앱 설정 수정"
             >
               <Settings className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
-          </h1>
+          </div>
         </div>
-        <p className="text-gray-500 mt-2 text-sm sm:text-base md:text-lg px-4">
-          {currentClassroom ? `${currentClassroom.name} - ${appSettings.subtitle}` : appSettings.subtitle}
-        </p>
         
         {/* 학급 선택 탭 */}
         {classrooms.length > 0 && (
