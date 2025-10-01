@@ -60,135 +60,6 @@ const getIconComponent = (iconId) => {
 
 // --- Sub-Components ---
 
-const AppHeaderSettingsModal = ({ currentSettings, onClose, onSave }) => {
-  const [title, setTitle] = useState(currentSettings.title);
-  const [subtitle, setSubtitle] = useState(currentSettings.subtitle);
-  const [iconId, setIconId] = useState(currentSettings.iconId);
-  const [iconColor, setIconColor] = useState(currentSettings.iconColor);
-  const [font, setFont] = useState(currentSettings.font);
-  const [isSaving, setIsSaving] = useState(false);
-
-  const IconComponent = getIconComponent(iconId);
-
-  const fontOptions = [
-    { value: "'Noto Sans KR', sans-serif", name: 'Noto Sans KR (기본/깔끔)' },
-    { value: "'Pretendard', sans-serif", name: 'Pretendard (현대적/깔끔)' },
-    { value: "'Noto Serif KR', serif", name: 'Noto Serif KR (단정함/신뢰)' },
-    { value: "'Nanum Gothic', sans-serif", name: '나눔고딕 (친근함/가독성)' },
-    { value: "'Nanum Myeongjo', serif", name: '나눔명조 (우아함/전통적)' },
-    { value: "'BM Hanna Pro', sans-serif", name: 'BM Hanna Pro (활동적/친근)' },
-    { value: "'BM Jua', sans-serif", name: 'BM Jua (둥글고/귀여움)' },
-    { value: "'BM Kirang Haerang', sans-serif", name: 'BM Kirang Haerang (개성적/유니크)' },
-  ];
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!/^#([0-9A-F]{3}){1,2}$/i.test(iconColor)) {
-      alert('유효한 Hex 색상 코드를 입력해주세요 (예: #4f46e5).');
-      return;
-    }
-
-    if (!title.trim() || !iconId || !iconColor || !font) return;
-    setIsSaving(true);
-    await onSave({ title: title.trim(), subtitle: subtitle.trim(), iconId, iconColor, font });
-    setIsSaving(false);
-  };
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-lg">
-        <h3 className="text-2xl font-bold mb-6 flex items-center text-indigo-600">
-          <Settings className="w-6 h-6 mr-2" /> 앱 제목 및 설정 수정
-        </h3>
-        
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="p-3 border rounded-lg flex items-center justify-between">
-            <span className="text-lg font-bold" style={{ color: iconColor }}>{title || '제목 없음'}</span>
-            <IconComponent className="w-6 h-6" style={{ color: iconColor }} />
-          </div>
-
-          <label className="block">
-            <span className="text-gray-700 font-semibold">제목</span>
-            <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} className="mt-1 block w-full p-2 border border-gray-300 rounded-lg" required/>
-          </label>
-          
-          <label className="block">
-            <span className="text-gray-700 font-semibold">설명 (부제)</span>
-            <input type="text" value={subtitle} onChange={(e) => setSubtitle(e.target.value)} className="mt-1 block w-full p-2 border border-gray-300 rounded-lg"/>
-          </label>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="block col-span-2">
-              <span className="text-gray-700 font-semibold mb-2 block">아이콘 선택</span>
-              <div className="grid grid-cols-6 sm:grid-cols-8 gap-2 p-2 border border-gray-300 rounded-lg max-h-48 overflow-y-auto bg-gray-50">
-                {ICON_OPTIONS.map(opt => {
-                  const Icon = opt.icon;
-                  const isSelected = iconId === opt.id;
-                  return (
-                    <button
-                      key={opt.id}
-                      type="button"
-                      onClick={() => setIconId(opt.id)}
-                      className={`p-2 rounded-lg transition duration-150 flex justify-center items-center ${isSelected ? 'bg-indigo-500 text-white shadow-md ring-2 ring-indigo-500' : 'bg-white text-gray-700 hover:bg-indigo-100'}`}
-                      title={opt.id}
-                    >
-                      <Icon className="w-6 h-6" />
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-            
-            <label className="block col-span-2 sm:col-span-1">
-              <span className="text-gray-700 font-semibold">아이콘 색상</span>
-              <div className="flex items-center gap-2 mt-1">
-                <input 
-                  type="color" 
-                  value={iconColor} 
-                  onChange={(e) => setIconColor(e.target.value)} 
-                  className="w-full h-10 p-0 border border-gray-300 rounded-md cursor-pointer overflow-hidden" 
-                  required
-                />
-              </div>
-            </label>
-
-            <label className="block col-span-2 sm:col-span-1">
-              <span className="text-gray-700 font-semibold">제목 폰트</span>
-              <select 
-                value={font} 
-                onChange={(e) => setFont(e.target.value)} 
-                className="mt-1 block w-full p-2 border border-gray-300 rounded-lg bg-white"
-              >
-                {fontOptions.map(opt => (
-                  <option key={opt.value} value={opt.value}>{opt.name}</option>
-                ))}
-              </select>
-            </label>
-          </div>
-          
-          <div className="flex justify-end gap-3 pt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
-              disabled={isSaving}
-            >
-              취소
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition flex items-center"
-              disabled={isSaving}
-            >
-              {isSaving ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <Save className="w-5 h-5 mr-2" />} 설정 저장
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-};
-
 const EditStudentModal = ({ student, onClose, onSave }) => {
   const [name, setName] = useState(student.name);
   const [grade, setGrade] = useState(String(student.grade || 1));
@@ -1674,8 +1545,8 @@ const App = () => {
             />
           </label>
           
-          <div className="md:col-span-1 lg:col-span-4">
-            <span className="text-gray-700 text-sm block mb-1">아이콘 선택</span>
+          <div className="md:col-span-2 lg:col-span-5">
+            <span className="text-gray-700 text-sm block mb-1">아이콘 및 색상 선택</span>
             <div className="grid grid-cols-6 sm:grid-cols-8 gap-1 p-2 border border-gray-300 rounded-lg bg-gray-50 max-h-48 overflow-y-auto">
               {ICON_OPTIONS.map(opt => {
                 const Icon = opt.icon;
@@ -1685,26 +1556,35 @@ const App = () => {
                     key={opt.id}
                     type="button"
                     onClick={() => setCurrentRule(prev => ({ ...prev, iconId: opt.id }))}
-                    className={`p-2 rounded-lg transition duration-150 flex justify-center items-center ${isSelected ? 'bg-indigo-500 text-white shadow-md ring-2 ring-indigo-500' : 'bg-white text-gray-700 hover:bg-indigo-100'}`}
+                    className={`p-2 rounded-lg transition duration-150 flex justify-center items-center ${isSelected ? 'shadow-md ring-2' : 'bg-white hover:bg-gray-100'}`}
+                    style={isSelected ? { backgroundColor: currentRule.color, color: 'white', borderColor: currentRule.color } : {}}
                     title={opt.id}
                   >
-                    <Icon className="w-6 h-6" />
+                    <Icon className="w-6 h-6" style={isSelected ? {} : { color: '#374151' }} />
                   </button>
                 );
               })}
+              
+              {/* 색상 선택 버튼 */}
+              <label 
+                className="p-2 rounded-lg bg-white hover:bg-gray-100 transition duration-150 flex justify-center items-center cursor-pointer border-2 border-dashed border-gray-300 hover:border-gray-400 relative overflow-hidden"
+                title="색상 선택"
+              >
+                <Palette className="w-6 h-6 text-gray-600 absolute" />
+                <input 
+                  type="color" 
+                  value={currentRule.color} 
+                  onChange={(e) => setCurrentRule(prev => ({ ...prev, color: e.target.value }))} 
+                  className="opacity-0 w-full h-full absolute inset-0 cursor-pointer"
+                  required
+                />
+                <div 
+                  className="w-full h-full absolute inset-0 opacity-30"
+                  style={{ backgroundColor: currentRule.color }}
+                ></div>
+              </label>
             </div>
           </div>
-
-          <label className="md:col-span-1 lg:col-span-1">
-            <span className="text-gray-700 text-sm">색상</span>
-            <input 
-              type="color" 
-              value={currentRule.color} 
-              onChange={(e) => setCurrentRule(prev => ({ ...prev, color: e.target.value }))} 
-              className="w-full p-0 border border-gray-300 rounded-lg cursor-pointer mt-1 overflow-hidden h-[42px]" 
-              required
-            />
-          </label>
           
           <div className="md:col-span-2 lg:col-span-1 flex gap-2 pt-2 md:pt-0">
             <button type="submit" className="flex-1 bg-indigo-500 text-white p-2 rounded-lg hover:bg-indigo-600 transition flex items-center justify-center shadow-md h-[42px]" disabled={isLoading}>
