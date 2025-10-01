@@ -7,8 +7,33 @@ const { initDatabase } = require('./config/database');
 const app = express();
 
 // Middleware
+const allowedOrigins = [
+  'https://classpoint.kr',
+  'https://classpoint.kr/',
+  'http://localhost:3000',
+  process.env.FRONTEND_URL
+].filter(Boolean); // undefined 값 제거
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'https://classpoint.kr',
+  origin: function (origin, callback) {
+    // origin이 undefined인 경우 (예: 모바일 앱, Postman 등) 허용
+    if (!origin) return callback(null, true);
+    
+    // 정확히 일치하는 origin이 있으면 허용
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    
+    // 슬래시를 제거한 버전과 비교
+    const originWithoutSlash = origin.replace(/\/$/, '');
+    const allowedWithoutSlash = allowedOrigins.map(o => o.replace(/\/$/, ''));
+    
+    if (allowedWithoutSlash.includes(originWithoutSlash)) {
+      return callback(null, true);
+    }
+    
+    callback(new Error('CORS 정책에 의해 차단되었습니다.'));
+  },
   credentials: true
 }));
 app.use(express.json());
