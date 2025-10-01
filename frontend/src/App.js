@@ -607,11 +607,6 @@ const App = () => {
         settingsAPI.get(),
       ];
       
-      // 교사인 경우에만 학생 관리자 목록도 로드
-      if (savedUser.role === 'teacher') {
-        promises.push(studentManagersAPI.getAll({ params: { classroomId: selectedClassroom.id } }));
-      }
-      
       const results = await Promise.all(promises);
 
       setStudents(results[0].data);
@@ -621,8 +616,16 @@ const App = () => {
       setShareEnabled(settings.shareEnabled || false);
       setShareToken(settings.shareToken || null);
       
-      if (savedUser.role === 'teacher' && results[3]) {
-        setManagers(results[3].data);
+      // 교사인 경우에만 학생 관리자 목록도 로드 (별도 처리로 실패해도 앱 작동)
+      if (savedUser.role === 'teacher') {
+        try {
+          console.log('Loading student managers for classroom:', selectedClassroom.id);
+          const managersResult = await studentManagersAPI.getAll({ params: { classroomId: selectedClassroom.id } });
+          setManagers(managersResult.data);
+        } catch (managersError) {
+          console.warn('학생 관리자 목록 로드 실패:', managersError.response?.data || managersError.message);
+          setManagers([]);
+        }
       }
     } catch (err) {
       console.error('Load data error:', err);
