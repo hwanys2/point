@@ -76,7 +76,6 @@ const initDatabase = async () => {
       CREATE INDEX IF NOT EXISTS idx_daily_scores_student ON daily_scores(student_id);
       CREATE INDEX IF NOT EXISTS idx_daily_scores_date ON daily_scores(date);
       CREATE INDEX IF NOT EXISTS idx_student_managers_user_id ON student_managers(user_id);
-      CREATE INDEX IF NOT EXISTS idx_student_managers_classroom_id ON student_managers(classroom_id);
     `);
     
     // 기존 데이터베이스를 위한 마이그레이션 쿼리
