@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LogIn, UserPlus, Loader2, Award, X } from 'lucide-react';
+import { LogIn, UserPlus, Loader2, X } from 'lucide-react';
 import { authAPI } from '../services/api';
 
 const Auth = ({ onLogin, onClose, initialMode = 'login' }) => {
@@ -73,9 +73,11 @@ const Auth = ({ onLogin, onClose, initialMode = 'login' }) => {
           </button>
         )}
         <div className="text-center mb-8">
-          <Award className="w-16 h-16 mx-auto text-indigo-600 mb-4" />
-          <h1 className="text-3xl font-bold text-gray-800">학급 관리 시스템</h1>
-          <p className="text-gray-500 mt-2">학생 점수 관리 및 순위표</p>
+          <img 
+            src={isLogin ? "/logo.png" : "/logo2.png"}
+            alt="학급 관리 시스템 로고" 
+            className="h-20 sm:h-24 w-auto object-contain mx-auto"
+          />
         </div>
 
         {error && (
