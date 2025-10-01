@@ -1377,12 +1377,12 @@ const App = () => {
       ) : (
         <div className="overflow-x-auto max-h-[60vh] overflow-y-auto border border-gray-200 rounded-lg">
           <table className="min-w-full divide-y divide-gray-200 relative">
-            <thead className="bg-gray-100 sticky top-0 z-10">
+            <thead className="bg-gray-100 sticky top-0 z-20">
               <tr>
                 <th className="px-3 py-3 text-left text-sm font-semibold text-gray-700 w-12 bg-gray-100">학년</th>
                 <th className="px-3 py-3 text-left text-sm font-semibold text-gray-700 w-12 bg-gray-100">반</th>
                 <th className="px-3 py-3 text-left text-sm font-semibold text-gray-700 w-12 bg-gray-100">번호</th>
-                <th className="px-3 py-3 text-left text-sm font-semibold text-gray-700 w-24 bg-gray-100">이름</th>
+                <th className="px-3 py-3 text-left text-sm font-semibold text-gray-700 w-24 bg-gray-100 sticky left-0 z-30 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">이름</th>
                 {allowedRules.map((rule) => {
                   const RuleIcon = getIconComponent(rule.iconId);
                   return (
@@ -1399,11 +1399,11 @@ const App = () => {
                 numberedStudents.map((student) => {
                   const dailyEntry = student.dailyScores[selectedDate] || {};
                   return (
-                    <tr key={student.id} className="hover:bg-indigo-50 transition duration-100">
+                    <tr key={student.id} className="group hover:bg-indigo-50 transition duration-100">
                       <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-900">{student.grade}</td>
                       <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-900">{student.classNum}</td>
                       <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-900">{student.studentNum}</td>
-                      <td className="px-3 py-3 whitespace-nowrap text-sm font-medium text-gray-900">{student.name}</td>
+                      <td className="px-3 py-3 whitespace-nowrap text-sm font-medium text-gray-900 sticky left-0 z-10 bg-white shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] group-hover:bg-indigo-50">{student.name}</td>
                       {allowedRules.map((rule) => {
                         const isChecked = dailyEntry[rule.id] === 1;
                         return (
