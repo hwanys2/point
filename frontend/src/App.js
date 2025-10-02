@@ -829,8 +829,6 @@ const App = () => {
       }
     };
 
-    const dateRange = getDateRange();
-    
     // filteredStudentsWithScores를 기반으로 계산 (이미 필터링된 dailyScores 사용)
     filteredStudentsWithScores.forEach(student => {
       scores[student.id] = {};
