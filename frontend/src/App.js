@@ -1638,7 +1638,7 @@ const App = () => {
           className="p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 w-full sm:w-auto text-lg"
         />
       </div>
- 
+
       <h3 className="text-xl font-semibold text-gray-700 mb-4">{selectedDate} 점수 부여 그리드</h3>
       
       {user?.role === 'student_manager' && (
