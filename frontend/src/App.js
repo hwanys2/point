@@ -2189,7 +2189,7 @@ const App = () => {
               className="inline-flex items-center px-3 py-1.5 text-sm text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
               title="사용자 정보 수정"
             >
-              <User className="w-4 h-4 mr-1" /> 정보수정
+              <User className="w-4 h-4 mr-1" /> 정보수정{user ? `(${user.username || user.email || user.id})` : ''}
             </button>
             <button
               onClick={handleLogout}
