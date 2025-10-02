@@ -389,10 +389,6 @@ const AllStudentsRuleComparison = ({ students, rules, studentRuleScores }) => {
   
   const sortedStudents = [...students].sort((a, b) => (b.periodScore || b.score) - (a.periodScore || a.score));
 
-  // 디버깅 로그
-  console.log('AllStudentsRuleComparison - students:', students);
-  console.log('AllStudentsRuleComparison - studentRuleScores:', studentRuleScores);
-  console.log('AllStudentsRuleComparison - maxScore:', maxScore);
 
   return (
     <div className="bg-white p-3 sm:p-4 md:p-6 rounded-xl shadow-2xl border border-gray-100">
@@ -792,92 +788,9 @@ const App = () => {
     });
   }, [students]);
   
-  const studentRuleScores = useMemo(() => {
-    const scores = {};
-    
-    // filteredStudentsWithScores와 동일한 기간 계산 로직 사용
-    const getDateRange = () => {
-      const today = new Date();
-      const todayStr = getTodayDate();
-      
-      switch (periodFilter) {
-        case 'daily':
-          return [todayStr];
-        case 'weekly': {
-          const dates = [];
-          for (let i = 0; i < 7; i++) {
-            const d = new Date(today);
-            d.setDate(d.getDate() - i);
-            dates.push(d.toISOString().split('T')[0]);
-          }
-          return dates;
-        }
-        case 'monthly': {
-          const dates = [];
-          for (let i = 0; i < 30; i++) {
-            const d = new Date(today);
-            d.setDate(d.getDate() - i);
-            dates.push(d.toISOString().split('T')[0]);
-          }
-          return dates;
-        }
-        case 'custom': {
-          const dates = [];
-          const start = new Date(customStartDate);
-          const end = new Date(customEndDate);
-          for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-            dates.push(d.toISOString().split('T')[0]);
-          }
-          return dates;
-        }
-        default: // 'all'
-          return null;
-      }
-    };
-
-    const dateRange = getDateRange();
-
-    students.forEach(student => {
-      scores[student.id] = {};
-      
-      if (dateRange === null) {
-        // 전체 기간 - 모든 날짜 포함
-        const daily = student.dailyScores || {};
-        Object.keys(daily).forEach(dateStr => {
-          const dailyEntry = daily[dateStr];
-          for (const ruleId in dailyEntry) {
-            const scoreData = dailyEntry[ruleId];
-            const scoreValue = typeof scoreData === 'object' ? scoreData.value : scoreData;
-            
-            if (rules.some(r => r.id === parseInt(ruleId, 10)) && scoreValue === 1) {
-              scores[student.id][ruleId] = (scores[student.id][ruleId] || 0) + 1;
-            }
-          }
-        });
-      } else {
-        // 특정 기간
-        dateRange.forEach(dateStr => {
-          if (student.dailyScores && student.dailyScores[dateStr]) {
-            const dailyEntry = student.dailyScores[dateStr];
-            for (const ruleId in dailyEntry) {
-              const scoreData = dailyEntry[ruleId];
-              const scoreValue = typeof scoreData === 'object' ? scoreData.value : scoreData;
-              
-              if (rules.some(r => r.id === parseInt(ruleId, 10)) && scoreValue === 1) {
-                scores[student.id][ruleId] = (scores[student.id][ruleId] || 0) + 1;
-              }
-            }
-          }
-        });
-      }
-    });
-    
-    return scores;
-  }, [students, rules, periodFilter, customStartDate, customEndDate]);
 
   // filteredStudentsWithScores를 기반으로 한 studentRuleScores 계산
   const filteredStudentRuleScores = useMemo(() => {
-    console.log('🔄 filteredStudentRuleScores 계산 시작');
     const scores = {};
     
     // 기간별 필터링된 점수 계산
@@ -921,7 +834,6 @@ const App = () => {
     };
 
     const dateRange = getDateRange();
-    console.log('📆 filteredStudentRuleScores dateRange:', dateRange);
     
     // filteredStudentsWithScores를 기반으로 계산
     filteredStudentsWithScores.forEach(student => {
@@ -958,11 +870,7 @@ const App = () => {
         });
       }
       
-      // 디버깅: 각 학생의 점수 계산 결과 확인
-      console.log(`👤 ${student.name}: scores[${student.id}] =`, scores[student.id]);
     });
-    
-    console.log('✅ filteredStudentRuleScores 결과:', scores);
     return scores;
   }, [filteredStudentsWithScores, rules, periodFilter, customStartDate, customEndDate]);
   
@@ -1426,7 +1334,7 @@ const App = () => {
                     </td>
                     <td className="px-1 sm:px-2 md:px-3 py-2 sm:py-4 whitespace-nowrap text-sm text-center">
                       <div className="w-12 sm:w-24 md:w-32 lg:w-40 mx-auto">
-                        <RuleScoreBar student={student} rules={rules} studentRuleScores={studentRuleScores} />
+                        <RuleScoreBar student={student} rules={rules} studentRuleScores={filteredStudentRuleScores} />
                       </div>
                     </td>
                   </tr>
@@ -1821,7 +1729,7 @@ const App = () => {
             
             const rankedByRule = [...students].map(s => ({
               ...s,
-              ruleScore: studentRuleScores[s.id]?.[rule.id] || 0
+              ruleScore: filteredStudentRuleScores[s.id]?.[rule.id] || 0
             })).sort((a, b) => {
               if (b.ruleScore !== a.ruleScore) return b.ruleScore - a.ruleScore;
               if (a.grade !== b.grade) return a.grade - b.grade;
