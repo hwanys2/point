@@ -247,7 +247,7 @@ router.put('/profile', auth, [
     }
 
     // 업데이트된 사용자 정보 조회
-    const updatedUserResult = await pool.query('SELECT id, username, email, school_name, role FROM users WHERE id = $1', [userId]);
+    const updatedUserResult = await pool.query('SELECT id, username, email, school_name FROM users WHERE id = $1', [userId]);
     const updatedUser = updatedUserResult.rows[0];
 
     res.json({
@@ -256,8 +256,7 @@ router.put('/profile', auth, [
         id: updatedUser.id,
         username: updatedUser.username,
         email: updatedUser.email,
-        schoolName: updatedUser.school_name,
-        role: updatedUser.role
+        schoolName: updatedUser.school_name
       }
     });
   } catch (error) {
