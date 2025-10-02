@@ -1889,7 +1889,7 @@ const App = () => {
           <p className="text-gray-700">새 규칙을 등록하여 학급 관리 시스템을 시작하세요.</p>
         </div>
       ) : (
-        <div className="space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {rules.map((rule) => {
             const RuleIcon = getIconComponent(rule.iconId);
             
