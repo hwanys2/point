@@ -2163,9 +2163,7 @@ const App = () => {
                     className={`flex items-center gap-2 px-3 py-2 rounded-md transition-all ${
                       currentClassroom?.id === classroom.id
                         ? 'bg-indigo-500 text-white shadow-md'
-                        : classrooms.length > 1 
-                          ? 'bg-gray-50 text-gray-700 hover:bg-indigo-50 hover:text-indigo-600'
-                          : 'bg-indigo-500 text-white shadow-md'
+                        : 'bg-gray-50 text-gray-700 hover:bg-indigo-50 hover:text-indigo-600'
                     }`}
                   >
                     {/* 기본 학급 별표 */}
