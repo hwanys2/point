@@ -957,6 +957,9 @@ const App = () => {
           }
         });
       }
+      
+      // 디버깅: 각 학생의 점수 계산 결과 확인
+      console.log(`👤 ${student.name}: scores[${student.id}] =`, scores[student.id]);
     });
     
     console.log('✅ filteredStudentRuleScores 결과:', scores);
