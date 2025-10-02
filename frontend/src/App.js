@@ -374,12 +374,12 @@ const RuleScoreBar = ({ student, rules, studentRuleScores }) => {
 
 const AllStudentsRuleComparison = ({ students, rules, studentRuleScores }) => {
   const maxScore = useMemo(() => {
-    const scores = students.map(s => s.periodScore || s.score);
+    const scores = students.map(s => s.periodScore || 0);
     const actualMax = Math.max(...scores);
     return actualMax > 0 ? actualMax : 1; // 실제 최대값이 0보다 클 때만 사용
   }, [students]);
 
-  if (students.length === 0 || rules.length === 0 || students.every(s => (s.periodScore || s.score) === 0)) {
+  if (students.length === 0 || rules.length === 0 || students.every(s => (s.periodScore || 0) === 0)) {
     return (
       <div className="text-center p-8 text-gray-500 bg-white rounded-xl shadow-lg h-full flex items-center justify-center border border-gray-100">
         <p>등록된 학생이 없거나 규칙/점수가 부여되지 않았습니다.</p>
@@ -409,7 +409,7 @@ const AllStudentsRuleComparison = ({ students, rules, studentRuleScores }) => {
       
       <div className="space-y-6">
         {sortedStudents.map(student => {
-          const totalScore = student.periodScore || student.score || 0;
+          const totalScore = student.periodScore || 0;
           
           if (totalScore === 0) return null;
           
@@ -738,7 +738,6 @@ const App = () => {
     };
 
     const dateRange = getDateRange();
-    console.log('🔍 dateRange:', dateRange);
 
     const result = students.map(student => {
       let periodScore = 0;
@@ -763,7 +762,15 @@ const App = () => {
         });
       }
 
-      return { ...student, periodScore, dailyScores: filteredDailyScores };
+      // 명시적으로 dailyScores를 덮어쓰기
+      const filteredStudent = { 
+        ...student, 
+        periodScore, 
+        dailyScores: filteredDailyScores 
+      };
+      
+      
+      return filteredStudent;
     });
     
     return result;
@@ -796,8 +803,6 @@ const App = () => {
     filteredStudentsWithScores.forEach(student => {
       scores[student.id] = {};
       
-      // 디버깅: 각 학생의 필터링된 dailyScores 확인
-      console.log(`🔍 ${student.name}: periodScore=${student.periodScore}, dailyScores=`, student.dailyScores);
       
       // 이미 필터링된 dailyScores 사용
       const daily = student.dailyScores || {};
@@ -813,8 +818,6 @@ const App = () => {
         }
       });
       
-      // 디버깅: 계산된 점수 확인
-      console.log(`📊 ${student.name}: scores[${student.id}] =`, scores[student.id]);
     });
     return scores;
   }, [filteredStudentsWithScores, rules]);
