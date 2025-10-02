@@ -50,11 +50,12 @@ const PublicRuleComparison = ({ students, rules }) => {
     return actualMax > 0 ? actualMax : 1; // 실제 최대값이 0보다 클 때만 사용
   }, [students]);
 
-  // 각 학생의 규칙별 점수 계산 - dailyScores[date][ruleId] = { value, ruleName, ... }
+  // 각 학생의 규칙별 점수 계산 - 백엔드에서 이미 필터링된 dailyScores 사용
   const studentRuleScores = useMemo(() => {
     const scores = {};
     students.forEach(student => {
       scores[student.id] = {};
+      // 백엔드에서 이미 필터링된 dailyScores만 사용
       Object.values(student.dailyScores || {}).forEach(dayScores => {
         Object.entries(dayScores).forEach(([ruleId, scoreEntry]) => {
           // scoreEntry가 객체인 경우 value 속성 사용, 아니면 직접 값 사용

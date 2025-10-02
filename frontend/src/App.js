@@ -697,9 +697,6 @@ const App = () => {
 
   // 기간별 필터링된 학생 점수 계산
   const filteredStudentsWithScores = useMemo(() => {
-    console.log('🔄 filteredStudentsWithScores 계산 시작');
-    console.log('📅 periodFilter:', periodFilter);
-    console.log('👥 students:', students);
     
     const getDateRange = () => {
       const today = new Date();
@@ -741,19 +738,20 @@ const App = () => {
     };
 
     const dateRange = getDateRange();
-    console.log('📆 dateRange:', dateRange);
 
     const result = students.map(student => {
       let periodScore = 0;
+      let filteredDailyScores = {};
       
       if (dateRange === null) {
         // 전체 기간
         periodScore = student.score;
-        console.log(`👤 ${student.name}: 전체 기간 점수 = ${periodScore}`);
+        filteredDailyScores = student.dailyScores;
       } else {
         // 특정 기간 - dailyScores 구조 처리 (숫자 또는 객체)
         dateRange.forEach(date => {
           if (student.dailyScores[date]) {
+            filteredDailyScores[date] = student.dailyScores[date];
             Object.values(student.dailyScores[date]).forEach(scoreData => {
               // scoreData가 객체인 경우 value 속성 사용, 아니면 직접 값 사용
               const scoreValue = typeof scoreData === 'object' ? scoreData.value : scoreData;
@@ -761,13 +759,11 @@ const App = () => {
             });
           }
         });
-        console.log(`👤 ${student.name}: ${periodFilter} 기간 점수 = ${periodScore}, dailyScores:`, student.dailyScores);
       }
 
-      return { ...student, periodScore };
+      return { ...student, periodScore, dailyScores: filteredDailyScores };
     });
     
-    console.log('✅ filteredStudentsWithScores 결과:', result);
     return result;
   }, [students, periodFilter, customStartDate, customEndDate]);
 
@@ -835,41 +831,23 @@ const App = () => {
 
     const dateRange = getDateRange();
     
-    // filteredStudentsWithScores를 기반으로 계산
+    // filteredStudentsWithScores를 기반으로 계산 (이미 필터링된 dailyScores 사용)
     filteredStudentsWithScores.forEach(student => {
       scores[student.id] = {};
       
-      if (dateRange === null) {
-        // 전체 기간 - 모든 날짜 포함
-        const daily = student.dailyScores || {};
-        Object.keys(daily).forEach(dateStr => {
-          const dailyEntry = daily[dateStr];
-          for (const ruleId in dailyEntry) {
-            const scoreData = dailyEntry[ruleId];
-            const scoreValue = typeof scoreData === 'object' ? scoreData.value : scoreData;
-            
-            if (rules.some(r => r.id === parseInt(ruleId, 10)) && scoreValue === 1) {
-              scores[student.id][ruleId] = (scores[student.id][ruleId] || 0) + 1;
-            }
+      // 이미 필터링된 dailyScores 사용
+      const daily = student.dailyScores || {};
+      Object.keys(daily).forEach(dateStr => {
+        const dailyEntry = daily[dateStr];
+        for (const ruleId in dailyEntry) {
+          const scoreData = dailyEntry[ruleId];
+          const scoreValue = typeof scoreData === 'object' ? scoreData.value : scoreData;
+          
+          if (rules.some(r => r.id === parseInt(ruleId, 10)) && scoreValue === 1) {
+            scores[student.id][ruleId] = (scores[student.id][ruleId] || 0) + 1;
           }
-        });
-      } else {
-        // 특정 기간 - dateRange에 포함된 날짜만
-        dateRange.forEach(dateStr => {
-          if (student.dailyScores && student.dailyScores[dateStr]) {
-            const dailyEntry = student.dailyScores[dateStr];
-            for (const ruleId in dailyEntry) {
-              const scoreData = dailyEntry[ruleId];
-              const scoreValue = typeof scoreData === 'object' ? scoreData.value : scoreData;
-              
-              if (rules.some(r => r.id === parseInt(ruleId, 10)) && scoreValue === 1) {
-                scores[student.id][ruleId] = (scores[student.id][ruleId] || 0) + 1;
-              }
-            }
-          }
-        });
-      }
-      
+        }
+      });
     });
     return scores;
   }, [filteredStudentsWithScores, rules, periodFilter, customStartDate, customEndDate]);
