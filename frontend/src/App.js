@@ -815,7 +815,7 @@ const App = () => {
       console.log(`📊 ${student.name}: scores[${student.id}] =`, scores[student.id]);
     });
     return scores;
-  }, [filteredStudentsWithScores, rules, periodFilter, customStartDate, customEndDate]);
+  }, [filteredStudentsWithScores, rules]);
   
   const handleAddStudent = async (e) => {
     e.preventDefault();
