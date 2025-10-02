@@ -723,17 +723,31 @@ const App = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // 현재 학급이 변경되면 해당 학급의 학생과 규칙 다시 로드
+  // 현재 학급이 변경되면 해당 학급의 학생, 규칙, 학생관리자 다시 로드
   useEffect(() => {
     if (currentClassroom && user) {
       const reloadClassroomData = async () => {
         try {
-          const [studentsRes, rulesRes] = await Promise.all([
+          const promises = [
             studentsAPI.getAll({ params: { classroomId: currentClassroom.id } }),
             rulesAPI.getAll({ params: { classroomId: currentClassroom.id } })
-          ]);
-          setStudents(studentsRes.data);
-          setRules(rulesRes.data);
+          ];
+          
+          // 교사인 경우에만 학생관리자 목록도 로드
+          if (user.role === 'teacher') {
+            promises.push(
+              studentManagersAPI.getAll({ params: { classroomId: currentClassroom.id } })
+            );
+          }
+          
+          const results = await Promise.all(promises);
+          setStudents(results[0].data);
+          setRules(results[1].data);
+          
+          // 교사인 경우 학생관리자 목록도 업데이트
+          if (user.role === 'teacher' && results[2]) {
+            setManagers(results[2].data);
+          }
         } catch (err) {
           console.error('Reload classroom data error:', err);
           setError('학급 데이터를 불러오는 중 오류가 발생했습니다.');
