@@ -189,21 +189,31 @@ router.put('/profile', auth, [
   body('newPassword').optional().isLength({ min: 6 }).withMessage('새 비밀번호는 최소 6자 이상이어야 합니다.')
 ], async (req, res) => {
   try {
+    console.log('Update profile request:', req.body);
+    
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.log('Validation errors:', errors.array());
       return res.status(400).json({ errors: errors.array() });
     }
 
     const { schoolName, currentPassword, newPassword } = req.body;
     const userId = req.userId;
+    
+    console.log('User ID:', userId, 'School Name:', schoolName);
 
     // 사용자 정보 조회
+    console.log('Querying user with ID:', userId);
     const userResult = await pool.query('SELECT * FROM users WHERE id = $1', [userId]);
+    console.log('User query result:', userResult.rows.length, 'rows');
+    
     if (userResult.rows.length === 0) {
+      console.log('User not found');
       return res.status(404).json({ error: '사용자를 찾을 수 없습니다.' });
     }
 
     const user = userResult.rows[0];
+    console.log('Found user:', user.username);
 
     // 비밀번호 변경이 있는 경우 현재 비밀번호 확인
     if (newPassword) {
@@ -228,10 +238,12 @@ router.put('/profile', auth, [
 
     // 학교명 업데이트
     if (schoolName !== undefined) {
+      console.log('Updating school name to:', schoolName);
       await pool.query(
         'UPDATE users SET school_name = $1 WHERE id = $2',
         [schoolName, userId]
       );
+      console.log('School name updated successfully');
     }
 
     // 업데이트된 사용자 정보 조회
@@ -250,7 +262,11 @@ router.put('/profile', auth, [
     });
   } catch (error) {
     console.error('Update profile error:', error);
-    res.status(500).json({ error: '사용자 정보 수정 중 오류가 발생했습니다.' });
+    console.error('Error stack:', error.stack);
+    res.status(500).json({ 
+      error: '사용자 정보 수정 중 오류가 발생했습니다.',
+      details: error.message 
+    });
   }
 });
 
