@@ -2206,8 +2206,7 @@ const App = () => {
                     )}
                   </button>
                 </div>
-                ))
-              )}
+              ))}
               
               {/* 학급 추가 버튼 (교사만) */}
               {user?.role === 'teacher' && (
