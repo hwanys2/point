@@ -758,7 +758,7 @@ const App = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentClassroom?.id]);
 
-  const loadData = useCallback(async () => {
+  const loadData = async () => {
     try {
       setIsLoading(true);
       const savedUser = JSON.parse(localStorage.getItem('user') || '{}');
@@ -840,7 +840,7 @@ const App = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [defaultSettings]);
+  };
 
   const handleLogin = (userData) => {
     setUser(userData);
