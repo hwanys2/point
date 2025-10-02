@@ -250,6 +250,146 @@ const EditClassroomModal = ({ classroom, onClose, onUpdate, onDelete }) => {
   );
 };
 
+// 사용자 정보 수정 모달 컴포넌트
+const EditUserModal = ({ user, onClose, onUpdate }) => {
+  const [formData, setFormData] = useState({
+    username: user?.username || '',
+    schoolName: user?.schoolName || '',
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      // 비밀번호 변경이 있는 경우 확인
+      if (formData.newPassword && formData.newPassword !== formData.confirmPassword) {
+        setError('새 비밀번호가 일치하지 않습니다.');
+        return;
+      }
+
+      const updateData = {
+        username: formData.username,
+        schoolName: formData.schoolName
+      };
+
+      // 비밀번호 변경이 있는 경우에만 포함
+      if (formData.newPassword) {
+        updateData.currentPassword = formData.currentPassword;
+        updateData.newPassword = formData.newPassword;
+      }
+
+      await authAPI.updateProfile(updateData);
+      onUpdate(updateData);
+      onClose();
+    } catch (err) {
+      setError(err.response?.data?.error || '정보 수정 중 오류가 발생했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md">
+        <h3 className="text-xl font-bold mb-4 flex items-center text-indigo-600">
+          <User className="w-5 h-5 mr-2" /> 사용자 정보 수정
+        </h3>
+        
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">아이디</label>
+            <input
+              type="text"
+              value={formData.username}
+              onChange={(e) => setFormData(prev => ({ ...prev, username: e.target.value }))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">학교명</label>
+            <input
+              type="text"
+              value={formData.schoolName}
+              onChange={(e) => setFormData(prev => ({ ...prev, schoolName: e.target.value }))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              placeholder="선택사항"
+            />
+          </div>
+
+          <div className="border-t pt-4">
+            <h4 className="text-sm font-medium text-gray-700 mb-3">비밀번호 변경 (선택사항)</h4>
+            
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">현재 비밀번호</label>
+                <input
+                  type="password"
+                  value={formData.currentPassword}
+                  onChange={(e) => setFormData(prev => ({ ...prev, currentPassword: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  placeholder="비밀번호 변경 시에만 입력"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">새 비밀번호</label>
+                <input
+                  type="password"
+                  value={formData.newPassword}
+                  onChange={(e) => setFormData(prev => ({ ...prev, newPassword: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  placeholder="새 비밀번호"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">새 비밀번호 확인</label>
+                <input
+                  type="password"
+                  value={formData.confirmPassword}
+                  onChange={(e) => setFormData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  placeholder="새 비밀번호 확인"
+                />
+              </div>
+            </div>
+          </div>
+
+          {error && (
+            <div className="text-red-600 text-sm">{error}</div>
+          )}
+
+          <div className="flex gap-3 pt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition"
+            >
+              취소
+            </button>
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="flex-1 px-4 py-2 bg-indigo-600 text-white hover:bg-indigo-700 rounded-lg transition disabled:opacity-50"
+            >
+              {isLoading ? '수정 중...' : '수정'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
 // 토스트 알림 컴포넌트
 const Toast = ({ toast, onClose }) => {
   useEffect(() => {
@@ -528,6 +668,7 @@ const App = () => {
   const [newStudentInfo, setNewStudentInfo] = useState({ grade: 1, classNum: 1, studentNum: 1, name: '' });
   const [toast, setToast] = useState(null);
   const [editingStudent, setEditingStudent] = useState(null);
+  const [editingUser, setEditingUser] = useState(null);
   const [currentRule, setCurrentRule] = useState({ name: '', iconId: 'Clock', color: '#4f46e5' });
   const [editingRuleId, setEditingRuleId] = useState(null);
   const [appSettings, setAppSettings] = useState(defaultSettings);
@@ -718,6 +859,16 @@ const App = () => {
     setUser(null);
     setStudents([]);
     setRules([]);
+  };
+
+  const handleUpdateUser = (updatedData) => {
+    setUser(prev => ({ ...prev, ...updatedData }));
+    
+    // 성공 토스트 알림
+    setToast({
+      type: 'success',
+      message: '사용자 정보가 수정되었습니다.'
+    });
   };
 
   // 역할에 따라 허용된 규칙만 필터링
@@ -1952,6 +2103,14 @@ const App = () => {
         console.log('Rendering EditClassroomModal with classroom:', editingClassroom);
         return <EditClassroomModal classroom={editingClassroom} onClose={() => setEditingClassroom(null)} onUpdate={handleUpdateClassroom} onDelete={handleDeleteClassroom} />;
       })()}
+      
+      {editingUser && (
+        <EditUserModal 
+          user={editingUser} 
+          onClose={() => setEditingUser(null)} 
+          onUpdate={handleUpdateUser} 
+        />
+      )}
 
       <header className="text-center mb-4 sm:mb-8">
         <div className="flex flex-col items-center justify-center pt-4 sm:pt-6">
@@ -2033,19 +2192,30 @@ const App = () => {
             </div>
           </div>
         )}
+        
+        {/* 사용자 정보 및 로그아웃 - 헤더 우측 상단 */}
+        <div className="flex justify-end items-center mb-4">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-600">{user.username}</span>
+            <button
+              onClick={() => setEditingUser(user)}
+              className="inline-flex items-center px-3 py-1.5 text-sm text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
+              title="사용자 정보 수정"
+            >
+              <User className="w-4 h-4 mr-1" /> 정보수정
+            </button>
+            <button
+              onClick={handleLogout}
+              className="inline-flex items-center px-3 py-1.5 text-sm text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+              title="로그아웃"
+            >
+              <LogOut className="w-4 h-4 mr-1" /> 로그아웃
+            </button>
+          </div>
+        </div>
       </header>
 
       <div className="max-w-7xl mx-auto">
-        {/* 로그아웃 버튼 - 콘텐츠 영역 오른쪽 정렬 */}
-        <div className="flex justify-end mb-4">
-          <button
-            onClick={handleLogout}
-            className="inline-flex items-center px-3 py-1.5 text-sm text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
-            title="로그아웃"
-          >
-            <LogOut className="w-4 h-4 mr-1" /> {user.username}
-          </button>
-        </div>
         <div className="flex border-b border-gray-200 mb-6 sticky top-0 bg-white z-10 shadow-sm rounded-t-xl overflow-x-auto">
           {visibleTabs.map(tab => {
             const TabIcon = tab.icon;

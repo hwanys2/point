@@ -182,4 +182,103 @@ router.get('/me', auth, async (req, res) => {
   }
 });
 
+// 사용자 정보 수정
+router.put('/profile', auth, [
+  body('username').optional().trim().isLength({ min: 3, max: 50 }).withMessage('사용자명은 3-50자여야 합니다.'),
+  body('schoolName').optional().trim(),
+  body('currentPassword').optional().isLength({ min: 6 }).withMessage('현재 비밀번호는 최소 6자 이상이어야 합니다.'),
+  body('newPassword').optional().isLength({ min: 6 }).withMessage('새 비밀번호는 최소 6자 이상이어야 합니다.')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { username, schoolName, currentPassword, newPassword } = req.body;
+    const userId = req.userId;
+
+    // 사용자 정보 조회
+    const userResult = await pool.query('SELECT * FROM users WHERE id = $1', [userId]);
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ error: '사용자를 찾을 수 없습니다.' });
+    }
+
+    const user = userResult.rows[0];
+
+    // 비밀번호 변경이 있는 경우 현재 비밀번호 확인
+    if (newPassword) {
+      if (!currentPassword) {
+        return res.status(400).json({ error: '현재 비밀번호를 입력하세요.' });
+      }
+
+      const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password);
+      if (!isCurrentPasswordValid) {
+        return res.status(400).json({ error: '현재 비밀번호가 올바르지 않습니다.' });
+      }
+
+      // 새 비밀번호 해시화
+      const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+      
+      // 비밀번호 업데이트
+      await pool.query(
+        'UPDATE users SET password = $1 WHERE id = $2',
+        [hashedNewPassword, userId]
+      );
+    }
+
+    // 사용자명과 학교명 업데이트
+    const updateFields = [];
+    const updateValues = [];
+    let paramIndex = 1;
+
+    if (username && username !== user.username) {
+      // 사용자명 중복 확인
+      const existingUser = await pool.query(
+        'SELECT * FROM users WHERE username = $1 AND id != $2',
+        [username, userId]
+      );
+      if (existingUser.rows.length > 0) {
+        return res.status(400).json({ error: '이미 사용 중인 사용자명입니다.' });
+      }
+      
+      updateFields.push(`username = $${paramIndex}`);
+      updateValues.push(username);
+      paramIndex++;
+    }
+
+    if (schoolName !== undefined) {
+      updateFields.push(`school_name = $${paramIndex}`);
+      updateValues.push(schoolName);
+      paramIndex++;
+    }
+
+    if (updateFields.length > 0) {
+      updateValues.push(userId);
+      await pool.query(
+        `UPDATE users SET ${updateFields.join(', ')} WHERE id = $${paramIndex}`,
+        updateValues
+      );
+    }
+
+    // 업데이트된 사용자 정보 조회
+    const updatedUserResult = await pool.query('SELECT id, username, email, school_name, role FROM users WHERE id = $1', [userId]);
+    const updatedUser = updatedUserResult.rows[0];
+
+    res.json({
+      message: '사용자 정보가 수정되었습니다.',
+      user: {
+        id: updatedUser.id,
+        username: updatedUser.username,
+        email: updatedUser.email,
+        schoolName: updatedUser.school_name,
+        role: updatedUser.role
+      }
+    });
+  } catch (error) {
+    console.error('Update profile error:', error);
+    res.status(500).json({ error: '사용자 정보 수정 중 오류가 발생했습니다.' });
+  }
+});
+
 module.exports = router;
