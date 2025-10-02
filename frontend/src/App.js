@@ -635,13 +635,13 @@ const AllStudentsRuleComparison = ({ students, rules, studentRuleScores }) => {
 // --- Main App Component ---
 
 const App = () => {
-  const defaultSettings = {
+  const defaultSettings = useMemo(() => ({
     title: '학급 관리 시스템',
     subtitle: '학년/반/번호 기반 관리 및 실시간 점수 순위표',
     iconId: 'Award',
     iconColor: '#4f46e5',
     font: "'Noto Sans KR', sans-serif",
-  };
+  }), []);
 
   const [user, setUser] = useState(null);
   const [classrooms, setClassrooms] = useState([]);
