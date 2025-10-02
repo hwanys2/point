@@ -2144,11 +2144,16 @@ const App = () => {
           />
         </div>
         
-        {/* 학급 선택 탭 (교사만, 학급이 2개 이상일 때) */}
-        {user?.role === 'teacher' && classrooms.length > 1 && (
+        {/* 학급 선택 탭 (교사만, 학급이 1개 이상일 때) */}
+        {user?.role === 'teacher' && classrooms.length > 0 && (
           <div className="mt-4 flex justify-center">
             <div className="flex flex-wrap gap-2 bg-white rounded-lg p-1 shadow-md border">
-              {classrooms.map(classroom => (
+              {classrooms.length === 1 ? (
+                <div className="text-xs text-gray-500 px-2 py-1 bg-gray-50 rounded">
+                  현재 학급: {classrooms[0].name}
+                </div>
+              ) : (
+                classrooms.map(classroom => (
                 <div key={classroom.id} className="relative group">
                   <button
                     onClick={() => {
@@ -2199,7 +2204,8 @@ const App = () => {
                     )}
                   </button>
                 </div>
-              ))}
+                ))
+              )}
               
               {/* 학급 추가 버튼 (교사만) */}
               {user?.role === 'teacher' && (

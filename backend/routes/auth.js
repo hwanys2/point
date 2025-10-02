@@ -59,7 +59,8 @@ router.post('/register', [
         id: user.id,
         username: user.username,
         email: user.email,
-        schoolName: user.school_name
+        schoolName: user.school_name,
+        role: 'teacher'  // 회원가입 시 교사 역할로 명시적 설정
       }
     });
   } catch (error) {
