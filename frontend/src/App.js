@@ -842,7 +842,7 @@ const App = () => {
         classroomId: currentClassroom.id 
       });
       setStudents([...students, response.data]);
-      setNewStudentInfo({ grade: 1, classNum: 1, studentNum: 1, name: '' });
+      setNewStudentInfo({ grade, classNum, studentNum, name: '' });
     } catch (err) {
       console.error('Add student error:', err);
       setError(err.response?.data?.error || '학생 추가 중 오류가 발생했습니다.');
