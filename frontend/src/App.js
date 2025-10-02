@@ -738,6 +738,7 @@ const App = () => {
     };
 
     const dateRange = getDateRange();
+    console.log('🔍 dateRange:', dateRange);
 
     const result = students.map(student => {
       let periodScore = 0;
@@ -751,6 +752,7 @@ const App = () => {
         // 특정 기간 - dailyScores 구조 처리 (숫자 또는 객체)
         dateRange.forEach(date => {
           if (student.dailyScores[date]) {
+            // 해당 날짜의 데이터만 필터링
             filteredDailyScores[date] = student.dailyScores[date];
             Object.values(student.dailyScores[date]).forEach(scoreData => {
               // scoreData가 객체인 경우 value 속성 사용, 아니면 직접 값 사용
