@@ -253,7 +253,6 @@ const EditClassroomModal = ({ classroom, onClose, onUpdate, onDelete }) => {
 // 사용자 정보 수정 모달 컴포넌트
 const EditUserModal = ({ user, onClose, onUpdate }) => {
   const [formData, setFormData] = useState({
-    username: user?.username || '',
     schoolName: user?.schoolName || '',
     currentPassword: '',
     newPassword: '',
@@ -275,7 +274,6 @@ const EditUserModal = ({ user, onClose, onUpdate }) => {
       }
 
       const updateData = {
-        username: formData.username,
         schoolName: formData.schoolName
       };
 
@@ -303,17 +301,6 @@ const EditUserModal = ({ user, onClose, onUpdate }) => {
         </h3>
         
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">아이디</label>
-            <input
-              type="text"
-              value={formData.username}
-              onChange={(e) => setFormData(prev => ({ ...prev, username: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-              required
-            />
-          </div>
-
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">학교명</label>
             <input
@@ -2112,6 +2099,28 @@ const App = () => {
         />
       )}
 
+      {/* 사용자 정보 - 최상단 우측 */}
+      <div className="max-w-7xl mx-auto px-4 py-2">
+        <div className="flex justify-end">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setEditingUser(user)}
+              className="inline-flex items-center px-3 py-1.5 text-sm text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
+              title="사용자 정보 수정"
+            >
+              <User className="w-4 h-4 mr-1" /> 정보수정
+            </button>
+            <button
+              onClick={handleLogout}
+              className="inline-flex items-center px-3 py-1.5 text-sm text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+              title="로그아웃"
+            >
+              <LogOut className="w-4 h-4 mr-1" /> 로그아웃
+            </button>
+          </div>
+        </div>
+      </div>
+
       <header className="text-center mb-4 sm:mb-8">
         <div className="flex flex-col items-center justify-center pt-4 sm:pt-6">
           <img 
@@ -2192,27 +2201,6 @@ const App = () => {
             </div>
           </div>
         )}
-        
-        {/* 사용자 정보 및 로그아웃 - 헤더 우측 상단 */}
-        <div className="flex justify-end items-center mb-4">
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-600">{user.username}</span>
-            <button
-              onClick={() => setEditingUser(user)}
-              className="inline-flex items-center px-3 py-1.5 text-sm text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
-              title="사용자 정보 수정"
-            >
-              <User className="w-4 h-4 mr-1" /> 정보수정
-            </button>
-            <button
-              onClick={handleLogout}
-              className="inline-flex items-center px-3 py-1.5 text-sm text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
-              title="로그아웃"
-            >
-              <LogOut className="w-4 h-4 mr-1" /> 로그아웃
-            </button>
-          </div>
-        </div>
       </header>
 
       <div className="max-w-7xl mx-auto">

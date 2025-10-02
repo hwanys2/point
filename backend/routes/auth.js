@@ -184,7 +184,6 @@ router.get('/me', auth, async (req, res) => {
 
 // 사용자 정보 수정
 router.put('/profile', auth, [
-  body('username').optional().trim().isLength({ min: 3, max: 50 }).withMessage('사용자명은 3-50자여야 합니다.'),
   body('schoolName').optional().trim(),
   body('currentPassword').optional().isLength({ min: 6 }).withMessage('현재 비밀번호는 최소 6자 이상이어야 합니다.'),
   body('newPassword').optional().isLength({ min: 6 }).withMessage('새 비밀번호는 최소 6자 이상이어야 합니다.')
@@ -195,7 +194,7 @@ router.put('/profile', auth, [
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { username, schoolName, currentPassword, newPassword } = req.body;
+    const { schoolName, currentPassword, newPassword } = req.body;
     const userId = req.userId;
 
     // 사용자 정보 조회
@@ -227,37 +226,11 @@ router.put('/profile', auth, [
       );
     }
 
-    // 사용자명과 학교명 업데이트
-    const updateFields = [];
-    const updateValues = [];
-    let paramIndex = 1;
-
-    if (username && username !== user.username) {
-      // 사용자명 중복 확인
-      const existingUser = await pool.query(
-        'SELECT * FROM users WHERE username = $1 AND id != $2',
-        [username, userId]
-      );
-      if (existingUser.rows.length > 0) {
-        return res.status(400).json({ error: '이미 사용 중인 사용자명입니다.' });
-      }
-      
-      updateFields.push(`username = $${paramIndex}`);
-      updateValues.push(username);
-      paramIndex++;
-    }
-
+    // 학교명 업데이트
     if (schoolName !== undefined) {
-      updateFields.push(`school_name = $${paramIndex}`);
-      updateValues.push(schoolName);
-      paramIndex++;
-    }
-
-    if (updateFields.length > 0) {
-      updateValues.push(userId);
       await pool.query(
-        `UPDATE users SET ${updateFields.join(', ')} WHERE id = $${paramIndex}`,
-        updateValues
+        'UPDATE users SET school_name = $1 WHERE id = $2',
+        [schoolName, userId]
       );
     }
 
