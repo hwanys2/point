@@ -923,7 +923,8 @@ const App = () => {
     const dateRange = getDateRange();
     console.log('📆 filteredStudentRuleScores dateRange:', dateRange);
     
-    students.forEach(student => {
+    // filteredStudentsWithScores를 기반으로 계산
+    filteredStudentsWithScores.forEach(student => {
       scores[student.id] = {};
       
       if (dateRange === null) {
