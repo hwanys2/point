@@ -772,64 +772,89 @@ const App = () => {
   
   const studentRuleScores = useMemo(() => {
     const scores = {};
-    // 기간 날짜 목록 계산
-    const buildDateSet = () => {
-      const set = new Set();
-      if (periodFilter === 'all') {
-        // include all dates present in data
-        students.forEach(s => {
-          Object.keys(s.dailyScores || {}).forEach(d => set.add(d));
-        });
-        return set;
-      }
-      if (periodFilter === 'daily') {
-        set.add(getTodayDate());
-        return set;
-      }
-      if (periodFilter === 'weekly' || periodFilter === 'monthly') {
-        const days = periodFilter === 'weekly' ? 7 : 30;
-        const today = new Date(getTodayDate());
-        for (let i = 0; i < days; i++) {
-          const d = new Date(today);
-          d.setDate(today.getDate() - i);
-          const y = d.getFullYear();
-          const m = String(d.getMonth() + 1).padStart(2, '0');
-          const day = String(d.getDate()).padStart(2, '0');
-          set.add(`${y}-${m}-${day}`);
+    
+    // filteredStudentsWithScores와 동일한 기간 계산 로직 사용
+    const getDateRange = () => {
+      const today = new Date();
+      const todayStr = getTodayDate();
+      
+      switch (periodFilter) {
+        case 'daily':
+          return [todayStr];
+        case 'weekly': {
+          const dates = [];
+          for (let i = 0; i < 7; i++) {
+            const d = new Date(today);
+            d.setDate(d.getDate() - i);
+            dates.push(d.toISOString().split('T')[0]);
+          }
+          return dates;
         }
-        return set;
+        case 'monthly': {
+          const dates = [];
+          for (let i = 0; i < 30; i++) {
+            const d = new Date(today);
+            d.setDate(d.getDate() - i);
+            dates.push(d.toISOString().split('T')[0]);
+          }
+          return dates;
+        }
+        case 'custom': {
+          const dates = [];
+          const start = new Date(customStartDate);
+          const end = new Date(customEndDate);
+          for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+            dates.push(d.toISOString().split('T')[0]);
+          }
+          return dates;
+        }
+        default: // 'all'
+          return null;
       }
-      // custom
-      const start = new Date(customStartDate);
-      const end = new Date(customEndDate);
-      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-        const y = d.getFullYear();
-        const m = String(d.getMonth() + 1).padStart(2, '0');
-        const day = String(d.getDate()).padStart(2, '0');
-        set.add(`${y}-${m}-${day}`);
-      }
-      return set;
     };
 
-    const allowedDates = buildDateSet();
+    const dateRange = getDateRange();
 
     students.forEach(student => {
       scores[student.id] = {};
-      const daily = student.dailyScores || {};
-      Object.keys(daily).forEach(dateStr => {
-        if (!allowedDates.has(dateStr)) return;
-        const dailyEntry = daily[dateStr];
-        for (const ruleId in dailyEntry) {
-          // dailyEntry[ruleId]가 객체인 경우 value 속성 사용, 아니면 직접 값 사용
-          const scoreData = dailyEntry[ruleId];
-          const scoreValue = typeof scoreData === 'object' ? scoreData.value : scoreData;
-          
-          if (rules.some(r => r.id === parseInt(ruleId, 10)) && scoreValue === 1) {
-            scores[student.id][ruleId] = (scores[student.id][ruleId] || 0) + 1;
+      
+      if (dateRange === null) {
+        // 전체 기간 - 모든 날짜 포함
+        const daily = student.dailyScores || {};
+        Object.keys(daily).forEach(dateStr => {
+          const dailyEntry = daily[dateStr];
+          for (const ruleId in dailyEntry) {
+            const scoreData = dailyEntry[ruleId];
+            const scoreValue = typeof scoreData === 'object' ? scoreData.value : scoreData;
+            
+            if (rules.some(r => r.id === parseInt(ruleId, 10)) && scoreValue === 1) {
+              scores[student.id][ruleId] = (scores[student.id][ruleId] || 0) + 1;
+            }
           }
-        }
-      });
+        });
+      } else {
+        // 특정 기간
+        dateRange.forEach(dateStr => {
+          if (student.dailyScores && student.dailyScores[dateStr]) {
+            const dailyEntry = student.dailyScores[dateStr];
+            for (const ruleId in dailyEntry) {
+              const scoreData = dailyEntry[ruleId];
+              const scoreValue = typeof scoreData === 'object' ? scoreData.value : scoreData;
+              
+              if (rules.some(r => r.id === parseInt(ruleId, 10)) && scoreValue === 1) {
+                scores[student.id][ruleId] = (scores[student.id][ruleId] || 0) + 1;
+              }
+            }
+          }
+        });
+      }
     });
+    
+    // 디버깅을 위한 로그
+    console.log('studentRuleScores calculated:', scores);
+    console.log('periodFilter:', periodFilter);
+    console.log('dateRange:', dateRange);
+    
     return scores;
   }, [students, rules, periodFilter, customStartDate, customEndDate]);
   
