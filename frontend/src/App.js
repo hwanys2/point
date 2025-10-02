@@ -1133,7 +1133,7 @@ const App = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [students]);
+  }, [students, loadData]);
 
   const handleBulkClearRule = useCallback(async (ruleId, date) => {
     if (!Array.isArray(students) || students.length === 0) return;
@@ -1154,7 +1154,7 @@ const App = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [students]);
+  }, [students, loadData]);
   
   const handleDownloadSampleCsv = () => {
     // 샘플 CSV 데이터 생성
