@@ -737,11 +737,13 @@ const App = () => {
         // 전체 기간
         periodScore = student.score;
       } else {
-        // 특정 기간
+        // 특정 기간 - dailyScores 구조 처리 (숫자 또는 객체)
         dateRange.forEach(date => {
           if (student.dailyScores[date]) {
-            Object.values(student.dailyScores[date]).forEach(value => {
-              if (value === 1) periodScore++;
+            Object.values(student.dailyScores[date]).forEach(scoreData => {
+              // scoreData가 객체인 경우 value 속성 사용, 아니면 직접 값 사용
+              const scoreValue = typeof scoreData === 'object' ? scoreData.value : scoreData;
+              if (scoreValue === 1) periodScore++;
             });
           }
         });
@@ -818,7 +820,11 @@ const App = () => {
         if (!allowedDates.has(dateStr)) return;
         const dailyEntry = daily[dateStr];
         for (const ruleId in dailyEntry) {
-          if (rules.some(r => r.id === parseInt(ruleId, 10)) && dailyEntry[ruleId] === 1) {
+          // dailyEntry[ruleId]가 객체인 경우 value 속성 사용, 아니면 직접 값 사용
+          const scoreData = dailyEntry[ruleId];
+          const scoreValue = typeof scoreData === 'object' ? scoreData.value : scoreData;
+          
+          if (rules.some(r => r.id === parseInt(ruleId, 10)) && scoreValue === 1) {
             scores[student.id][ruleId] = (scores[student.id][ruleId] || 0) + 1;
           }
         }
@@ -1433,7 +1439,10 @@ const App = () => {
                       <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-900">{student.studentNum}</td>
                       <td className="px-3 py-3 whitespace-nowrap text-sm font-medium text-gray-900 sticky left-0 z-10 bg-white shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] group-hover:bg-indigo-50">{student.name}</td>
                       {allowedRules.map((rule) => {
-                        const isChecked = dailyEntry[rule.id] === 1;
+                        // dailyEntry[rule.id]가 객체인 경우 value 속성 사용, 아니면 직접 값 사용
+                        const scoreData = dailyEntry[rule.id];
+                        const scoreValue = scoreData ? (typeof scoreData === 'object' ? scoreData.value : scoreData) : 0;
+                        const isChecked = scoreValue === 1;
                         return (
                           <td key={rule.id} className="px-3 py-3 whitespace-nowrap text-center">
             <button

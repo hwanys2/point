@@ -8,13 +8,14 @@ const RuleScoreBar = ({ student, rules }) => {
   const totalScore = student.totalScore || 0;
   if (totalScore === 0) return <div className="h-2 w-full bg-gray-200 rounded-full"></div>;
   
-  // 학생의 규칙별 점수 계산
+  // 학생의 규칙별 점수 계산 - dailyScores[date][ruleId] = { value, ruleName, ... }
   const ruleScores = {};
   Object.values(student.dailyScores || {}).forEach(dayScores => {
-    Object.values(dayScores).forEach(scoreEntry => {
-      const rule = rules.find(r => r.name === scoreEntry.ruleName);
-      if (rule) {
-        ruleScores[rule.id] = (ruleScores[rule.id] || 0) + scoreEntry.value;
+    Object.entries(dayScores).forEach(([ruleId, scoreEntry]) => {
+      // scoreEntry가 객체인 경우 value 속성 사용, 아니면 직접 값 사용
+      const scoreValue = typeof scoreEntry === 'object' ? scoreEntry.value : scoreEntry;
+      if (scoreValue === 1) {
+        ruleScores[ruleId] = (ruleScores[ruleId] || 0) + 1;
       }
     });
   });
@@ -47,16 +48,17 @@ const PublicRuleComparison = ({ students, rules }) => {
     return Math.max(1, ...students.map(s => s.totalScore || 0));
   }, [students]);
 
-  // 각 학생의 규칙별 점수 계산
+  // 각 학생의 규칙별 점수 계산 - dailyScores[date][ruleId] = { value, ruleName, ... }
   const studentRuleScores = useMemo(() => {
     const scores = {};
     students.forEach(student => {
       scores[student.id] = {};
       Object.values(student.dailyScores || {}).forEach(dayScores => {
-        Object.values(dayScores).forEach(scoreEntry => {
-          const ruleId = rules.find(r => r.name === scoreEntry.ruleName)?.id;
-          if (ruleId) {
-            scores[student.id][ruleId] = (scores[student.id][ruleId] || 0) + scoreEntry.value;
+        Object.entries(dayScores).forEach(([ruleId, scoreEntry]) => {
+          // scoreEntry가 객체인 경우 value 속성 사용, 아니면 직접 값 사용
+          const scoreValue = typeof scoreEntry === 'object' ? scoreEntry.value : scoreEntry;
+          if (scoreValue === 1 && rules.some(r => r.id === parseInt(ruleId, 10))) {
+            scores[student.id][ruleId] = (scores[student.id][ruleId] || 0) + 1;
           }
         });
       });

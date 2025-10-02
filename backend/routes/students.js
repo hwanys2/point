@@ -41,7 +41,11 @@ router.get('/', auth, async (req, res) => {
         if (!dailyScores[dateStr]) {
           dailyScores[dateStr] = {};
         }
-        dailyScores[dateStr][score.rule_id] = score.value;
+        // 객체 형태로 저장하여 public.js와 일관성 유지
+        dailyScores[dateStr][score.rule_id] = {
+          value: score.value,
+          ruleName: score.rule_name
+        };
       });
 
       return {
