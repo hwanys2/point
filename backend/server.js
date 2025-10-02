@@ -73,7 +73,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Routes
+console.log('🔗 Registering routes...');
 app.use('/api/auth', require('./routes/auth'));
+console.log('✅ Auth routes registered');
 app.use('/api/classrooms', require('./routes/classrooms'));
 app.use('/api/students', require('./routes/students'));
 app.use('/api/rules', require('./routes/rules'));
@@ -81,6 +83,7 @@ app.use('/api/scores', require('./routes/scores'));
 app.use('/api/settings', require('./routes/settings'));
 app.use('/api/student-managers', require('./routes/student-managers'));
 app.use('/api/public', require('./routes/public'));
+console.log('✅ All routes registered');
 
 // In production, serve frontend build as static files
 if (process.env.NODE_ENV === 'production') {
