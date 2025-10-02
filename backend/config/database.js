@@ -133,6 +133,27 @@ const initDatabase = async () => {
         END $$;
       `);
       
+      // 5. 잘못된 제약조건 제거 및 올바른 제약조건 추가
+      await pool.query(`
+        DO $$ 
+        BEGIN
+          -- 기존 잘못된 제약조건 제거 (classroom_id 없이 user_id만 포함)
+          IF EXISTS (
+            SELECT 1 FROM pg_constraint WHERE conname = 'students_user_id_grade_class_num_student_num_key'
+          ) THEN
+            ALTER TABLE students DROP CONSTRAINT students_user_id_grade_class_num_student_num_key;
+          END IF;
+          
+          -- 올바른 제약조건 추가 (classroom_id 포함)
+          IF NOT EXISTS (
+            SELECT 1 FROM pg_constraint WHERE conname = 'students_classroom_id_grade_class_num_student_num_key'
+          ) THEN
+            ALTER TABLE students ADD CONSTRAINT students_classroom_id_grade_class_num_student_num_key 
+            UNIQUE (classroom_id, grade, class_num, student_num);
+          END IF;
+        END $$;
+      `);
+      
       await pool.query(`
         DO $$ 
         BEGIN

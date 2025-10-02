@@ -227,35 +227,44 @@ router.delete('/:id', auth, async (req, res) => {
 // CSV 일괄 업로드
 router.post('/bulk-upload', auth, async (req, res) => {
   try {
+    console.log('📊 CSV bulk upload started');
     const { students, classroomId } = req.body;
+    console.log('📊 Request data:', { studentsCount: students?.length, classroomId });
 
     if (!Array.isArray(students) || students.length === 0) {
+      console.log('❌ Invalid students data');
       return res.status(400).json({ error: '유효한 학생 데이터를 제공하세요.' });
     }
 
     if (!classroomId) {
+      console.log('❌ Missing classroom ID');
       return res.status(400).json({ error: '학급 ID가 필요합니다.' });
     }
 
     // 학급 소유권 확인
+    console.log('🔍 Checking classroom ownership:', { classroomId, userId: req.userId });
     const classroomCheck = await pool.query(
       'SELECT id FROM classrooms WHERE id = $1 AND user_id = $2',
       [classroomId, req.userId]
     );
 
     if (classroomCheck.rows.length === 0) {
+      console.log('❌ Classroom access denied');
       return res.status(403).json({ error: '해당 학급에 접근할 수 없습니다.' });
     }
+    console.log('✅ Classroom access granted');
 
     const client = await pool.connect();
     let successCount = 0;
 
     try {
+      console.log('🔄 Starting database transaction');
       await client.query('BEGIN');
 
       for (const student of students) {
         const { name, grade, classNum, studentNum } = student;
         const studentId = `${classroomId}-${grade}-${classNum}-${studentNum}`;
+        console.log(`👤 Processing student: ${name} (${studentId})`);
 
         // 기존 학생 확인
         const existing = await client.query(
@@ -265,12 +274,14 @@ router.post('/bulk-upload', auth, async (req, res) => {
 
         if (existing.rows.length > 0) {
           // 기존 학생 업데이트 (이름만)
+          console.log(`🔄 Updating existing student: ${name}`);
           await client.query(
             'UPDATE students SET name = $1 WHERE id = $2 AND classroom_id = $3',
             [name, studentId, classroomId]
           );
         } else {
           // 새 학생 추가
+          console.log(`➕ Adding new student: ${name}`);
           await client.query(
             'INSERT INTO students (id, user_id, classroom_id, name, grade, class_num, student_num, score) VALUES ($1, $2, $3, $4, $5, $6, $7, 0)',
             [studentId, req.userId, classroomId, name, grade, classNum, studentNum]
