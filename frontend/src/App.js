@@ -789,49 +789,13 @@ const App = () => {
   const filteredStudentRuleScores = useMemo(() => {
     const scores = {};
     
-    // 기간별 필터링된 점수 계산
-    const getDateRange = () => {
-      const today = new Date();
-      const todayStr = getTodayDate();
-      
-      switch (periodFilter) {
-        case 'daily':
-          return [todayStr];
-        case 'weekly': {
-          const dates = [];
-          for (let i = 0; i < 7; i++) {
-            const d = new Date(today);
-            d.setDate(d.getDate() - i);
-            dates.push(d.toISOString().split('T')[0]);
-          }
-          return dates;
-        }
-        case 'monthly': {
-          const dates = [];
-          for (let i = 0; i < 30; i++) {
-            const d = new Date(today);
-            d.setDate(d.getDate() - i);
-            dates.push(d.toISOString().split('T')[0]);
-          }
-          return dates;
-        }
-        case 'custom': {
-          const dates = [];
-          const start = new Date(customStartDate);
-          const end = new Date(customEndDate);
-          for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-            dates.push(d.toISOString().split('T')[0]);
-          }
-          return dates;
-        }
-        default: // 'all'
-          return null;
-      }
-    };
 
     // filteredStudentsWithScores를 기반으로 계산 (이미 필터링된 dailyScores 사용)
     filteredStudentsWithScores.forEach(student => {
       scores[student.id] = {};
+      
+      // 디버깅: 각 학생의 필터링된 dailyScores 확인
+      console.log(`🔍 ${student.name}: periodScore=${student.periodScore}, dailyScores=`, student.dailyScores);
       
       // 이미 필터링된 dailyScores 사용
       const daily = student.dailyScores || {};
@@ -846,6 +810,9 @@ const App = () => {
           }
         }
       });
+      
+      // 디버깅: 계산된 점수 확인
+      console.log(`📊 ${student.name}: scores[${student.id}] =`, scores[student.id]);
     });
     return scores;
   }, [filteredStudentsWithScores, rules, periodFilter, customStartDate, customEndDate]);
