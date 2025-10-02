@@ -1113,48 +1113,6 @@ const App = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rules]);
-
-  const handleBulkApplyRule = useCallback(async (ruleId, date) => {
-    if (!Array.isArray(students) || students.length === 0) return;
-    try {
-      setIsLoading(true);
-      const togglePromises = students
-        .filter((s) => {
-          const value = s?.dailyScores?.[date]?.[ruleId];
-          const scoreValue = value ? (typeof value === 'object' ? value.value : value) : 0;
-          return scoreValue !== 1; // 아직 체크되지 않은 학생만
-        })
-        .map((s) => scoresAPI.toggle({ studentId: s.id, ruleId, date }));
-      await Promise.all(togglePromises);
-      await loadData();
-    } catch (err) {
-      console.error('Bulk apply error:', err);
-      setError('일괄 등록 중 오류가 발생했습니다.');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [students]);
-
-  const handleBulkClearRule = useCallback(async (ruleId, date) => {
-    if (!Array.isArray(students) || students.length === 0) return;
-    try {
-      setIsLoading(true);
-      const togglePromises = students
-        .filter((s) => {
-          const value = s?.dailyScores?.[date]?.[ruleId];
-          const scoreValue = value ? (typeof value === 'object' ? value.value : value) : 0;
-          return scoreValue === 1; // 체크된 학생만
-        })
-        .map((s) => scoresAPI.toggle({ studentId: s.id, ruleId, date }));
-      await Promise.all(togglePromises);
-      await loadData();
-    } catch (err) {
-      console.error('Bulk clear error:', err);
-      setError('일괄 해제 중 오류가 발생했습니다.');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [students]);
   
   const handleDownloadSampleCsv = () => {
     // 샘플 CSV 데이터 생성
@@ -1669,31 +1627,9 @@ const App = () => {
                 {allowedRules.map((rule) => {
                   const RuleIcon = getIconComponent(rule.iconId);
                   return (
-                    <th key={rule.id} className="px-3 py-2 text-center text-xs font-semibold text-gray-600 whitespace-nowrap bg-gray-100">
-                      <div className="flex flex-col items-center gap-1">
-                        <RuleIcon className={`w-5 h-5`} style={{ color: rule.color }} title={rule.name} />
-                        <span className="text-[11px] leading-none">{rule.name}</span>
-                        <div className="flex gap-1 mt-1">
-                          <button
-                            type="button"
-                            onClick={() => handleBulkApplyRule(rule.id, selectedDate)}
-                            className="px-1.5 py-0.5 rounded bg-green-500 text-white text-[10px] hover:bg-green-600 disabled:opacity-50"
-                            disabled={isLoading}
-                            title="일괄등록"
-                          >
-                            일괄등록
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleBulkClearRule(rule.id, selectedDate)}
-                            className="px-1.5 py-0.5 rounded bg-gray-400 text-white text-[10px] hover:bg-gray-500 disabled:opacity-50"
-                            disabled={isLoading}
-                            title="일괄해제"
-                          >
-                            일괄해제
-                          </button>
-                        </div>
-                      </div>
+                    <th key={rule.id} className="px-3 py-3 text-center text-xs font-semibold text-gray-600 whitespace-nowrap bg-gray-100">
+                      <RuleIcon className={`w-5 h-5 mx-auto mb-1`} style={{ color: rule.color }} title={rule.name} />
+                      {rule.name}
                     </th>
                   );
                 })}
