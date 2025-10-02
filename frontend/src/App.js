@@ -800,6 +800,7 @@ const App = () => {
         }
         
         if (!selectedClassroom) {
+          // 학급이 없는 경우 기본 학급을 생성하거나 안내 메시지 표시
           setError('학급이 없습니다. 학급을 먼저 생성해주세요.');
           setIsLoading(false);
           return;
@@ -846,6 +847,8 @@ const App = () => {
     // 학생 관리자는 점수 부여 탭을, 교사는 순위표 탭을 기본으로 표시
     setActiveTab(userData.role === 'student_manager' ? 'scoring' : 'leaderboard');
     setShowAuthModal(false);
+    
+    // 사용자 정보를 즉시 설정하고 데이터 로드
     loadData();
   };
   
@@ -2148,22 +2151,21 @@ const App = () => {
         {user?.role === 'teacher' && classrooms.length > 0 && (
           <div className="mt-4 flex justify-center">
             <div className="flex flex-wrap gap-2 bg-white rounded-lg p-1 shadow-md border">
-              {classrooms.length === 1 ? (
-                <div className="text-xs text-gray-500 px-2 py-1 bg-gray-50 rounded">
-                  현재 학급: {classrooms[0].name}
-                </div>
-              ) : (
-                classrooms.map(classroom => (
+              {classrooms.map(classroom => (
                 <div key={classroom.id} className="relative group">
                   <button
                     onClick={() => {
-                      setCurrentClassroom(classroom);
-                      localStorage.setItem('selectedClassroomId', classroom.id.toString());
+                      if (classrooms.length > 1) {
+                        setCurrentClassroom(classroom);
+                        localStorage.setItem('selectedClassroomId', classroom.id.toString());
+                      }
                     }}
                     className={`flex items-center gap-2 px-3 py-2 rounded-md transition-all ${
                       currentClassroom?.id === classroom.id
                         ? 'bg-indigo-500 text-white shadow-md'
-                        : 'bg-gray-50 text-gray-700 hover:bg-indigo-50 hover:text-indigo-600'
+                        : classrooms.length > 1 
+                          ? 'bg-gray-50 text-gray-700 hover:bg-indigo-50 hover:text-indigo-600'
+                          : 'bg-indigo-500 text-white shadow-md'
                     }`}
                   >
                     {/* 기본 학급 별표 */}
