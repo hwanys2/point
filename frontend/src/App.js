@@ -389,6 +389,11 @@ const AllStudentsRuleComparison = ({ students, rules, studentRuleScores }) => {
   
   const sortedStudents = [...students].sort((a, b) => (b.periodScore || b.score) - (a.periodScore || a.score));
 
+  // 디버깅 로그
+  console.log('AllStudentsRuleComparison - students:', students);
+  console.log('AllStudentsRuleComparison - studentRuleScores:', studentRuleScores);
+  console.log('AllStudentsRuleComparison - maxScore:', maxScore);
+
   return (
     <div className="bg-white p-3 sm:p-4 md:p-6 rounded-xl shadow-2xl border border-gray-100">
       <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-800 mb-4 sm:mb-6 flex items-center">
@@ -408,7 +413,6 @@ const AllStudentsRuleComparison = ({ students, rules, studentRuleScores }) => {
       
       <div className="space-y-6">
         {sortedStudents.map(student => {
-          const scores = studentRuleScores[student.id] || {};
           const totalScore = student.periodScore || student.score || 0;
           
           if (totalScore === 0) return null;
@@ -425,22 +429,28 @@ const AllStudentsRuleComparison = ({ students, rules, studentRuleScores }) => {
                 className="flex h-5 rounded-md overflow-hidden shadow-md border border-gray-300"
                 style={{ width: `${overallPercentage}%`, minWidth: '10%' }}
               >
-                {rules.map(rule => {
-                  const score = scores[rule.id] || 0;
-                  const relativePercentage = (score / totalScore) * 100;
-                  
-                  if (relativePercentage > 0) {
-                    return (
-                      <div 
-                        key={rule.id} 
-                        className={`h-full`}
-                        style={{ width: `${relativePercentage}%`, backgroundColor: rule.color }}
-                        title={`${student.name} - ${rule.name}: ${score}점`}
-                      />
-                    );
-                  }
-                  return null;
-                })}
+                {/* studentRuleScores 대신 students 데이터에서 직접 계산 */}
+                {studentRuleScores[student.id] ? (
+                  rules.map(rule => {
+                    const score = studentRuleScores[student.id][rule.id] || 0;
+                    const relativePercentage = (score / totalScore) * 100;
+                    
+                    if (relativePercentage > 0) {
+                      return (
+                        <div 
+                          key={rule.id} 
+                          className={`h-full`}
+                          style={{ width: `${relativePercentage}%`, backgroundColor: rule.color }}
+                          title={`${student.name} - ${rule.name}: ${score}점`}
+                        />
+                      );
+                    }
+                    return null;
+                  })
+                ) : (
+                  // studentRuleScores가 없으면 빈 막대 표시
+                  <div className="w-full h-full bg-gray-200"></div>
+                )}
               </div>
             </div>
           );
@@ -691,6 +701,10 @@ const App = () => {
 
   // 기간별 필터링된 학생 점수 계산
   const filteredStudentsWithScores = useMemo(() => {
+    console.log('🔄 filteredStudentsWithScores 계산 시작');
+    console.log('📅 periodFilter:', periodFilter);
+    console.log('👥 students:', students);
+    
     const getDateRange = () => {
       const today = new Date();
       const todayStr = getTodayDate();
@@ -731,13 +745,15 @@ const App = () => {
     };
 
     const dateRange = getDateRange();
+    console.log('📆 dateRange:', dateRange);
 
-    return students.map(student => {
+    const result = students.map(student => {
       let periodScore = 0;
       
       if (dateRange === null) {
         // 전체 기간
         periodScore = student.score;
+        console.log(`👤 ${student.name}: 전체 기간 점수 = ${periodScore}`);
       } else {
         // 특정 기간 - dailyScores 구조 처리 (숫자 또는 객체)
         dateRange.forEach(date => {
@@ -749,10 +765,14 @@ const App = () => {
             });
           }
         });
+        console.log(`👤 ${student.name}: ${periodFilter} 기간 점수 = ${periodScore}, dailyScores:`, student.dailyScores);
       }
 
       return { ...student, periodScore };
     });
+    
+    console.log('✅ filteredStudentsWithScores 결과:', result);
+    return result;
   }, [students, periodFilter, customStartDate, customEndDate]);
 
   const sortedStudents = useMemo(() => {
@@ -935,6 +955,11 @@ const App = () => {
         });
       }
     });
+    
+    // 디버깅 로그
+    console.log('filteredStudentRuleScores calculated:', scores);
+    console.log('filteredStudentsWithScores:', filteredStudentsWithScores);
+    console.log('periodFilter:', periodFilter);
     
     return scores;
   }, [filteredStudentsWithScores, rules, periodFilter, customStartDate, customEndDate]);
