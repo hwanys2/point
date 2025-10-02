@@ -22,6 +22,12 @@ router.get('/leaderboard/:token', async (req, res) => {
     const settings = settingsResult.rows[0];
     const userId = settings.user_id;
 
+    // 학급 정보 조회
+    const classroomsResult = await pool.query(
+      'SELECT id, name FROM classrooms WHERE user_id = $1 ORDER BY created_at ASC',
+      [userId]
+    );
+
     // 기간 필터링 로직
     let dateFilter = '';
     let queryParams = [userId];
@@ -130,6 +136,7 @@ router.get('/leaderboard/:token', async (req, res) => {
         schoolName: settings.school_name,
         teacherName: settings.username
       },
+      classrooms: classroomsResult.rows,
       leaderboard,
       rules: rulesResult.rows,
       period,

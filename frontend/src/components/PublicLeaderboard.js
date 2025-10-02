@@ -216,7 +216,7 @@ const PublicLeaderboard = ({ token }) => {
     );
   }
 
-  const { settings, rules } = data;
+  const { settings, rules, classrooms } = data;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50">
@@ -230,7 +230,8 @@ const PublicLeaderboard = ({ token }) => {
               className="h-16 sm:h-20 md:h-24 w-auto object-contain mb-3"
             />
             <p className="text-sm text-gray-500">
-              {settings.schoolName} • {settings.teacherName} 선생님
+              {classrooms && classrooms.length > 0 ? classrooms[0].name : '학급'}
+              {settings.schoolName && ` • ${settings.schoolName}`} • {settings.teacherName} 선생님
             </p>
           </div>
         </div>
