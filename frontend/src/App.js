@@ -961,7 +961,7 @@ const App = () => {
     
     console.log('✅ filteredStudentRuleScores 결과:', scores);
     return scores;
-  }, [students, rules, periodFilter, customStartDate, customEndDate]);
+  }, [filteredStudentsWithScores, rules, periodFilter, customStartDate, customEndDate]);
   
   const handleAddStudent = async (e) => {
     e.preventDefault();
