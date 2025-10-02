@@ -45,7 +45,9 @@ const RuleScoreBar = ({ student, rules }) => {
 // 규칙별 득점 비교 차트 컴포넌트
 const PublicRuleComparison = ({ students, rules }) => {
   const maxScore = useMemo(() => {
-    return Math.max(1, ...students.map(s => s.totalScore || 0));
+    const scores = students.map(s => s.totalScore || 0);
+    const actualMax = Math.max(...scores);
+    return actualMax > 0 ? actualMax : 1; // 실제 최대값이 0보다 클 때만 사용
   }, [students]);
 
   // 각 학생의 규칙별 점수 계산 - dailyScores[date][ruleId] = { value, ruleName, ... }

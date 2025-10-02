@@ -374,7 +374,9 @@ const RuleScoreBar = ({ student, rules, studentRuleScores }) => {
 
 const AllStudentsRuleComparison = ({ students, rules, studentRuleScores }) => {
   const maxScore = useMemo(() => {
-    return Math.max(1, ...students.map(s => s.periodScore || s.score));
+    const scores = students.map(s => s.periodScore || s.score);
+    const actualMax = Math.max(...scores);
+    return actualMax > 0 ? actualMax : 1; // 실제 최대값이 0보다 클 때만 사용
   }, [students]);
 
   if (students.length === 0 || rules.length === 0 || students.every(s => (s.periodScore || s.score) === 0)) {
@@ -849,11 +851,6 @@ const App = () => {
         });
       }
     });
-    
-    // 디버깅을 위한 로그
-    console.log('studentRuleScores calculated:', scores);
-    console.log('periodFilter:', periodFilter);
-    console.log('dateRange:', dateRange);
     
     return scores;
   }, [students, rules, periodFilter, customStartDate, customEndDate]);
