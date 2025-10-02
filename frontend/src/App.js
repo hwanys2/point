@@ -4,7 +4,7 @@ import {
   Shirt, BookOpenCheck, Sparkles, Armchair, Smile, Lightbulb,
   Feather, ShieldCheck, Settings, BarChart3, FileText, Trash2, Edit, Save, 
   ClipboardList, X, BarChart, Palette, LogOut, Clock, CheckSquare, XSquare,
-  Star, Download, Users, Mail, ExternalLink, ChevronDown
+  Star, Download, Users, Mail, ExternalLink, ChevronDown, User
 } from 'lucide-react';
 import Auth from './components/Auth';
 import LandingPage from './components/LandingPage';
@@ -12,7 +12,7 @@ import PublicLeaderboard from './components/PublicLeaderboard';
 import PrivacyPolicy from './components/PrivacyPolicy';
 import TermsOfService from './components/TermsOfService';
 import SEOHead from './components/SEOHead';
-import { classroomsAPI, studentsAPI, rulesAPI, scoresAPI, settingsAPI, studentManagersAPI } from './services/api';
+import { classroomsAPI, studentsAPI, rulesAPI, scoresAPI, settingsAPI, studentManagersAPI, authAPI } from './services/api';
 
 // Helper functions
 const getTodayDate = () => {
