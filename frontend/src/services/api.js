@@ -32,9 +32,14 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/';
+      const requestUrl = error.config?.url || '';
+      // 로그인/회원가입 실패 시에는 리다이렉트하지 않고 모달을 유지하도록 예외 처리
+      const isAuthAttempt = requestUrl.includes('/auth/login') || requestUrl.includes('/auth/register');
+      if (!isAuthAttempt) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/';
+      }
     }
     return Promise.reject(error);
   }
