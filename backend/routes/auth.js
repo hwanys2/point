@@ -9,7 +9,7 @@ const router = express.Router();
 
 // 회원가입
 router.post('/register', [
-  body('username').trim().isLength({ min: 3, max: 50 }).withMessage('사용자명은 3-50자여야 합니다.'),
+  body('username').trim().isLength({ min: 2, max: 50 }).withMessage('사용자명은 2-50자여야 합니다.'),
   body('email').isEmail().withMessage('유효한 이메일을 입력하세요.'),
   body('password').isLength({ min: 6 }).withMessage('비밀번호는 최소 6자 이상이어야 합니다.'),
   body('schoolName').optional().trim()
@@ -186,7 +186,7 @@ router.get('/me', auth, async (req, res) => {
 // 사용자 정보 수정
 router.put('/profile', auth, [
   body('schoolName').optional().trim(),
-  body('username').optional().trim().isLength({ min: 3, max: 50 }).withMessage('사용자명은 3-50자여야 합니다.'),
+  body('username').optional().trim().isLength({ min: 2, max: 50 }).withMessage('사용자명은 2-50자여야 합니다.'),
   body('currentPassword').optional().isLength({ min: 6 }).withMessage('현재 비밀번호는 최소 6자 이상이어야 합니다.'),
   body('newPassword').optional().isLength({ min: 6 }).withMessage('새 비밀번호는 최소 6자 이상이어야 합니다.')
 ], async (req, res) => {

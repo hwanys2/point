@@ -268,11 +268,11 @@ const EditUserModal = ({ user, onClose, onUpdate }) => {
     setError(null);
 
     try {
-      // 사용자명 유효성 (선택 입력: 입력했다면 3-50자)
+      // 사용자명 유효성 (선택 입력: 입력했다면 2-50자)
       const trimmedUsername = (formData.username || '').trim();
-      if (trimmedUsername && (trimmedUsername.length < 3 || trimmedUsername.length > 50)) {
+      if (trimmedUsername && (trimmedUsername.length < 2 || trimmedUsername.length > 50)) {
         setIsLoading(false);
-        setError('사용자명은 3-50자여야 합니다.');
+        setError('사용자명은 2-50자여야 합니다.');
         return;
       }
 
