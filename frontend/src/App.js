@@ -268,6 +268,14 @@ const EditUserModal = ({ user, onClose, onUpdate }) => {
     setError(null);
 
     try {
+      // 사용자명 유효성 (선택 입력: 입력했다면 3-50자)
+      const trimmedUsername = (formData.username || '').trim();
+      if (trimmedUsername && (trimmedUsername.length < 3 || trimmedUsername.length > 50)) {
+        setIsLoading(false);
+        setError('사용자명은 3-50자여야 합니다.');
+        return;
+      }
+
       // 비밀번호 변경이 있는 경우 확인
       if (formData.newPassword && formData.newPassword !== formData.confirmPassword) {
         setError('새 비밀번호가 일치하지 않습니다.');
@@ -279,8 +287,8 @@ const EditUserModal = ({ user, onClose, onUpdate }) => {
       };
 
       // 사용자명 변경 포함 (값이 있고 기존과 다를 때)
-      if (formData.username && formData.username !== user?.username) {
-        updateData.username = formData.username.trim();
+      if (trimmedUsername && trimmedUsername !== user?.username) {
+        updateData.username = trimmedUsername;
       }
 
       // 비밀번호 변경이 있는 경우에만 포함
@@ -293,7 +301,9 @@ const EditUserModal = ({ user, onClose, onUpdate }) => {
       onUpdate(updateData);
       onClose();
     } catch (err) {
-      setError(err.response?.data?.error || '정보 수정 중 오류가 발생했습니다.');
+      const serverError = err.response?.data?.error;
+      const validationMsg = err.response?.data?.errors?.[0]?.msg;
+      setError(serverError || validationMsg || '정보 수정 중 오류가 발생했습니다.');
     } finally {
       setIsLoading(false);
     }
