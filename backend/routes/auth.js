@@ -186,6 +186,7 @@ router.get('/me', auth, async (req, res) => {
 // 사용자 정보 수정
 router.put('/profile', auth, [
   body('schoolName').optional().trim(),
+  body('username').optional().trim().isLength({ min: 3, max: 50 }).withMessage('사용자명은 3-50자여야 합니다.'),
   body('currentPassword').optional().isLength({ min: 6 }).withMessage('현재 비밀번호는 최소 6자 이상이어야 합니다.'),
   body('newPassword').optional().isLength({ min: 6 }).withMessage('새 비밀번호는 최소 6자 이상이어야 합니다.')
 ], async (req, res) => {
@@ -198,7 +199,7 @@ router.put('/profile', auth, [
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { schoolName, currentPassword, newPassword } = req.body;
+    const { schoolName, username, currentPassword, newPassword } = req.body;
     const userId = req.userId;
     
     console.log('User ID:', userId, 'School Name:', schoolName);
@@ -234,6 +235,19 @@ router.put('/profile', auth, [
       await pool.query(
         'UPDATE users SET password = $1 WHERE id = $2',
         [hashedNewPassword, userId]
+      );
+    }
+
+    // 사용자명 변경 처리 (선택 사항)
+    if (username !== undefined && username !== user.username) {
+      // 사용자명 중복 확인
+      const dupCheck = await pool.query('SELECT id FROM users WHERE username = $1 AND id <> $2', [username, userId]);
+      if (dupCheck.rows.length > 0) {
+        return res.status(400).json({ error: '이미 사용 중인 사용자명입니다.' });
+      }
+      await pool.query(
+        'UPDATE users SET username = $1 WHERE id = $2',
+        [username, userId]
       );
     }
 

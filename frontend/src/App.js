@@ -253,6 +253,7 @@ const EditClassroomModal = ({ classroom, onClose, onUpdate, onDelete }) => {
 // 사용자 정보 수정 모달 컴포넌트
 const EditUserModal = ({ user, onClose, onUpdate }) => {
   const [formData, setFormData] = useState({
+    username: user?.username || '',
     schoolName: user?.schoolName || '',
     currentPassword: '',
     newPassword: '',
@@ -276,6 +277,11 @@ const EditUserModal = ({ user, onClose, onUpdate }) => {
       const updateData = {
         schoolName: formData.schoolName
       };
+
+      // 사용자명 변경 포함 (값이 있고 기존과 다를 때)
+      if (formData.username && formData.username !== user?.username) {
+        updateData.username = formData.username.trim();
+      }
 
       // 비밀번호 변경이 있는 경우에만 포함
       if (formData.newPassword) {
@@ -301,6 +307,16 @@ const EditUserModal = ({ user, onClose, onUpdate }) => {
         </h3>
         
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">사용자명</label>
+            <input
+              type="text"
+              value={formData.username}
+              onChange={(e) => setFormData(prev => ({ ...prev, username: e.target.value }))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              placeholder="로그인에 사용하는 사용자명"
+            />
+          </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">학교명</label>
             <input
