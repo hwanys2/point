@@ -9,7 +9,7 @@ router.get('/leaderboard/:token', async (req, res) => {
     const { token } = req.params;
     const { period = 'all', startDate, endDate } = req.query;
 
-    // 토큰으로 사용자 설정 조회
+    // 토큰으로 사용자 설정 조회 (classroom_id 포함)
     const settingsResult = await pool.query(
       'SELECT us.*, u.username, u.school_name FROM user_settings us JOIN users u ON us.user_id = u.id WHERE us.share_token = $1 AND us.share_enabled = true',
       [token]
@@ -21,11 +21,12 @@ router.get('/leaderboard/:token', async (req, res) => {
 
     const settings = settingsResult.rows[0];
     const userId = settings.user_id;
+    const classroomId = settings.classroom_id;
 
-    // 학급 정보 조회
+    // 학급 정보 조회 (해당 학급만)
     const classroomsResult = await pool.query(
-      'SELECT id, name FROM classrooms WHERE user_id = $1 ORDER BY created_at ASC',
-      [userId]
+      'SELECT id, name FROM classrooms WHERE id = $1 AND user_id = $2',
+      [classroomId, userId]
     );
 
     // 기간 필터링 로직
@@ -57,13 +58,13 @@ router.get('/leaderboard/:token', async (req, res) => {
       paramIndex += 2;
     }
 
-    // 학생 목록 조회
+    // 학생 목록 조회 (해당 학급의 학생만)
     const studentsResult = await pool.query(
       `SELECT id, name, grade, class_num, student_num, created_at 
        FROM students 
-       WHERE user_id = $1 
+       WHERE user_id = $1 AND classroom_id = $2
        ORDER BY grade, class_num, student_num`,
-      [userId]
+      [userId, classroomId]
     );
 
     const students = studentsResult.rows;
@@ -113,10 +114,10 @@ router.get('/leaderboard/:token', async (req, res) => {
       }
     });
 
-    // 규칙 목록 조회
+    // 규칙 목록 조회 (해당 학급의 규칙만)
     const rulesResult = await pool.query(
-      'SELECT id, name, color, icon_id FROM rules WHERE user_id = $1 ORDER BY name',
-      [userId]
+      'SELECT id, name, color, icon_id FROM rules WHERE user_id = $1 AND classroom_id = $2 ORDER BY name',
+      [userId, classroomId]
     );
 
     const leaderboard = Object.values(studentMap)

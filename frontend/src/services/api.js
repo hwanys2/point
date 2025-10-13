@@ -88,7 +88,7 @@ export const scoresAPI = {
 
 // Settings API
 export const settingsAPI = {
-  get: () => api.get('/settings'),
+  get: (params) => api.get('/settings', params),
   update: (data) => api.put('/settings', data),
 };
 

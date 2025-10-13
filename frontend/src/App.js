@@ -838,7 +838,7 @@ const App = () => {
       const promises = [
         studentsAPI.getAll({ params: { classroomId: selectedClassroom.id } }),
         rulesAPI.getAll({ params: { classroomId: selectedClassroom.id } }),
-        settingsAPI.get(),
+        settingsAPI.get({ params: { classroomId: selectedClassroom.id } }),
       ];
       
       const results = await Promise.all(promises);
@@ -1603,6 +1603,7 @@ const App = () => {
                     setShareEnabled(enabled);
                     try {
                       const response = await settingsAPI.update({
+                        classroomId: currentClassroom?.id,
                         title: appSettings.title,
                         subtitle: appSettings.subtitle,
                         iconId: appSettings.iconId,
