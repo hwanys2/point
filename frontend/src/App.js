@@ -4,7 +4,7 @@ import {
   Shirt, BookOpenCheck, Sparkles, Armchair, Smile, Lightbulb,
   Feather, ShieldCheck, Settings, BarChart3, FileText, Trash2, Edit, Save, 
   ClipboardList, X, BarChart, Palette, LogOut, Clock, CheckSquare, XSquare,
-  Star, Download, Users, Mail, ExternalLink, ChevronDown, User
+  Star, Download, Users, Mail, ExternalLink, ChevronDown, User, Minus
 } from 'lucide-react';
 import Auth from './components/Auth';
 import LandingPage from './components/LandingPage';
@@ -1124,59 +1124,51 @@ const App = () => {
     }
   };
 
-  const handleToggleRulePoint = useCallback(async (studentId, ruleId, date) => {
+  const handleAdjustScore = useCallback(async (studentId, ruleId, date, delta) => {
     if (rules.length === 0) {
       setError("점수를 부여할 규칙이 없습니다. '규칙' 탭에서 규칙을 먼저 등록해주세요.");
       return;
     }
 
     try {
-      await scoresAPI.toggle({ studentId, ruleId, date });
+      await scoresAPI.adjust({ studentId, ruleId, date, delta });
       await loadData(); // 전체 데이터 다시 로드
     } catch (err) {
-      console.error('Toggle score error:', err);
+      console.error('Adjust score error:', err);
       setError('점수 업데이트 중 오류가 발생했습니다.');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rules]);
 
-  const handleBulkApplyRule = useCallback(async (ruleId, date) => {
+  const handleBulkIncrement = useCallback(async (ruleId, date) => {
     if (!Array.isArray(students) || students.length === 0) return;
     try {
       setIsLoading(true);
-      const togglePromises = students
-        .filter((s) => {
-          const value = s?.dailyScores?.[date]?.[ruleId];
-          const scoreValue = value ? (typeof value === 'object' ? value.value : value) : 0;
-          return scoreValue !== 1; // 아직 체크되지 않은 학생만
-        })
-        .map((s) => scoresAPI.toggle({ studentId: s.id, ruleId, date }));
-      await Promise.all(togglePromises);
+      const adjustPromises = students.map((s) => 
+        scoresAPI.adjust({ studentId: s.id, ruleId, date, delta: 1 })
+      );
+      await Promise.all(adjustPromises);
       await loadData();
     } catch (err) {
-      console.error('Bulk apply error:', err);
-      setError('일괄 등록 중 오류가 발생했습니다.');
+      console.error('Bulk increment error:', err);
+      setError('일괄 +1 중 오류가 발생했습니다.');
     } finally {
       setIsLoading(false);
     }
   }, [students, loadData]);
 
-  const handleBulkClearRule = useCallback(async (ruleId, date) => {
+  const handleBulkDecrement = useCallback(async (ruleId, date) => {
     if (!Array.isArray(students) || students.length === 0) return;
     try {
       setIsLoading(true);
-      const togglePromises = students
-        .filter((s) => {
-          const value = s?.dailyScores?.[date]?.[ruleId];
-          const scoreValue = value ? (typeof value === 'object' ? value.value : value) : 0;
-          return scoreValue === 1; // 체크된 학생만
-        })
-        .map((s) => scoresAPI.toggle({ studentId: s.id, ruleId, date }));
-      await Promise.all(togglePromises);
+      const adjustPromises = students.map((s) => 
+        scoresAPI.adjust({ studentId: s.id, ruleId, date, delta: -1 })
+      );
+      await Promise.all(adjustPromises);
       await loadData();
     } catch (err) {
-      console.error('Bulk clear error:', err);
-      setError('일괄 해제 중 오류가 발생했습니다.');
+      console.error('Bulk decrement error:', err);
+      setError('일괄 -1 중 오류가 발생했습니다.');
     } finally {
       setIsLoading(false);
     }
@@ -1703,21 +1695,21 @@ const App = () => {
                         <div className="flex gap-1 mt-1">
                           <button
                             type="button"
-                            onClick={() => handleBulkApplyRule(rule.id, selectedDate)}
+                            onClick={() => handleBulkIncrement(rule.id, selectedDate)}
                             className="px-1.5 py-0.5 rounded bg-green-500 text-white text-[10px] hover:bg-green-600 disabled:opacity-50"
                             disabled={isLoading}
-                            title="일괄등록"
+                            title="모든 학생에게 +1점"
                           >
-                            일괄등록
+                            일괄+1
                           </button>
                           <button
                             type="button"
-                            onClick={() => handleBulkClearRule(rule.id, selectedDate)}
-                            className="px-1.5 py-0.5 rounded bg-gray-400 text-white text-[10px] hover:bg-gray-500 disabled:opacity-50"
+                            onClick={() => handleBulkDecrement(rule.id, selectedDate)}
+                            className="px-1.5 py-0.5 rounded bg-red-500 text-white text-[10px] hover:bg-red-600 disabled:opacity-50"
                             disabled={isLoading}
-                            title="일괄해제"
+                            title="모든 학생에게 -1점"
                           >
-                            일괄해제
+                            일괄-1
                           </button>
                         </div>
                       </div>
@@ -1740,21 +1732,35 @@ const App = () => {
                         // dailyEntry[rule.id]가 객체인 경우 value 속성 사용, 아니면 직접 값 사용
                         const scoreData = dailyEntry[rule.id];
                         const scoreValue = scoreData ? (typeof scoreData === 'object' ? scoreData.value : scoreData) : 0;
-                        const isChecked = scoreValue === 1;
                         return (
                           <td key={rule.id} className="px-3 py-3 whitespace-nowrap text-center">
-            <button
-                              onClick={() => handleToggleRulePoint(student.id, rule.id, selectedDate)}
-                              className={`p-2 rounded-full transition duration-100 shadow-sm ${
-                                isChecked
-                                  ? 'bg-green-500 hover:bg-green-600 text-white'
-                                  : 'bg-gray-200 hover:bg-gray-300 text-gray-600'
-                              }`}
-                              title={isChecked ? `${rule.name} 점수 취소` : `${rule.name} 점수 부여 (+1)`}
-                              disabled={isLoading}
-                            >
-                              {isChecked ? <CheckSquare className="w-5 h-5" /> : <XSquare className="w-5 h-5" />}
-                            </button>
+                            <div className="flex items-center justify-center gap-1">
+                              <button
+                                onClick={() => handleAdjustScore(student.id, rule.id, selectedDate, -1)}
+                                className="w-7 h-7 rounded-lg bg-red-500 hover:bg-red-600 text-white transition duration-100 shadow-sm flex items-center justify-center font-bold disabled:opacity-50"
+                                title="점수 -1"
+                                disabled={isLoading}
+                              >
+                                <Minus className="w-4 h-4" />
+                              </button>
+                              <div className={`min-w-[2.5rem] px-2 py-1 rounded-lg font-semibold text-sm ${
+                                scoreValue > 0 
+                                  ? 'bg-green-100 text-green-700' 
+                                  : scoreValue < 0 
+                                  ? 'bg-red-100 text-red-700' 
+                                  : 'bg-gray-100 text-gray-600'
+                              }`}>
+                                {scoreValue}
+                              </div>
+                              <button
+                                onClick={() => handleAdjustScore(student.id, rule.id, selectedDate, 1)}
+                                className="w-7 h-7 rounded-lg bg-green-500 hover:bg-green-600 text-white transition duration-100 shadow-sm flex items-center justify-center font-bold disabled:opacity-50"
+                                title="점수 +1"
+                                disabled={isLoading}
+                              >
+                                <Plus className="w-4 h-4" />
+                              </button>
+                            </div>
                           </td>
                         );
                       })}

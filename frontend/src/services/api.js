@@ -83,6 +83,7 @@ export const rulesAPI = {
 // Scores API
 export const scoresAPI = {
   toggle: (data) => api.post('/scores/toggle', data),
+  adjust: (data) => api.post('/scores/adjust', data),
   getByDate: (date) => api.get(`/scores/date/${date}`),
 };
 
