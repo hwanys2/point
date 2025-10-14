@@ -612,16 +612,21 @@ const RuleScoreBar = ({ student, rules, studentRuleScores, allStudents }) => {
               className="relative flex flex-row-reverse"
               style={{ width: `${zeroPosition}%` }}
             >
-              {rules.map((rule, index) => {
+              {rules.map((rule, index, arr) => {
                 const scoreData = scores[rule.id];
                 const negativeScore = scoreData?.negative || 0;
                 const percentage = (negativeScore / maxNegative) * 100;
+                const visibleRules = arr.filter(r => {
+                  const sd = scores[r.id];
+                  return (sd?.negative || 0) > 0;
+                });
+                const isFirst = index === arr.length - 1 || rule.id === visibleRules[visibleRules.length - 1]?.id;
                 
                 if (percentage > 0) {
                   return (
                     <div 
                       key={`neg-${rule.id}`}
-                      className={`h-full opacity-90 ${index === 0 ? 'rounded-l' : ''}`}
+                      className={`h-full opacity-90 ${isFirst ? 'rounded-l' : ''}`}
                       style={{ width: `${percentage}%`, backgroundColor: rule.color }}
                       title={`${rule.name}: -${negativeScore}점`}
                     />
@@ -811,16 +816,21 @@ const AllStudentsRuleComparison = ({ students, rules, studentRuleScores }) => {
                         className="relative flex flex-row-reverse"
                         style={{ width: `${rangeValues.zeroPosition}%` }}
                       >
-                        {rules.map((rule, index) => {
+                        {rules.map((rule, index, arr) => {
                           const scoreData = scores[rule.id];
                           const negativeScore = scoreData?.negative || 0;
                           const percentage = (negativeScore / rangeValues.maxNegative) * 100;
+                          const visibleRules = arr.filter(r => {
+                            const sd = scores[r.id];
+                            return (sd?.negative || 0) > 0;
+                          });
+                          const isFirst = index === arr.length - 1 || rule.id === visibleRules[visibleRules.length - 1]?.id;
                           
                           if (percentage > 0) {
                             return (
                               <div 
                                 key={`neg-${rule.id}`}
-                                className={`h-full opacity-90 ${index === 0 ? 'rounded-l' : ''}`}
+                                className={`h-full opacity-90 ${isFirst ? 'rounded-l' : ''}`}
                                 style={{ width: `${percentage}%`, backgroundColor: rule.color }}
                                 title={`${student.name} - ${rule.name}: -${negativeScore}점`}
                               />
