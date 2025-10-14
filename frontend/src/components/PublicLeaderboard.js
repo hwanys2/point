@@ -48,20 +48,20 @@ const RuleScoreBar = ({ student, rules, studentRuleScores, allStudents }) => {
   }
   
   return (
-    <div className="relative w-full h-4" title={`총점: ${totalScore}점 (양수: +${totalPositive}, 음수: -${totalNegative})`}>
-      {/* 회색 배경 바 */}
+    <div className="relative w-full h-6" title={`총점: ${totalScore}점 (양수: +${totalPositive}, 음수: -${totalNegative})`}>
+      {/* 회색 배경 바 (유리관) */}
       <div className="absolute inset-0 bg-gray-200 rounded"></div>
       
       {/* 0 지점 구분선 (음수가 있을 때만) */}
       {hasNegative && (
         <div 
           className="absolute top-0 bottom-0 w-0.5 bg-gray-800 z-20"
-          style={{ left: `${zeroPosition}%`, height: 'calc(100% + 4px)', top: '-2px' }}
+          style={{ left: `${zeroPosition}%`, height: 'calc(100% + 8px)', top: '-4px' }}
         ></div>
       )}
       
-      {/* 실제 점수 막대 */}
-      <div className="absolute inset-0 flex">
+      {/* 실제 점수 막대 (액체) - 위아래 패딩 */}
+      <div className="absolute inset-x-0 inset-y-1 flex">
         {hasNegative ? (
           <>
             {/* 음수 영역 (0 지점 왼쪽) */}
@@ -264,20 +264,20 @@ const PublicRuleComparison = ({ students, rules }) => {
                 </span>
               </div>
               
-              <div className="relative w-full h-8">
-                {/* 회색 배경 바 */}
+              <div className="relative w-full h-10">
+                {/* 회색 배경 바 (유리관) */}
                 <div className="absolute inset-0 bg-gray-200 rounded"></div>
                 
                 {/* 0 지점 구분선 (음수가 있을 때만) */}
                 {rangeValues.hasNegative && (
                   <div 
                     className="absolute top-0 bottom-0 w-0.5 bg-gray-800 z-20"
-                    style={{ left: `${rangeValues.zeroPosition}%`, height: 'calc(100% + 6px)', top: '-3px' }}
+                    style={{ left: `${rangeValues.zeroPosition}%`, height: 'calc(100% + 10px)', top: '-5px' }}
                   ></div>
                 )}
                 
-                {/* 실제 점수 막대 */}
-                <div className="absolute inset-0 flex">
+                {/* 실제 점수 막대 (액체) - 위아래 패딩 */}
+                <div className="absolute inset-x-0 inset-y-1.5 flex">
                   {rangeValues.hasNegative ? (
                     <>
                       {/* 음수 영역 (0 지점 왼쪽) */}
