@@ -113,12 +113,12 @@ const RuleScoreBar = ({ student, rules, studentRuleScores, allStudents }) => {
             </div>
           </>
         ) : (
-          /* 음수가 없을 때: 기존 스타일 (0부터 시작) */
+          /* 음수가 없을 때: 0부터 최대값까지 범위로 표시 */
           <div className="relative flex w-full">
             {rules.map(rule => {
               const scoreData = scores[rule.id];
               const positiveScore = scoreData?.positive || 0;
-              const percentage = (positiveScore / totalPositive) * 100;
+              const percentage = (positiveScore / maxPositive) * 100;
               
               if (percentage > 0) {
                 return (
@@ -328,28 +328,28 @@ const PublicRuleComparison = ({ students, rules }) => {
                   })}
                 </div>
               </>
-            ) : (
-              /* 음수가 없을 때: 기존 스타일 (0부터 시작) */
-              <div className="relative flex w-full">
-                {rules.map(rule => {
-                  const scoreData = scores[rule.id];
-                  const positiveScore = scoreData?.positive || 0;
-                  const percentage = (positiveScore / totalPositive) * 100;
-                  
-                  if (percentage > 0) {
-                    return (
-                      <div 
-                        key={`pos-${rule.id}`}
-                        className="h-full"
-                        style={{ width: `${percentage}%`, backgroundColor: rule.color }}
-                        title={`${student.name} - ${rule.name}: ${positiveScore}점`}
-                      />
-                    );
-                  }
-                  return null;
-                })}
-              </div>
-            )}
+                  ) : (
+                    /* 음수가 없을 때: 0부터 최대값까지 범위로 표시 */
+                    <div className="relative flex w-full">
+                      {rules.map(rule => {
+                        const scoreData = scores[rule.id];
+                        const positiveScore = scoreData?.positive || 0;
+                        const percentage = (positiveScore / rangeValues.maxPositive) * 100;
+                        
+                        if (percentage > 0) {
+                          return (
+                            <div 
+                              key={`pos-${rule.id}`}
+                              className="h-full"
+                              style={{ width: `${percentage}%`, backgroundColor: rule.color }}
+                              title={`${student.name} - ${rule.name}: ${positiveScore}점`}
+                            />
+                          );
+                        }
+                        return null;
+                      })}
+                    </div>
+                  )}
           </div>
         </div>
             </div>
