@@ -1973,7 +1973,14 @@ const App = () => {
                                 type="number"
                                 value={scoreValue}
                                 onChange={(e) => {
-                                  const newValue = parseInt(e.target.value) || 0;
+                                  const inputValue = e.target.value;
+                                  // 빈 문자열이나 '-'만 입력된 경우는 무시
+                                  if (inputValue === '' || inputValue === '-') return;
+                                  
+                                  const newValue = parseInt(inputValue, 10);
+                                  // NaN이면 무시
+                                  if (isNaN(newValue)) return;
+                                  
                                   const delta = newValue - scoreValue;
                                   if (delta !== 0) {
                                     handleAdjustScore(student.id, rule.id, selectedDate, delta);
@@ -1988,7 +1995,7 @@ const App = () => {
                                     : 'bg-gray-50 text-gray-600 border-gray-300'
                                 }`}
                                 disabled={isLoading}
-                                title="클릭하여 직접 입력"
+                                title="클릭하여 직접 입력 (음수 가능)"
                               />
                               <button
                                 onClick={() => handleAdjustScore(student.id, rule.id, selectedDate, 1)}
