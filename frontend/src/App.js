@@ -951,6 +951,9 @@ const App = () => {
   
   // 학급 관리 관련 상태
   const [editingClassroom, setEditingClassroom] = useState(null);
+  
+  // 점수 입력 중인 값을 추적하기 위한 로컬 상태
+  const [editingScores, setEditingScores] = useState({});
 
   // 해시 변경 감지
   useEffect(() => {
@@ -1992,24 +1995,53 @@ const App = () => {
                                 <Minus className="w-4 h-4" />
                               </button>
                               <input
-                                type="number"
-                                value={scoreValue}
+                                type="text"
+                                value={editingScores[`${student.id}-${rule.id}`] ?? scoreValue}
                                 onChange={(e) => {
                                   const inputValue = e.target.value;
-                                  // 빈 문자열이나 '-'만 입력된 경우는 무시
-                                  if (inputValue === '' || inputValue === '-') return;
-                                  
-                                  const newValue = parseInt(inputValue, 10);
-                                  // NaN이면 무시
-                                  if (isNaN(newValue)) return;
-                                  
-                                  const delta = newValue - scoreValue;
-                                  if (delta !== 0) {
-                                    handleAdjustScore(student.id, rule.id, selectedDate, delta);
+                                  // 숫자, 마이너스, 빈 문자열만 허용
+                                  if (inputValue === '' || inputValue === '-' || /^-?\d+$/.test(inputValue)) {
+                                    setEditingScores(prev => ({
+                                      ...prev,
+                                      [`${student.id}-${rule.id}`]: inputValue
+                                    }));
                                   }
                                 }}
-                                onFocus={(e) => e.target.select()}
-                                className={`w-12 text-center px-1 py-0.5 rounded border font-semibold text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
+                                onFocus={(e) => {
+                                  e.target.select();
+                                  // 편집 시작 시 현재 값으로 초기화
+                                  setEditingScores(prev => ({
+                                    ...prev,
+                                    [`${student.id}-${rule.id}`]: scoreValue.toString()
+                                  }));
+                                }}
+                                onBlur={(e) => {
+                                  const inputValue = e.target.value;
+                                  const key = `${student.id}-${rule.id}`;
+                                  
+                                  // 빈 문자열이거나 '-'만 있으면 0으로 처리
+                                  const newValue = (inputValue === '' || inputValue === '-') ? 0 : parseInt(inputValue, 10);
+                                  
+                                  if (!isNaN(newValue)) {
+                                    const delta = newValue - scoreValue;
+                                    if (delta !== 0) {
+                                      handleAdjustScore(student.id, rule.id, selectedDate, delta);
+                                    }
+                                  }
+                                  
+                                  // 편집 완료 후 상태 제거
+                                  setEditingScores(prev => {
+                                    const newState = { ...prev };
+                                    delete newState[key];
+                                    return newState;
+                                  });
+                                }}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    e.target.blur(); // Enter 키 누르면 blur 이벤트 발생
+                                  }
+                                }}
+                                className={`w-12 text-center px-1 py-0.5 rounded border font-semibold text-sm ${
                                   scoreValue > 0 
                                     ? 'bg-green-50 text-green-700 border-green-300' 
                                     : scoreValue < 0 
@@ -2017,7 +2049,7 @@ const App = () => {
                                     : 'bg-gray-50 text-gray-600 border-gray-300'
                                 }`}
                                 disabled={isLoading}
-                                title="클릭하여 직접 입력 (음수 가능)"
+                                title="클릭하여 직접 입력 (음수 가능, Enter로 확정)"
                               />
                               <button
                                 onClick={() => handleAdjustScore(student.id, rule.id, selectedDate, 1)}
