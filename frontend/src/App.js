@@ -2235,10 +2235,14 @@ const App = () => {
           {rules.map((rule) => {
             const RuleIcon = getIconComponent(rule.iconId);
             
-            const rankedByRule = [...students].map(s => ({
-              ...s,
-              ruleScore: filteredStudentRuleScores[s.id]?.[rule.id] || 0
-            })).sort((a, b) => {
+            const rankedByRule = [...students].map(s => {
+              const scoreData = filteredStudentRuleScores[s.id]?.[rule.id];
+              const ruleScore = (scoreData && typeof scoreData === 'object') ? scoreData.total : (scoreData || 0);
+              return {
+                ...s,
+                ruleScore
+              };
+            }).sort((a, b) => {
               if (b.ruleScore !== a.ruleScore) return b.ruleScore - a.ruleScore;
               if (a.grade !== b.grade) return a.grade - b.grade;
               return a.studentNum - b.studentNum;
