@@ -169,8 +169,8 @@ const PublicRuleComparison = ({ students, rules }) => {
     return scores;
   }, [students, rules]);
 
-  // 양수/음수의 최대값 계산
-  const maxValues = useMemo(() => {
+  // 전체 범위의 최대/최소값 계산
+  const rangeValues = useMemo(() => {
     let maxPositive = 0;
     let maxNegative = 0;
     
@@ -190,7 +190,17 @@ const PublicRuleComparison = ({ students, rules }) => {
       maxNegative = Math.max(maxNegative, studentNegative);
     });
     
-    return { maxPositive: maxPositive || 1, maxNegative: maxNegative || 1 };
+    const totalRange = maxPositive + maxNegative;
+    const hasNegative = maxNegative > 0;
+    const zeroPosition = hasNegative ? (maxNegative / totalRange) * 100 : 0;
+    
+    return { 
+      maxPositive: maxPositive || 1, 
+      maxNegative: maxNegative || 0,
+      totalRange: totalRange || 1,
+      hasNegative,
+      zeroPosition
+    };
   }, [students, studentRuleScores]);
 
   if (students.length === 0 || rules.length === 0 || students.every(s => (s.totalScore || 0) === 0)) {
@@ -278,7 +288,7 @@ const PublicRuleComparison = ({ students, rules }) => {
                   {rules.map(rule => {
                     const scoreData = scores[rule.id];
                     const negativeScore = scoreData?.negative || 0;
-                    const percentage = (negativeScore / maxValues.maxNegative) * 100;
+                    const percentage = (negativeScore / rangeValues.maxNegative) * 100;
                     
                     if (percentage > 0) {
                       return (
@@ -302,7 +312,7 @@ const PublicRuleComparison = ({ students, rules }) => {
                   {rules.map(rule => {
                     const scoreData = scores[rule.id];
                     const positiveScore = scoreData?.positive || 0;
-                    const percentage = (positiveScore / maxValues.maxPositive) * 100;
+                    const percentage = (positiveScore / rangeValues.maxPositive) * 100;
                     
                     if (percentage > 0) {
                       return (
