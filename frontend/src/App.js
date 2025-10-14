@@ -1842,31 +1842,43 @@ const App = () => {
                         const scoreValue = scoreData ? (typeof scoreData === 'object' ? scoreData.value : scoreData) : 0;
                         return (
                           <td key={rule.id} className="px-3 py-3 whitespace-nowrap text-center">
-                            <div className="flex items-center justify-center gap-1">
+                            <div className="flex items-center justify-center gap-0.5">
                               <button
                                 onClick={() => handleAdjustScore(student.id, rule.id, selectedDate, -1)}
-                                className="w-6 h-6 rounded-lg bg-red-500 hover:bg-red-600 text-white transition duration-100 shadow-sm flex items-center justify-center font-bold disabled:opacity-50"
+                                className="text-red-500 hover:text-red-700 transition duration-100 disabled:opacity-30 p-1"
                                 title="점수 -1"
                                 disabled={isLoading}
                               >
-                                <Minus className="w-3.5 h-3.5" />
+                                <Minus className="w-4 h-4" />
                               </button>
-                              <div className={`min-w-[2rem] px-1.5 py-0.5 rounded-lg font-semibold text-sm ${
-                                scoreValue > 0 
-                                  ? 'bg-green-100 text-green-700' 
-                                  : scoreValue < 0 
-                                  ? 'bg-red-100 text-red-700' 
-                                  : 'bg-gray-100 text-gray-600'
-                              }`}>
-                                {scoreValue}
-                              </div>
+                              <input
+                                type="number"
+                                value={scoreValue}
+                                onChange={(e) => {
+                                  const newValue = parseInt(e.target.value) || 0;
+                                  const delta = newValue - scoreValue;
+                                  if (delta !== 0) {
+                                    handleAdjustScore(student.id, rule.id, selectedDate, delta);
+                                  }
+                                }}
+                                onFocus={(e) => e.target.select()}
+                                className={`w-12 text-center px-1 py-0.5 rounded border font-semibold text-sm ${
+                                  scoreValue > 0 
+                                    ? 'bg-green-50 text-green-700 border-green-300' 
+                                    : scoreValue < 0 
+                                    ? 'bg-red-50 text-red-700 border-red-300' 
+                                    : 'bg-gray-50 text-gray-600 border-gray-300'
+                                }`}
+                                disabled={isLoading}
+                                title="클릭하여 직접 입력"
+                              />
                               <button
                                 onClick={() => handleAdjustScore(student.id, rule.id, selectedDate, 1)}
-                                className="w-6 h-6 rounded-lg bg-green-500 hover:bg-green-600 text-white transition duration-100 shadow-sm flex items-center justify-center font-bold disabled:opacity-50"
+                                className="text-green-500 hover:text-green-700 transition duration-100 disabled:opacity-30 p-1"
                                 title="점수 +1"
                                 disabled={isLoading}
                               >
-                                <Plus className="w-3.5 h-3.5" />
+                                <Plus className="w-4 h-4" />
                               </button>
                             </div>
                           </td>
