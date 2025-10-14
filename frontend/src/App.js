@@ -3,7 +3,7 @@ import {
   Award, UserPlus, ListOrdered, Loader2, AlertTriangle, Plus, Calendar, 
   Shirt, BookOpenCheck, Sparkles, Armchair, Smile, Lightbulb,
   Feather, ShieldCheck, Settings, BarChart3, FileText, Trash2, Edit, Save, 
-  ClipboardList, X, BarChart, Palette, LogOut, Clock, CheckSquare, XSquare,
+  ClipboardList, X, BarChart, Palette, LogOut, Clock,
   Star, Download, Users, Mail, ExternalLink, ChevronDown, User, Minus
 } from 'lucide-react';
 import Auth from './components/Auth';
