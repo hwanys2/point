@@ -550,36 +550,100 @@ const Footer = () => {
 const RuleScoreBar = ({ student, rules, studentRuleScores }) => {
   const scores = studentRuleScores[student.id] || {};
   const totalScore = student.periodScore || student.score || 0;
-  if (totalScore === 0) return <div className="h-2 w-full bg-gray-200 rounded-full"></div>;
+  
+  // 양수/음수 점수 합계 계산
+  let totalPositive = 0;
+  let totalNegative = 0;
+  
+  Object.values(scores).forEach(scoreData => {
+    if (scoreData && typeof scoreData === 'object') {
+      totalPositive += scoreData.positive || 0;
+      totalNegative += scoreData.negative || 0;
+    }
+  });
+  
+  const maxValue = Math.max(totalPositive, totalNegative) || 1;
+  
+  if (totalPositive === 0 && totalNegative === 0) {
+    return <div className="h-2 w-full bg-gray-200 rounded-full"></div>;
+  }
   
   return (
-    <div className="flex w-full h-2 rounded-full overflow-hidden shadow-inner cursor-pointer" title={`총점: ${totalScore}점`}>
-      {rules.map((rule) => {
-        const score = scores[rule.id] || 0;
-        const percentage = (score / totalScore) * 100;
+    <div className="relative w-full" title={`총점: ${totalScore}점 (양수: +${totalPositive}, 음수: -${totalNegative})`}>
+      <div className="flex items-center h-2">
+        {/* 음수 점수 (왼쪽) */}
+        <div className="flex flex-row-reverse h-full" style={{ width: '50%' }}>
+          {rules.map((rule) => {
+            const scoreData = scores[rule.id];
+            const negativeScore = scoreData?.negative || 0;
+            const percentage = (negativeScore / maxValue) * 100;
+            
+            if (percentage > 0) {
+              return (
+                <div 
+                  key={`neg-${rule.id}`}
+                  className="h-full opacity-80"
+                  style={{ width: `${percentage}%`, backgroundColor: rule.color }}
+                  title={`${rule.name}: -${negativeScore}점`}
+                />
+              );
+            }
+            return null;
+          })}
+        </div>
         
-        if (percentage > 0) {
-          return (
-            <div 
-              key={rule.id} 
-              className={`h-full`}
-              style={{ width: `${percentage}%`, backgroundColor: rule.color }}
-              title={`${rule.name}: ${score}점 (${percentage.toFixed(0)}%)`}
-            />
-          );
-        }
-        return null;
-      })}
+        {/* 중앙 기준선 */}
+        <div className="w-0.5 h-4 bg-gray-800 z-10" style={{ marginLeft: '-1px', marginRight: '-1px' }}></div>
+        
+        {/* 양수 점수 (오른쪽) */}
+        <div className="flex h-full" style={{ width: '50%' }}>
+          {rules.map((rule) => {
+            const scoreData = scores[rule.id];
+            const positiveScore = scoreData?.positive || 0;
+            const percentage = (positiveScore / maxValue) * 100;
+            
+            if (percentage > 0) {
+              return (
+                <div 
+                  key={`pos-${rule.id}`}
+                  className="h-full"
+                  style={{ width: `${percentage}%`, backgroundColor: rule.color }}
+                  title={`${rule.name}: +${positiveScore}점`}
+                />
+              );
+            }
+            return null;
+          })}
+        </div>
+      </div>
     </div>
   );
 };
 
 const AllStudentsRuleComparison = ({ students, rules, studentRuleScores }) => {
-  const maxScore = useMemo(() => {
-    const scores = students.map(s => s.periodScore || 0);
-    const actualMax = Math.max(...scores);
-    return actualMax > 0 ? actualMax : 1; // 실제 최대값이 0보다 클 때만 사용
-  }, [students]);
+  // 양수/음수의 최대값 계산
+  const maxValues = useMemo(() => {
+    let maxPositive = 0;
+    let maxNegative = 0;
+    
+    students.forEach(student => {
+      const scores = studentRuleScores[student.id] || {};
+      let studentPositive = 0;
+      let studentNegative = 0;
+      
+      Object.values(scores).forEach(scoreData => {
+        if (scoreData && typeof scoreData === 'object') {
+          studentPositive += scoreData.positive || 0;
+          studentNegative += scoreData.negative || 0;
+        }
+      });
+      
+      maxPositive = Math.max(maxPositive, studentPositive);
+      maxNegative = Math.max(maxNegative, studentNegative);
+    });
+    
+    return { maxPositive: maxPositive || 1, maxNegative: maxNegative || 1 };
+  }, [students, studentRuleScores]);
 
   if (students.length === 0 || rules.length === 0 || students.every(s => (s.periodScore || 0) === 0)) {
     return (
@@ -590,7 +654,6 @@ const AllStudentsRuleComparison = ({ students, rules, studentRuleScores }) => {
   }
   
   const sortedStudents = [...students].sort((a, b) => (b.periodScore || b.score) - (a.periodScore || a.score));
-
 
   return (
     <div className="bg-white p-3 sm:p-4 md:p-6 rounded-xl shadow-2xl border border-gray-100">
@@ -611,44 +674,80 @@ const AllStudentsRuleComparison = ({ students, rules, studentRuleScores }) => {
       
       <div className="space-y-6">
         {sortedStudents.map(student => {
+          const scores = studentRuleScores[student.id] || {};
           const totalScore = student.periodScore || 0;
           
-          if (totalScore === 0) return null;
+          // 양수/음수 점수 합계 계산
+          let totalPositive = 0;
+          let totalNegative = 0;
           
-          const overallPercentage = (totalScore / maxScore) * 100;
+          Object.values(scores).forEach(scoreData => {
+            if (scoreData && typeof scoreData === 'object') {
+              totalPositive += scoreData.positive || 0;
+              totalNegative += scoreData.negative || 0;
+            }
+          });
+          
+          if (totalPositive === 0 && totalNegative === 0) return null;
 
           return (
             <div key={student.id} className="relative">
-              <div className="text-sm font-bold text-gray-700 mb-1 flex justify-between">
-                <span>{student.name} ({totalScore}점)</span>
+              <div className="text-sm font-bold text-gray-700 mb-2 flex justify-between items-center">
+                <span>{student.name}</span>
+                <span className="text-xs">
+                  <span className="text-green-600">+{totalPositive}</span>
+                  {' / '}
+                  <span className="text-red-600">-{totalNegative}</span>
+                  {' = '}
+                  <span className={totalScore >= 0 ? 'text-indigo-700' : 'text-red-700'}>{totalScore}점</span>
+                </span>
               </div>
               
-              <div 
-                className="flex h-5 rounded-md overflow-hidden shadow-md border border-gray-300"
-                style={{ width: `${overallPercentage}%`, minWidth: '10%' }}
-              >
-                {/* studentRuleScores 대신 students 데이터에서 직접 계산 */}
-                {studentRuleScores[student.id] ? (
-                  rules.map(rule => {
-                    const score = studentRuleScores[student.id][rule.id] || 0;
-                    const relativePercentage = (score / totalScore) * 100;
+              <div className="flex items-center">
+                {/* 음수 점수 (왼쪽) */}
+                <div className="flex flex-row-reverse h-6" style={{ width: '50%' }}>
+                  {rules.map(rule => {
+                    const scoreData = scores[rule.id];
+                    const negativeScore = scoreData?.negative || 0;
+                    const percentage = (negativeScore / maxValues.maxNegative) * 100;
                     
-                    if (relativePercentage > 0) {
+                    if (percentage > 0) {
                       return (
                         <div 
-                          key={rule.id} 
-                          className={`h-full`}
-                          style={{ width: `${relativePercentage}%`, backgroundColor: rule.color }}
-                          title={`${student.name} - ${rule.name}: ${score}점`}
+                          key={`neg-${rule.id}`}
+                          className="h-full opacity-80 rounded-l"
+                          style={{ width: `${percentage}%`, backgroundColor: rule.color }}
+                          title={`${student.name} - ${rule.name}: -${negativeScore}점`}
                         />
                       );
                     }
                     return null;
-                  })
-                ) : (
-                  // studentRuleScores가 없으면 빈 막대 표시
-                  <div className="w-full h-full bg-gray-200"></div>
-                )}
+                  })}
+                </div>
+                
+                {/* 중앙 기준선 */}
+                <div className="w-0.5 h-8 bg-gray-800 z-10" style={{ marginLeft: '-1px', marginRight: '-1px' }}></div>
+                
+                {/* 양수 점수 (오른쪽) */}
+                <div className="flex h-6" style={{ width: '50%' }}>
+                  {rules.map(rule => {
+                    const scoreData = scores[rule.id];
+                    const positiveScore = scoreData?.positive || 0;
+                    const percentage = (positiveScore / maxValues.maxPositive) * 100;
+                    
+                    if (percentage > 0) {
+                      return (
+                        <div 
+                          key={`pos-${rule.id}`}
+                          className="h-full rounded-r"
+                          style={{ width: `${percentage}%`, backgroundColor: rule.color }}
+                          title={`${student.name} - ${rule.name}: +${positiveScore}점`}
+                        />
+                      );
+                    }
+                    return null;
+                  })}
+                </div>
               </div>
             </div>
           );
@@ -1025,7 +1124,7 @@ const App = () => {
   }, [students]);
   
 
-  // filteredStudentsWithScores를 기반으로 한 studentRuleScores 계산
+  // filteredStudentsWithScores를 기반으로 한 studentRuleScores 계산 (양수/음수 분리)
   const filteredStudentRuleScores = useMemo(() => {
     const scores = {};
     
@@ -1043,8 +1142,17 @@ const App = () => {
           const scoreData = dailyEntry[ruleId];
           const scoreValue = typeof scoreData === 'object' ? scoreData.value : scoreData;
           
-          if (rules.some(r => r.id === parseInt(ruleId, 10)) && scoreValue === 1) {
-            scores[student.id][ruleId] = (scores[student.id][ruleId] || 0) + 1;
+          if (rules.some(r => r.id === parseInt(ruleId, 10)) && scoreValue !== 0) {
+            if (!scores[student.id][ruleId]) {
+              scores[student.id][ruleId] = { positive: 0, negative: 0, total: 0 };
+            }
+            
+            if (scoreValue > 0) {
+              scores[student.id][ruleId].positive += scoreValue;
+            } else {
+              scores[student.id][ruleId].negative += Math.abs(scoreValue);
+            }
+            scores[student.id][ruleId].total += scoreValue;
           }
         }
       });
