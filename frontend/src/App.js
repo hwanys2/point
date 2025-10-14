@@ -621,8 +621,8 @@ const RuleScoreBar = ({ student, rules, studentRuleScores }) => {
 };
 
 const AllStudentsRuleComparison = ({ students, rules, studentRuleScores }) => {
-  // 양수/음수의 최대값 계산
-  const maxValues = useMemo(() => {
+  // 전체 범위의 최대/최소값 계산
+  const rangeValues = useMemo(() => {
     let maxPositive = 0;
     let maxNegative = 0;
     
@@ -642,7 +642,17 @@ const AllStudentsRuleComparison = ({ students, rules, studentRuleScores }) => {
       maxNegative = Math.max(maxNegative, studentNegative);
     });
     
-    return { maxPositive: maxPositive || 1, maxNegative: maxNegative || 1 };
+    const totalRange = maxPositive + maxNegative;
+    const hasNegative = maxNegative > 0;
+    const zeroPosition = hasNegative ? (maxNegative / totalRange) * 100 : 0;
+    
+    return { 
+      maxPositive: maxPositive || 1, 
+      maxNegative: maxNegative || 0,
+      totalRange: totalRange || 1,
+      hasNegative,
+      zeroPosition
+    };
   }, [students, studentRuleScores]);
 
   if (students.length === 0 || rules.length === 0 || students.every(s => (s.periodScore || 0) === 0)) {
@@ -695,58 +705,104 @@ const AllStudentsRuleComparison = ({ students, rules, studentRuleScores }) => {
               <div className="text-sm font-bold text-gray-700 mb-2 flex justify-between items-center">
                 <span>{student.name}</span>
                 <span className="text-xs">
-                  <span className="text-green-600">+{totalPositive}</span>
-                  {' / '}
-                  <span className="text-red-600">-{totalNegative}</span>
-                  {' = '}
+                  {rangeValues.hasNegative && (
+                    <>
+                      <span className="text-green-600">+{totalPositive}</span>
+                      {' / '}
+                      <span className="text-red-600">-{totalNegative}</span>
+                      {' = '}
+                    </>
+                  )}
                   <span className={totalScore >= 0 ? 'text-indigo-700' : 'text-red-700'}>{totalScore}점</span>
                 </span>
               </div>
               
-              <div className="flex items-center">
-                {/* 음수 점수 (왼쪽) */}
-                <div className="flex flex-row-reverse h-6" style={{ width: '50%' }}>
-                  {rules.map(rule => {
-                    const scoreData = scores[rule.id];
-                    const negativeScore = scoreData?.negative || 0;
-                    const percentage = (negativeScore / maxValues.maxNegative) * 100;
-                    
-                    if (percentage > 0) {
-                      return (
-                        <div 
-                          key={`neg-${rule.id}`}
-                          className="h-full opacity-80 rounded-l"
-                          style={{ width: `${percentage}%`, backgroundColor: rule.color }}
-                          title={`${student.name} - ${rule.name}: -${negativeScore}점`}
-                        />
-                      );
-                    }
-                    return null;
-                  })}
-                </div>
+              <div className="relative w-full h-6">
+                {/* 회색 배경 바 */}
+                <div className="absolute inset-0 bg-gray-200 rounded"></div>
                 
-                {/* 중앙 기준선 */}
-                <div className="w-0.5 h-8 bg-gray-800 z-10" style={{ marginLeft: '-1px', marginRight: '-1px' }}></div>
+                {/* 0 지점 구분선 (음수가 있을 때만) */}
+                {rangeValues.hasNegative && (
+                  <div 
+                    className="absolute top-0 bottom-0 w-0.5 bg-gray-800 z-20"
+                    style={{ left: `${rangeValues.zeroPosition}%` }}
+                  ></div>
+                )}
                 
-                {/* 양수 점수 (오른쪽) */}
-                <div className="flex h-6" style={{ width: '50%' }}>
-                  {rules.map(rule => {
-                    const scoreData = scores[rule.id];
-                    const positiveScore = scoreData?.positive || 0;
-                    const percentage = (positiveScore / maxValues.maxPositive) * 100;
-                    
-                    if (percentage > 0) {
-                      return (
-                        <div 
-                          key={`pos-${rule.id}`}
-                          className="h-full rounded-r"
-                          style={{ width: `${percentage}%`, backgroundColor: rule.color }}
-                          title={`${student.name} - ${rule.name}: +${positiveScore}점`}
-                        />
-                      );
-                    }
-                    return null;
-                  })}
+                {/* 실제 점수 막대 */}
+                <div className="absolute inset-0 flex">
+                  {rangeValues.hasNegative ? (
+                    <>
+                      {/* 음수 영역 (0 지점 왼쪽) */}
+                      <div 
+                        className="relative flex flex-row-reverse"
+                        style={{ width: `${rangeValues.zeroPosition}%` }}
+                      >
+                        {rules.map(rule => {
+                          const scoreData = scores[rule.id];
+                          const negativeScore = scoreData?.negative || 0;
+                          const percentage = (negativeScore / rangeValues.maxNegative) * 100;
+                          
+                          if (percentage > 0) {
+                            return (
+                              <div 
+                                key={`neg-${rule.id}`}
+                                className="h-full opacity-90"
+                                style={{ width: `${percentage}%`, backgroundColor: rule.color }}
+                                title={`${student.name} - ${rule.name}: -${negativeScore}점`}
+                              />
+                            );
+                          }
+                          return null;
+                        })}
+                      </div>
+                      
+                      {/* 양수 영역 (0 지점 오른쪽) */}
+                      <div 
+                        className="relative flex"
+                        style={{ width: `${100 - rangeValues.zeroPosition}%` }}
+                      >
+                        {rules.map(rule => {
+                          const scoreData = scores[rule.id];
+                          const positiveScore = scoreData?.positive || 0;
+                          const percentage = (positiveScore / rangeValues.maxPositive) * 100;
+                          
+                          if (percentage > 0) {
+                            return (
+                              <div 
+                                key={`pos-${rule.id}`}
+                                className="h-full"
+                                style={{ width: `${percentage}%`, backgroundColor: rule.color }}
+                                title={`${student.name} - ${rule.name}: +${positiveScore}점`}
+                              />
+                            );
+                          }
+                          return null;
+                        })}
+                      </div>
+                    </>
+                  ) : (
+                    /* 음수가 없을 때: 기존 스타일 (0부터 시작) */
+                    <div className="relative flex w-full">
+                      {rules.map(rule => {
+                        const scoreData = scores[rule.id];
+                        const positiveScore = scoreData?.positive || 0;
+                        const percentage = (positiveScore / totalPositive) * 100;
+                        
+                        if (percentage > 0) {
+                          return (
+                            <div 
+                              key={`pos-${rule.id}`}
+                              className="h-full"
+                              style={{ width: `${percentage}%`, backgroundColor: rule.color }}
+                              title={`${student.name} - ${rule.name}: ${positiveScore}점`}
+                            />
+                          );
+                        }
+                        return null;
+                      })}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
