@@ -1918,7 +1918,7 @@ const App = () => {
                                   }
                                 }}
                                 onFocus={(e) => e.target.select()}
-                                className={`w-12 text-center px-1 py-0.5 rounded border font-semibold text-sm ${
+                                className={`w-12 text-center px-1 py-0.5 rounded border font-semibold text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
                                   scoreValue > 0 
                                     ? 'bg-green-50 text-green-700 border-green-300' 
                                     : scoreValue < 0 
