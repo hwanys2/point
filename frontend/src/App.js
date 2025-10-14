@@ -1845,13 +1845,13 @@ const App = () => {
                             <div className="flex items-center justify-center gap-1">
                               <button
                                 onClick={() => handleAdjustScore(student.id, rule.id, selectedDate, -1)}
-                                className="w-7 h-7 rounded-lg bg-red-500 hover:bg-red-600 text-white transition duration-100 shadow-sm flex items-center justify-center font-bold disabled:opacity-50"
+                                className="w-6 h-6 rounded-lg bg-red-500 hover:bg-red-600 text-white transition duration-100 shadow-sm flex items-center justify-center font-bold disabled:opacity-50"
                                 title="점수 -1"
                                 disabled={isLoading}
                               >
-                                <Minus className="w-4 h-4" />
+                                <Minus className="w-3.5 h-3.5" />
                               </button>
-                              <div className={`min-w-[2.5rem] px-2 py-1 rounded-lg font-semibold text-sm ${
+                              <div className={`min-w-[2rem] px-1.5 py-0.5 rounded-lg font-semibold text-sm ${
                                 scoreValue > 0 
                                   ? 'bg-green-100 text-green-700' 
                                   : scoreValue < 0 
@@ -1862,11 +1862,11 @@ const App = () => {
                               </div>
                               <button
                                 onClick={() => handleAdjustScore(student.id, rule.id, selectedDate, 1)}
-                                className="w-7 h-7 rounded-lg bg-green-500 hover:bg-green-600 text-white transition duration-100 shadow-sm flex items-center justify-center font-bold disabled:opacity-50"
+                                className="w-6 h-6 rounded-lg bg-green-500 hover:bg-green-600 text-white transition duration-100 shadow-sm flex items-center justify-center font-bold disabled:opacity-50"
                                 title="점수 +1"
                                 disabled={isLoading}
                               >
-                                <Plus className="w-4 h-4" />
+                                <Plus className="w-3.5 h-3.5" />
                               </button>
                             </div>
                           </td>
