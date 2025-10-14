@@ -61,7 +61,7 @@ const RuleScoreBar = ({ student, rules, studentRuleScores, allStudents }) => {
       )}
       
       {/* 실제 점수 막대 (액체) - 위아래 패딩 */}
-      <div className="absolute inset-x-0 inset-y-1 flex">
+      <div className="absolute inset-x-0 inset-y-1 flex overflow-hidden rounded">
         {hasNegative ? (
           <>
             {/* 음수 영역 (0 지점 왼쪽) */}
@@ -69,7 +69,7 @@ const RuleScoreBar = ({ student, rules, studentRuleScores, allStudents }) => {
               className="relative flex flex-row-reverse"
               style={{ width: `${zeroPosition}%` }}
             >
-              {rules.map(rule => {
+              {rules.map((rule, index) => {
                 const scoreData = scores[rule.id];
                 const negativeScore = scoreData?.negative || 0;
                 const percentage = (negativeScore / maxNegative) * 100;
@@ -78,7 +78,7 @@ const RuleScoreBar = ({ student, rules, studentRuleScores, allStudents }) => {
                   return (
                     <div 
                       key={`neg-${rule.id}`}
-                      className="h-full opacity-90"
+                      className={`h-full opacity-90 ${index === 0 ? 'rounded-l' : ''}`}
                       style={{ width: `${percentage}%`, backgroundColor: rule.color }}
                       title={`${rule.name}: -${negativeScore}점`}
                     />
@@ -93,16 +93,21 @@ const RuleScoreBar = ({ student, rules, studentRuleScores, allStudents }) => {
               className="relative flex"
               style={{ width: `${100 - zeroPosition}%` }}
             >
-              {rules.map(rule => {
+              {rules.map((rule, index, arr) => {
                 const scoreData = scores[rule.id];
                 const positiveScore = scoreData?.positive || 0;
                 const percentage = (positiveScore / maxPositive) * 100;
+                const visibleRules = arr.filter(r => {
+                  const sd = scores[r.id];
+                  return (sd?.positive || 0) > 0;
+                });
+                const isLast = index === arr.length - 1 || rule.id === visibleRules[visibleRules.length - 1]?.id;
                 
                 if (percentage > 0) {
                   return (
                     <div 
                       key={`pos-${rule.id}`}
-                      className="h-full"
+                      className={`h-full ${isLast ? 'rounded-r' : ''}`}
                       style={{ width: `${percentage}%`, backgroundColor: rule.color }}
                       title={`${rule.name}: +${positiveScore}점`}
                     />
@@ -115,16 +120,22 @@ const RuleScoreBar = ({ student, rules, studentRuleScores, allStudents }) => {
         ) : (
           /* 음수가 없을 때: 0부터 최대값까지 범위로 표시 */
           <div className="relative flex w-full">
-            {rules.map(rule => {
+            {rules.map((rule, index, arr) => {
               const scoreData = scores[rule.id];
               const positiveScore = scoreData?.positive || 0;
               const percentage = (positiveScore / maxPositive) * 100;
+              const visibleRules = arr.filter(r => {
+                const sd = scores[r.id];
+                return (sd?.positive || 0) > 0;
+              });
+              const isFirst = index === 0 || rule.id === visibleRules[0]?.id;
+              const isLast = index === arr.length - 1 || rule.id === visibleRules[visibleRules.length - 1]?.id;
               
               if (percentage > 0) {
                 return (
                   <div 
                     key={`pos-${rule.id}`}
-                    className="h-full"
+                    className={`h-full ${isFirst ? 'rounded-l' : ''} ${isLast ? 'rounded-r' : ''}`}
                     style={{ width: `${percentage}%`, backgroundColor: rule.color }}
                     title={`${rule.name}: ${positiveScore}점`}
                   />
@@ -277,7 +288,7 @@ const PublicRuleComparison = ({ students, rules }) => {
                 )}
                 
                 {/* 실제 점수 막대 (액체) - 위아래 패딩 */}
-                <div className="absolute inset-x-0 inset-y-1.5 flex">
+                <div className="absolute inset-x-0 inset-y-1.5 flex overflow-hidden rounded">
                   {rangeValues.hasNegative ? (
                     <>
                       {/* 음수 영역 (0 지점 왼쪽) */}
@@ -285,7 +296,7 @@ const PublicRuleComparison = ({ students, rules }) => {
                         className="relative flex flex-row-reverse"
                         style={{ width: `${rangeValues.zeroPosition}%` }}
                       >
-                  {rules.map(rule => {
+                  {rules.map((rule, index) => {
                     const scoreData = scores[rule.id];
                     const negativeScore = scoreData?.negative || 0;
                     const percentage = (negativeScore / rangeValues.maxNegative) * 100;
@@ -294,7 +305,7 @@ const PublicRuleComparison = ({ students, rules }) => {
                       return (
                         <div 
                           key={`neg-${rule.id}`}
-                          className="h-full opacity-90"
+                          className={`h-full opacity-90 ${index === 0 ? 'rounded-l' : ''}`}
                           style={{ width: `${percentage}%`, backgroundColor: rule.color }}
                           title={`${student.name} - ${rule.name}: -${negativeScore}점`}
                         />
@@ -309,16 +320,21 @@ const PublicRuleComparison = ({ students, rules }) => {
                   className="relative flex"
                   style={{ width: `${100 - rangeValues.zeroPosition}%` }}
                 >
-                  {rules.map(rule => {
+                  {rules.map((rule, index, arr) => {
                     const scoreData = scores[rule.id];
                     const positiveScore = scoreData?.positive || 0;
                     const percentage = (positiveScore / rangeValues.maxPositive) * 100;
+                    const visibleRules = arr.filter(r => {
+                      const sd = scores[r.id];
+                      return (sd?.positive || 0) > 0;
+                    });
+                    const isLast = index === arr.length - 1 || rule.id === visibleRules[visibleRules.length - 1]?.id;
                     
                     if (percentage > 0) {
                       return (
                         <div 
                           key={`pos-${rule.id}`}
-                          className="h-full"
+                          className={`h-full ${isLast ? 'rounded-r' : ''}`}
                           style={{ width: `${percentage}%`, backgroundColor: rule.color }}
                           title={`${student.name} - ${rule.name}: +${positiveScore}점`}
                         />
@@ -331,16 +347,22 @@ const PublicRuleComparison = ({ students, rules }) => {
                   ) : (
                     /* 음수가 없을 때: 0부터 최대값까지 범위로 표시 */
                     <div className="relative flex w-full">
-                      {rules.map(rule => {
+                      {rules.map((rule, index, arr) => {
                         const scoreData = scores[rule.id];
                         const positiveScore = scoreData?.positive || 0;
                         const percentage = (positiveScore / rangeValues.maxPositive) * 100;
+                        const visibleRules = arr.filter(r => {
+                          const sd = scores[r.id];
+                          return (sd?.positive || 0) > 0;
+                        });
+                        const isFirst = index === 0 || rule.id === visibleRules[0]?.id;
+                        const isLast = index === arr.length - 1 || rule.id === visibleRules[visibleRules.length - 1]?.id;
                         
                         if (percentage > 0) {
                           return (
                             <div 
                               key={`pos-${rule.id}`}
-                              className="h-full"
+                              className={`h-full ${isFirst ? 'rounded-l' : ''} ${isLast ? 'rounded-r' : ''}`}
                               style={{ width: `${percentage}%`, backgroundColor: rule.color }}
                               title={`${student.name} - ${rule.name}: ${positiveScore}점`}
                             />
