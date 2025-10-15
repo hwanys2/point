@@ -1246,7 +1246,7 @@ const App = () => {
             Object.values(student.dailyScores[date]).forEach(scoreData => {
               // scoreData가 객체인 경우 value 속성 사용, 아니면 직접 값 사용
               const scoreValue = typeof scoreData === 'object' ? scoreData.value : scoreData;
-              if (scoreValue === 1) periodScore++;
+              periodScore += scoreValue; // 양수/음수 모두 합산
             });
           }
         });
