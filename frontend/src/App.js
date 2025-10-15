@@ -591,20 +591,20 @@ const RuleScoreBar = ({ student, rules, studentRuleScores, allStudents }) => {
   }
   
   return (
-    <div className="relative w-full h-6" title={`총점: ${totalScore}점 (양수: +${totalPositive}, 음수: -${totalNegative})`}>
-      {/* 회색 배경 바 (유리관) */}
-      <div className="absolute inset-0 bg-gray-200 rounded"></div>
+    <div className="relative w-full h-3" title={`총점: ${totalScore}점 (양수: +${totalPositive}, 음수: -${totalNegative})`}>
+      {/* 회색 외곽선 (유리관 테두리) */}
+      <div className="absolute inset-0 border border-gray-300 rounded"></div>
       
       {/* 0 지점 구분선 (음수가 있을 때만) */}
       {hasNegative && (
         <div 
-          className="absolute top-0 bottom-0 w-0.5 bg-gray-800 z-20"
-          style={{ left: `${zeroPosition}%`, height: 'calc(100% + 8px)', top: '-4px' }}
+          className="absolute inset-y-0 w-0.5 bg-gray-700 z-20"
+          style={{ left: `${zeroPosition}%` }}
         ></div>
       )}
       
-      {/* 실제 점수 막대 (액체) - 위아래 패딩 */}
-      <div className="absolute inset-x-0 inset-y-1 flex overflow-hidden rounded">
+      {/* 실제 점수 막대 (액체) */}
+      <div className="absolute inset-0 flex overflow-hidden rounded">
         {hasNegative ? (
           <>
             {/* 음수 영역 (0 지점 왼쪽) */}
@@ -626,8 +626,8 @@ const RuleScoreBar = ({ student, rules, studentRuleScores, allStudents }) => {
                   return (
                     <div 
                       key={`neg-${rule.id}`}
-                      className={`h-full opacity-90 ${isFirst ? 'rounded-l' : ''}`}
-                      style={{ width: `${percentage}%`, backgroundColor: rule.color }}
+                      className={`opacity-70 ${isFirst ? 'rounded-l' : ''}`}
+                      style={{ width: `${percentage}%`, height: '80%', alignSelf: 'center', backgroundColor: rule.color }}
                       title={`${rule.name}: -${negativeScore}점`}
                     />
                   );
@@ -779,36 +779,25 @@ const AllStudentsRuleComparison = ({ students, rules, studentRuleScores }) => {
           if (totalPositive === 0 && totalNegative === 0) return null;
 
           return (
-            <div key={student.id} className="relative">
-              <div className="text-sm font-bold text-gray-700 mb-2 flex justify-between items-center">
-                <span>{student.name}</span>
-                <span className="text-xs">
-                  {rangeValues.hasNegative && (
-                    <>
-                      <span className="text-green-600">+{totalPositive}</span>
-                      {' / '}
-                      <span className="text-red-600">-{totalNegative}</span>
-                      {' = '}
-                    </>
-                  )}
-                  <span className={totalScore >= 0 ? 'text-indigo-700' : 'text-red-700'}>{totalScore}점</span>
-                </span>
+            <div key={student.id} className="relative flex items-center gap-3">
+              <div className="text-sm font-bold text-gray-700 min-w-[80px]">
+                {student.name}
               </div>
               
-              <div className="relative w-full h-10">
-                {/* 회색 배경 바 (유리관) */}
-                <div className="absolute inset-0 bg-gray-200 rounded"></div>
+              <div className="flex-1 relative h-6">
+                {/* 회색 외곽선 (유리관 테두리) */}
+                <div className="absolute inset-0 border border-gray-300 rounded"></div>
                 
                 {/* 0 지점 구분선 (음수가 있을 때만) */}
                 {rangeValues.hasNegative && (
                   <div 
-                    className="absolute top-0 bottom-0 w-0.5 bg-gray-800 z-20"
-                    style={{ left: `${rangeValues.zeroPosition}%`, height: 'calc(100% + 10px)', top: '-5px' }}
+                    className="absolute inset-y-0 w-0.5 bg-gray-700 z-20"
+                    style={{ left: `${rangeValues.zeroPosition}%` }}
                   ></div>
                 )}
                 
-                {/* 실제 점수 막대 (액체) - 위아래 패딩 */}
-                <div className="absolute inset-x-0 inset-y-1.5 flex overflow-hidden rounded">
+                {/* 실제 점수 막대 (액체) */}
+                <div className="absolute inset-0 flex overflow-hidden rounded">
                   {rangeValues.hasNegative ? (
                     <>
                       {/* 음수 영역 (0 지점 왼쪽) */}
@@ -830,8 +819,8 @@ const AllStudentsRuleComparison = ({ students, rules, studentRuleScores }) => {
                             return (
                               <div 
                                 key={`neg-${rule.id}`}
-                                className={`h-full opacity-90 ${isFirst ? 'rounded-l' : ''}`}
-                                style={{ width: `${percentage}%`, backgroundColor: rule.color }}
+                                className={`opacity-70 ${isFirst ? 'rounded-l' : ''}`}
+                                style={{ width: `${percentage}%`, height: '80%', alignSelf: 'center', backgroundColor: rule.color }}
                                 title={`${student.name} - ${rule.name}: -${negativeScore}점`}
                               />
                             );
@@ -898,6 +887,18 @@ const AllStudentsRuleComparison = ({ students, rules, studentRuleScores }) => {
                     </div>
                   )}
                 </div>
+              </div>
+              
+              <div className="text-xs font-semibold min-w-[100px] text-right">
+                {rangeValues.hasNegative && (
+                  <>
+                    <span className="text-green-600">+{totalPositive}</span>
+                    {' '}
+                    <span className="text-red-600">-{totalNegative}</span>
+                    {' = '}
+                  </>
+                )}
+                <span className={totalScore >= 0 ? 'text-indigo-700' : 'text-red-700'}>{totalScore}점</span>
               </div>
             </div>
           );
