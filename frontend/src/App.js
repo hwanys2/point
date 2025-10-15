@@ -1391,28 +1391,78 @@ const App = () => {
       return;
     }
 
+    // Optimistic UI 업데이트: 먼저 로컬 상태를 즉시 업데이트
+    setStudents(prevStudents => {
+      return prevStudents.map(student => {
+        if (student.id === studentId) {
+          const updatedStudent = { ...student };
+          if (!updatedStudent.dailyScores) {
+            updatedStudent.dailyScores = {};
+          }
+          if (!updatedStudent.dailyScores[date]) {
+            updatedStudent.dailyScores[date] = {};
+          }
+          
+          const currentScore = updatedStudent.dailyScores[date][ruleId];
+          const currentValue = currentScore ? (typeof currentScore === 'object' ? currentScore.value : currentScore) : 0;
+          const newValue = currentValue + delta;
+          
+          updatedStudent.dailyScores[date][ruleId] = newValue;
+          
+          return updatedStudent;
+        }
+        return student;
+      });
+    });
+
+    // 백그라운드에서 API 호출
     try {
       await scoresAPI.adjust({ studentId, ruleId, date, delta });
-      await loadData(); // 전체 데이터 다시 로드
+      // API 성공 시에도 loadData를 호출하여 최종 동기화 (조용하게 백그라운드에서)
+      loadData();
     } catch (err) {
       console.error('Adjust score error:', err);
-      setError('점수 업데이트 중 오류가 발생했습니다.');
+      setError('점수 업데이트 중 오류가 발생했습니다. 다시 시도해주세요.');
+      // 실패 시 데이터를 다시 불러와서 롤백
+      await loadData();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rules]);
 
   const handleBulkIncrement = useCallback(async (ruleId, date) => {
     if (!Array.isArray(students) || students.length === 0) return;
+    
+    // Optimistic UI 업데이트: 모든 학생의 점수를 먼저 즉시 업데이트
+    setStudents(prevStudents => {
+      return prevStudents.map(student => {
+        const updatedStudent = { ...student };
+        if (!updatedStudent.dailyScores) {
+          updatedStudent.dailyScores = {};
+        }
+        if (!updatedStudent.dailyScores[date]) {
+          updatedStudent.dailyScores[date] = {};
+        }
+        
+        const currentScore = updatedStudent.dailyScores[date][ruleId];
+        const currentValue = currentScore ? (typeof currentScore === 'object' ? currentScore.value : currentScore) : 0;
+        updatedStudent.dailyScores[date][ruleId] = currentValue + 1;
+        
+        return updatedStudent;
+      });
+    });
+    
+    // 백그라운드에서 API 호출
     try {
       setIsLoading(true);
       const adjustPromises = students.map((s) => 
         scoresAPI.adjust({ studentId: s.id, ruleId, date, delta: 1 })
       );
       await Promise.all(adjustPromises);
-      await loadData();
+      loadData(); // 최종 동기화
     } catch (err) {
       console.error('Bulk increment error:', err);
       setError('일괄 +1 중 오류가 발생했습니다.');
+      await loadData(); // 실패 시 롤백
     } finally {
       setIsLoading(false);
     }
@@ -1420,16 +1470,38 @@ const App = () => {
 
   const handleBulkDecrement = useCallback(async (ruleId, date) => {
     if (!Array.isArray(students) || students.length === 0) return;
+    
+    // Optimistic UI 업데이트: 모든 학생의 점수를 먼저 즉시 업데이트
+    setStudents(prevStudents => {
+      return prevStudents.map(student => {
+        const updatedStudent = { ...student };
+        if (!updatedStudent.dailyScores) {
+          updatedStudent.dailyScores = {};
+        }
+        if (!updatedStudent.dailyScores[date]) {
+          updatedStudent.dailyScores[date] = {};
+        }
+        
+        const currentScore = updatedStudent.dailyScores[date][ruleId];
+        const currentValue = currentScore ? (typeof currentScore === 'object' ? currentScore.value : currentScore) : 0;
+        updatedStudent.dailyScores[date][ruleId] = currentValue - 1;
+        
+        return updatedStudent;
+      });
+    });
+    
+    // 백그라운드에서 API 호출
     try {
       setIsLoading(true);
       const adjustPromises = students.map((s) => 
         scoresAPI.adjust({ studentId: s.id, ruleId, date, delta: -1 })
       );
       await Promise.all(adjustPromises);
-      await loadData();
+      loadData(); // 최종 동기화
     } catch (err) {
       console.error('Bulk decrement error:', err);
       setError('일괄 -1 중 오류가 발생했습니다.');
+      await loadData(); // 실패 시 롤백
     } finally {
       setIsLoading(false);
     }
