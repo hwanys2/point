@@ -1234,9 +1234,14 @@ const App = () => {
       let filteredDailyScores = {};
       
       if (dateRange === null) {
-        // 전체 기간
-        periodScore = student.score;
+        // 전체 기간 - dailyScores에서 직접 계산 (DB의 score는 GREATEST로 인해 부정확할 수 있음)
         filteredDailyScores = student.dailyScores;
+        Object.values(student.dailyScores || {}).forEach(dayScores => {
+          Object.values(dayScores).forEach(scoreData => {
+            const scoreValue = typeof scoreData === 'object' ? scoreData.value : scoreData;
+            periodScore += scoreValue; // 양수/음수 모두 합산
+          });
+        });
       } else {
         // 특정 기간 - dailyScores 구조 처리 (숫자 또는 객체)
         dateRange.forEach(date => {
