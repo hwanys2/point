@@ -143,10 +143,10 @@ router.delete('/:id', auth, async (req, res) => {
         [id]
       );
 
-      // 각 학생의 총점에서 규칙 점수 차감
+      // 각 학생의 총점에서 규칙 점수 차감 (음수 허용)
       for (const row of scoresResult.rows) {
         await client.query(
-          'UPDATE students SET score = GREATEST(0, score - $1) WHERE id = $2',
+          'UPDATE students SET score = score - $1 WHERE id = $2',
           [row.total, row.student_id]
         );
       }

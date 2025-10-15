@@ -75,9 +75,9 @@ router.post('/toggle', auth, [
         );
       }
 
-      // 학생 총점 업데이트
+      // 학생 총점 업데이트 (음수 허용)
       await client.query(
-        'UPDATE students SET score = GREATEST(0, score + $1) WHERE id = $2',
+        'UPDATE students SET score = score + $1 WHERE id = $2',
         [scoreDelta, studentId]
       );
 
@@ -180,9 +180,9 @@ router.post('/adjust', auth, [
         );
       }
 
-      // 학생 총점 업데이트
+      // 학생 총점 업데이트 (음수 허용)
       await client.query(
-        'UPDATE students SET score = GREATEST(0, score + $1) WHERE id = $2',
+        'UPDATE students SET score = score + $1 WHERE id = $2',
         [scoreDelta, studentId]
       );
 
