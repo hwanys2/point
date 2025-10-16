@@ -4,11 +4,11 @@ import { publicAPI } from '../services/api';
 import Footer from './Footer';
 
 // 규칙별 점수 막대 그래프 컴포넌트 (양수/음수 분리)
-const RuleScoreBar = ({ student, rules, studentRuleScores, allStudents }) => {
+const RuleScoreBar = ({ student, rules, studentRuleScores }) => {
   const scores = studentRuleScores[student.id] || {};
   const totalScore = student.totalScore || 0;
   
-  // 양수/음수 점수 합계 계산
+  // 양수/음수 점수 합계 계산 (해당 학생만)
   let totalPositive = 0;
   let totalNegative = 0;
   
@@ -19,29 +19,10 @@ const RuleScoreBar = ({ student, rules, studentRuleScores, allStudents }) => {
     }
   });
   
-  // 전체 학생 중 최대/최소값 계산
-  let maxPositive = 0;
-  let maxNegative = 0;
-  
-  (allStudents || [student]).forEach(s => {
-    const sScores = studentRuleScores[s.id] || {};
-    let sPositive = 0;
-    let sNegative = 0;
-    
-    Object.values(sScores).forEach(scoreData => {
-      if (scoreData && typeof scoreData === 'object') {
-        sPositive += scoreData.positive || 0;
-        sNegative += scoreData.negative || 0;
-      }
-    });
-    
-    maxPositive = Math.max(maxPositive, sPositive);
-    maxNegative = Math.max(maxNegative, sNegative);
-  });
-  
-  const totalRange = maxPositive + maxNegative;
-  const hasNegative = maxNegative > 0;
-  const zeroPosition = hasNegative ? (maxNegative / totalRange) * 100 : 0;
+  // 해당 학생의 점수 기준으로 계산 (자기 점수 100%)
+  const totalRange = totalPositive + totalNegative;
+  const hasNegative = totalNegative > 0;
+  const zeroPosition = hasNegative ? (totalNegative / totalRange) * 100 : 0;
   
   if (totalPositive === 0 && totalNegative === 0) {
     return <div className="h-4 w-full bg-gray-200 rounded"></div>;
@@ -74,7 +55,7 @@ const RuleScoreBar = ({ student, rules, studentRuleScores, allStudents }) => {
               {rules.map((rule, index, arr) => {
                 const scoreData = scores[rule.id];
                 const negativeScore = scoreData?.negative || 0;
-                const percentage = (negativeScore / maxNegative) * 100;
+                const percentage = totalNegative > 0 ? (negativeScore / totalNegative) * 100 : 0;
                 const visibleRules = arr.filter(r => {
                   const sd = scores[r.id];
                   return (sd?.negative || 0) > 0;
@@ -103,7 +84,7 @@ const RuleScoreBar = ({ student, rules, studentRuleScores, allStudents }) => {
               {rules.map((rule, index, arr) => {
                 const scoreData = scores[rule.id];
                 const positiveScore = scoreData?.positive || 0;
-                const percentage = (positiveScore / maxPositive) * 100;
+                const percentage = totalPositive > 0 ? (positiveScore / totalPositive) * 100 : 0;
                 const visibleRules = arr.filter(r => {
                   const sd = scores[r.id];
                   return (sd?.positive || 0) > 0;
@@ -130,7 +111,7 @@ const RuleScoreBar = ({ student, rules, studentRuleScores, allStudents }) => {
             {rules.map((rule, index, arr) => {
               const scoreData = scores[rule.id];
               const positiveScore = scoreData?.positive || 0;
-              const percentage = (positiveScore / maxPositive) * 100;
+              const percentage = totalPositive > 0 ? (positiveScore / totalPositive) * 100 : 0;
               const visibleRules = arr.filter(r => {
                 const sd = scores[r.id];
                 return (sd?.positive || 0) > 0;
@@ -654,7 +635,7 @@ const PublicLeaderboard = ({ token }) => {
                     </td>
                     <td className="px-1 sm:px-2 md:px-3 py-2 sm:py-4 whitespace-nowrap text-sm text-center">
                       <div className="w-12 sm:w-24 md:w-32 lg:w-40 mx-auto">
-                        <RuleScoreBar student={student} rules={rules} studentRuleScores={studentRuleScores} allStudents={data.leaderboard} />
+                        <RuleScoreBar student={student} rules={rules} studentRuleScores={studentRuleScores} />
                       </div>
                     </td>
                   </tr>
