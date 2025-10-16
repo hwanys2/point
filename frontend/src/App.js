@@ -2698,7 +2698,7 @@ const App = () => {
       </header>
 
       <div className="max-w-7xl mx-auto">
-        <div className="flex border-b border-gray-200 mb-6 sticky top-0 bg-white z-10 shadow-sm rounded-t-xl overflow-x-auto">
+        <div className="flex border-b border-gray-200 mb-6 sticky top-0 bg-white z-50 shadow-sm rounded-t-xl overflow-x-auto">
           {visibleTabs.map(tab => {
             const TabIcon = tab.icon;
             const isActive = activeTab === tab.id;
