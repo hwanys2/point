@@ -38,13 +38,13 @@ const RuleScoreBar = ({ student, rules, studentRuleScores }) => {
         {/* 0 지점 구분선 (음수가 있을 때만) */}
         {hasNegative && (
           <div 
-            className="absolute w-0.5 bg-gray-800 z-20"
+            className="absolute w-0.5 bg-gray-800 z-[2]"
             style={{ left: `${zeroPosition}%`, top: '-2px', bottom: '-2px' }}
           ></div>
         )}
       
         {/* 점수 막대 내용 */}
-        <div className="absolute inset-0 flex z-10">
+        <div className="absolute inset-0 flex z-[1]">
         {hasNegative ? (
           <>
             {/* 음수 영역 (0 지점 왼쪽) */}
@@ -118,19 +118,19 @@ const RuleScoreBar = ({ student, rules, studentRuleScores }) => {
               });
               const isFirst = index === 0 || rule.id === visibleRules[0]?.id;
               const isLast = index === arr.length - 1 || rule.id === visibleRules[visibleRules.length - 1]?.id;
-              
-              if (percentage > 0) {
-                return (
-                  <div 
+        
+        if (percentage > 0) {
+          return (
+            <div 
                     key={`pos-${rule.id}`}
                     className={`h-full ${isFirst ? 'rounded-l' : ''} ${isLast ? 'rounded-r' : ''}`}
-                    style={{ width: `${percentage}%`, backgroundColor: rule.color }}
+              style={{ width: `${percentage}%`, backgroundColor: rule.color }}
                     title={`${rule.name}: ${positiveScore}점`}
-                  />
-                );
-              }
-              return null;
-            })}
+            />
+          );
+        }
+        return null;
+      })}
           </div>
         )}
         </div>
@@ -262,13 +262,13 @@ const PublicRuleComparison = ({ students, rules }) => {
                   {/* 0 지점 구분선 (음수가 있을 때만) */}
                   {rangeValues.hasNegative && (
                     <div 
-                      className="absolute w-0.5 bg-gray-800 z-20"
+                      className="absolute w-0.5 bg-gray-800 z-[2]"
                       style={{ left: `${rangeValues.zeroPosition}%`, top: '-2px', bottom: '-2px' }}
                     ></div>
                   )}
                 
                   {/* 점수 막대 내용 */}
-                  <div className="absolute inset-0 flex z-10">
+                  <div className="absolute inset-0 flex z-[1]">
                   {rangeValues.hasNegative ? (
                     <>
                       {/* 음수 영역 (0 지점 왼쪽) */}
@@ -350,11 +350,11 @@ const PublicRuleComparison = ({ students, rules }) => {
                               className={`h-full ${isFirst ? 'rounded-l' : ''} ${isLast ? 'rounded-r' : ''}`}
                               style={{ width: `${percentage}%`, backgroundColor: rule.color }}
                               title={`${student.name} - ${rule.name}: ${positiveScore}점`}
-                            />
-                          );
-                        }
-                        return null;
-                      })}
+                      />
+                    );
+                  }
+                  return null;
+                })}
                     </div>
                   )}
                   </div>

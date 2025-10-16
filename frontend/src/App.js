@@ -578,16 +578,16 @@ const RuleScoreBar = ({ student, rules, studentRuleScores }) => {
         {/* 회색 배경 (유리관) - 막대보다 4px 크게 */}
         <div className="absolute inset-x-0 bg-gray-200 rounded" style={{ top: '-2px', bottom: '-2px' }}></div>
       
-        {/* 0 지점 구분선 (음수가 있을 때만) */}
-        {hasNegative && (
-          <div 
-            className="absolute w-0.5 bg-gray-800 z-20"
-            style={{ left: `${zeroPosition}%`, top: '-2px', bottom: '-2px' }}
-          ></div>
-        )}
+      {/* 0 지점 구분선 (음수가 있을 때만) */}
+      {hasNegative && (
+        <div 
+          className="absolute w-0.5 bg-gray-800 z-[2]"
+          style={{ left: `${zeroPosition}%`, top: '-2px', bottom: '-2px' }}
+        ></div>
+      )}
       
         {/* 점수 막대 내용 */}
-        <div className="absolute inset-0 flex z-10">
+        <div className="absolute inset-0 flex z-[1]">
         {hasNegative ? (
           <>
             {/* 음수 영역 (0 지점 왼쪽) */}
@@ -604,10 +604,10 @@ const RuleScoreBar = ({ student, rules, studentRuleScores }) => {
                   return (sd?.negative || 0) > 0;
                 });
                 const isFirst = index === arr.length - 1 || rule.id === visibleRules[visibleRules.length - 1]?.id;
-                
-                if (percentage > 0) {
-                  return (
-                    <div 
+        
+        if (percentage > 0) {
+          return (
+            <div 
                       key={`neg-${rule.id}`}
                       className={`opacity-75 ${isFirst ? 'rounded-l' : ''}`}
                       style={{ width: `${percentage}%`, height: '75%', alignSelf: 'center', backgroundColor: rule.color }}
@@ -639,13 +639,13 @@ const RuleScoreBar = ({ student, rules, studentRuleScores }) => {
                     <div 
                       key={`pos-${rule.id}`}
                       className={`h-full ${isLast ? 'rounded-r' : ''}`}
-                      style={{ width: `${percentage}%`, backgroundColor: rule.color }}
+              style={{ width: `${percentage}%`, backgroundColor: rule.color }}
                       title={`${rule.name}: +${positiveScore}점`}
-                    />
-                  );
-                }
-                return null;
-              })}
+            />
+          );
+        }
+        return null;
+      })}
             </div>
           </>
         ) : (
@@ -774,16 +774,16 @@ const AllStudentsRuleComparison = ({ students, rules, studentRuleScores }) => {
                   {/* 회색 배경 (유리관) - 막대보다 4px 크게 */}
                   <div className="absolute inset-x-0 bg-gray-200 rounded" style={{ top: '-2px', bottom: '-2px' }}></div>
                 
-                  {/* 0 지점 구분선 (음수가 있을 때만) */}
-                  {rangeValues.hasNegative && (
-                    <div 
-                      className="absolute w-0.5 bg-gray-800 z-20"
-                      style={{ left: `${rangeValues.zeroPosition}%`, top: '-2px', bottom: '-2px' }}
-                    ></div>
-                  )}
+                {/* 0 지점 구분선 (음수가 있을 때만) */}
+                {rangeValues.hasNegative && (
+                  <div 
+                    className="absolute w-0.5 bg-gray-800 z-[2]"
+                    style={{ left: `${rangeValues.zeroPosition}%`, top: '-2px', bottom: '-2px' }}
+                  ></div>
+                )}
                 
                   {/* 점수 막대 내용 */}
-                  <div className="absolute inset-0 flex z-10">
+                  <div className="absolute inset-0 flex z-[1]">
                   {rangeValues.hasNegative ? (
                     <>
                       {/* 음수 영역 (0 지점 왼쪽) */}
@@ -802,16 +802,16 @@ const AllStudentsRuleComparison = ({ students, rules, studentRuleScores }) => {
                           const isFirst = index === arr.length - 1 || rule.id === visibleRules[visibleRules.length - 1]?.id;
                           
                           if (percentage > 0) {
-                            return (
-                              <div 
+                      return (
+                        <div 
                                 key={`neg-${rule.id}`}
                                 className={`opacity-75 ${isFirst ? 'rounded-l' : ''}`}
                                 style={{ width: `${percentage}%`, height: '75%', alignSelf: 'center', backgroundColor: rule.color }}
                                 title={`${student.name} - ${rule.name}: -${negativeScore}점`}
-                              />
-                            );
-                          }
-                          return null;
+                        />
+                      );
+                    }
+                    return null;
                         })}
                       </div>
                       
@@ -2061,7 +2061,7 @@ const App = () => {
                         return (
                           <td key={rule.id} className="px-3 py-3 whitespace-nowrap text-center">
                             <div className="flex items-center justify-center gap-0.5">
-                              <button
+            <button
                                 onClick={() => handleAdjustScore(student.id, rule.id, selectedDate, -1)}
                                 className="text-red-500 hover:text-red-700 transition duration-100 disabled:opacity-30 p-1"
                                 title="점수 -1"
@@ -2130,10 +2130,10 @@ const App = () => {
                                 onClick={() => handleAdjustScore(student.id, rule.id, selectedDate, 1)}
                                 className="text-green-500 hover:text-green-700 transition duration-100 disabled:opacity-30 p-1"
                                 title="점수 +1"
-                                disabled={isLoading}
-                              >
+                              disabled={isLoading}
+                            >
                                 <Plus className="w-4 h-4" />
-                              </button>
+                            </button>
                             </div>
                           </td>
                         );
@@ -2368,7 +2368,7 @@ const App = () => {
               const scoreData = filteredStudentRuleScores[s.id]?.[rule.id];
               const ruleScore = (scoreData && typeof scoreData === 'object') ? scoreData.total : (scoreData || 0);
               return {
-                ...s,
+              ...s,
                 ruleScore
               };
             }).sort((a, b) => {
