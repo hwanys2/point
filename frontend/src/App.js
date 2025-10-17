@@ -549,7 +549,7 @@ const Footer = () => {
 
 const RuleScoreBar = ({ student, rules, studentRuleScores }) => {
   const scores = studentRuleScores[student.id] || {};
-  const totalScore = student.periodScore || student.score || 0;
+  const totalScore = student.periodScore !== undefined ? student.periodScore : (student.score || 0);
   
   // 양수/음수 점수 합계 계산 (해당 학생만)
   let totalPositive = 0;
@@ -725,7 +725,11 @@ const AllStudentsRuleComparison = ({ students, rules, studentRuleScores }) => {
     );
   }
   
-  const sortedStudents = [...students].sort((a, b) => (b.periodScore || b.score) - (a.periodScore || a.score));
+  const sortedStudents = [...students].sort((a, b) => {
+    const scoreA = a.periodScore !== undefined ? a.periodScore : (a.score || 0);
+    const scoreB = b.periodScore !== undefined ? b.periodScore : (b.score || 0);
+    return scoreB - scoreA;
+  });
 
   return (
     <div className="bg-white p-3 sm:p-4 md:p-6 rounded-xl shadow-2xl border border-gray-100">
