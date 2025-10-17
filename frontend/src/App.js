@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { 
   Award, UserPlus, ListOrdered, Loader2, AlertTriangle, Plus, Calendar, 
   Shirt, BookOpenCheck, Sparkles, Armchair, Smile, Lightbulb,
@@ -953,6 +953,9 @@ const App = () => {
   // 점수 입력 중인 값을 추적하기 위한 로컬 상태
   const [editingScores, setEditingScores] = useState({});
 
+  // 규칙 입력 폼 ref (스크롤 용도)
+  const ruleFormRef = useRef(null);
+
   // 해시 변경 감지
   useEffect(() => {
     const handleHashChange = () => {
@@ -1688,6 +1691,13 @@ const App = () => {
   const handleStartEditRule = (rule) => {
     setEditingRuleId(rule.id);
     setCurrentRule({ name: rule.name, iconId: rule.iconId, color: rule.color });
+    
+    // 규칙 입력 폼으로 부드럽게 스크롤
+    setTimeout(() => {
+      if (ruleFormRef.current) {
+        ruleFormRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 100);
   };
 
   // 학급 관리 핸들러들
@@ -2277,7 +2287,7 @@ const App = () => {
         )}
       </div>
 
-      <div className="border p-4 rounded-lg bg-indigo-50">
+      <div ref={ruleFormRef} className="border p-4 rounded-lg bg-indigo-50">
         <h3 className="text-xl font-semibold text-indigo-700 mb-3 flex items-center">
           <Edit className="w-5 h-5 mr-2" /> {editingRuleId ? '규칙 수정' : '새 규칙 등록'}
         </h3>
