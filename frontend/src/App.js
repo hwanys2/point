@@ -1188,7 +1188,10 @@ const App = () => {
           for (let i = 0; i < 7; i++) {
             const d = new Date(today);
             d.setDate(d.getDate() - i);
-            dates.push(d.toISOString().split('T')[0]);
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            dates.push(`${y}-${m}-${day}`);
           }
           return dates;
         }
@@ -1197,7 +1200,10 @@ const App = () => {
           for (let i = 0; i < 30; i++) {
             const d = new Date(today);
             d.setDate(d.getDate() - i);
-            dates.push(d.toISOString().split('T')[0]);
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            dates.push(`${y}-${m}-${day}`);
           }
           return dates;
         }
@@ -1206,7 +1212,10 @@ const App = () => {
           const start = new Date(customStartDate);
           const end = new Date(customEndDate);
           for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-            dates.push(d.toISOString().split('T')[0]);
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            dates.push(`${y}-${m}-${day}`);
           }
           return dates;
         }

@@ -3,6 +3,14 @@ const { pool } = require('../config/database');
 
 const router = express.Router();
 
+// 로컬 날짜를 YYYY-MM-DD 형식으로 반환 (UTC 변환 없이)
+const getLocalDateString = (date = new Date()) => {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+};
+
 // 공개 리더보드 조회 (토큰 기반)
 router.get('/leaderboard/:token', async (req, res) => {
   try {
@@ -36,19 +44,19 @@ router.get('/leaderboard/:token', async (req, res) => {
 
     if (period === 'daily') {
       // 클라이언트에서 전달받은 오늘 날짜 사용 (YYYY-MM-DD 형식)
-      const today = new Date().toISOString().split('T')[0];
+      const today = getLocalDateString();
       dateFilter = `AND s.date = $${paramIndex}`;
       queryParams.push(today);
       paramIndex++;
     } else if (period === 'weekly') {
-      const today = new Date().toISOString().split('T')[0];
-      const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      const today = getLocalDateString();
+      const weekAgo = getLocalDateString(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000));
       dateFilter = `AND s.date >= $${paramIndex} AND s.date <= $${paramIndex + 1}`;
       queryParams.push(weekAgo, today);
       paramIndex += 2;
     } else if (period === 'monthly') {
-      const today = new Date().toISOString().split('T')[0];
-      const monthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      const today = getLocalDateString();
+      const monthAgo = getLocalDateString(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000));
       dateFilter = `AND s.date >= $${paramIndex} AND s.date <= $${paramIndex + 1}`;
       queryParams.push(monthAgo, today);
       paramIndex += 2;
@@ -96,7 +104,7 @@ router.get('/leaderboard/:token', async (req, res) => {
     // 점수 데이터 처리
     scoresResult.rows.forEach(score => {
       const dateStr = score.date instanceof Date 
-        ? score.date.toISOString().split('T')[0] 
+        ? getLocalDateString(score.date)
         : score.date;
       
       if (studentMap[score.student_id]) {

@@ -5,6 +5,14 @@ const auth = require('../middleware/auth');
 
 const router = express.Router();
 
+// 로컬 날짜를 YYYY-MM-DD 형식으로 반환 (UTC 변환 없이)
+const getLocalDateString = (date = new Date()) => {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+};
+
 // 모든 학생 조회
 router.get('/', auth, async (req, res) => {
   try {
@@ -36,7 +44,7 @@ router.get('/', auth, async (req, res) => {
       scoresResult.rows.forEach(score => {
         // PostgreSQL DATE를 YYYY-MM-DD 문자열로 변환
         const dateStr = score.date instanceof Date 
-          ? score.date.toISOString().split('T')[0] 
+          ? getLocalDateString(score.date)
           : score.date;
         if (!dailyScores[dateStr]) {
           dailyScores[dateStr] = {};
