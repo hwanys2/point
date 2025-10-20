@@ -43,22 +43,40 @@ router.get('/leaderboard/:token', async (req, res) => {
     let paramIndex = 2;
 
     if (period === 'daily') {
-      // 클라이언트에서 전달받은 오늘 날짜 사용 (YYYY-MM-DD 형식)
+      // 오늘
       const today = getLocalDateString();
       dateFilter = `AND s.date = $${paramIndex}`;
       queryParams.push(today);
       paramIndex++;
     } else if (period === 'weekly') {
-      const today = getLocalDateString();
-      const weekAgo = getLocalDateString(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000));
+      // 이번주 (월요일부터 오늘까지)
+      const today = new Date();
+      const dayOfWeek = today.getDay(); // 0(일요일) ~ 6(토요일)
+      const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // 월요일까지 가는 일수
+      const monday = new Date(today);
+      monday.setDate(today.getDate() - mondayOffset);
+      
+      const mondayStr = getLocalDateString(monday);
+      const todayStr = getLocalDateString();
       dateFilter = `AND s.date >= $${paramIndex} AND s.date <= $${paramIndex + 1}`;
-      queryParams.push(weekAgo, today);
+      queryParams.push(mondayStr, todayStr);
       paramIndex += 2;
     } else if (period === 'monthly') {
-      const today = getLocalDateString();
-      const monthAgo = getLocalDateString(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000));
+      // 이번달 (1일부터 오늘까지)
+      const today = new Date();
+      const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+      
+      const firstDayStr = getLocalDateString(firstDay);
+      const todayStr = getLocalDateString();
       dateFilter = `AND s.date >= $${paramIndex} AND s.date <= $${paramIndex + 1}`;
-      queryParams.push(monthAgo, today);
+      queryParams.push(firstDayStr, todayStr);
+      paramIndex += 2;
+    } else if (period === 'last30days') {
+      // 최근 30일
+      const today = getLocalDateString();
+      const thirtyDaysAgo = getLocalDateString(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000));
+      dateFilter = `AND s.date >= $${paramIndex} AND s.date <= $${paramIndex + 1}`;
+      queryParams.push(thirtyDaysAgo, today);
       paramIndex += 2;
     } else if (period === 'custom' && startDate && endDate) {
       dateFilter = `AND s.date >= $${paramIndex} AND s.date <= $${paramIndex + 1}`;

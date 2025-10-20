@@ -90,7 +90,7 @@ const EditStudentModal = ({ student, onClose, onSave }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-4">
       <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md">
         <h3 className="text-xl font-bold mb-4 flex items-center text-indigo-600">
           <Edit className="w-5 h-5 mr-2" /> 학생 정보 수정
@@ -310,7 +310,7 @@ const EditUserModal = ({ user, onClose, onUpdate }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-4">
       <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md">
         <h3 className="text-xl font-bold mb-4 flex items-center text-indigo-600">
           <User className="w-5 h-5 mr-2" /> 사용자 정보 수정
@@ -417,7 +417,7 @@ const Toast = ({ toast, onClose }) => {
   if (!toast) return null;
 
   return (
-    <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-right duration-300">
+    <div className="fixed top-4 right-4 z-[110] animate-in slide-in-from-right duration-300">
       <div className={`px-4 py-3 rounded-lg shadow-lg border-l-4 flex items-center space-x-3 ${
         toast.type === 'success' 
           ? 'bg-green-50 border-green-400 text-green-800' 
@@ -1184,8 +1184,12 @@ const App = () => {
         case 'daily':
           return [todayStr];
         case 'weekly': {
+          // 이번주 (월요일부터 오늘까지)
           const dates = [];
-          for (let i = 0; i < 7; i++) {
+          const dayOfWeek = today.getDay(); // 0(일요일) ~ 6(토요일)
+          const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // 월요일까지 가는 일수
+          
+          for (let i = mondayOffset; i >= 0; i--) {
             const d = new Date(today);
             d.setDate(d.getDate() - i);
             const y = d.getFullYear();
@@ -1196,6 +1200,20 @@ const App = () => {
           return dates;
         }
         case 'monthly': {
+          // 이번달 (1일부터 오늘까지)
+          const dates = [];
+          const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+          
+          for (let d = new Date(firstDay); d <= today; d.setDate(d.getDate() + 1)) {
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            dates.push(`${y}-${m}-${day}`);
+          }
+          return dates;
+        }
+        case 'last30days': {
+          // 최근 30일
           const dates = [];
           for (let i = 0; i < 30; i++) {
             const d = new Date(today);
@@ -1809,17 +1827,17 @@ const App = () => {
           <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-3">
             <button
               onClick={() => setPeriodFilter('all')}
-              className={`px-2 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm md:text-base font-semibold transition ${
+              className={`px-1.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition ${
                 periodFilter === 'all'
                   ? 'bg-indigo-600 text-white shadow-md'
                   : 'bg-white text-gray-700 hover:bg-indigo-50 border'
               }`}
             >
-              전체
+              현재
             </button>
             <button
               onClick={() => setPeriodFilter('daily')}
-              className={`px-2 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm md:text-base font-semibold transition ${
+              className={`px-1.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition ${
                 periodFilter === 'daily'
                   ? 'bg-indigo-600 text-white shadow-md'
                   : 'bg-white text-gray-700 hover:bg-indigo-50 border'
@@ -1829,33 +1847,43 @@ const App = () => {
             </button>
             <button
               onClick={() => setPeriodFilter('weekly')}
-              className={`px-2 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm md:text-base font-semibold transition ${
+              className={`px-1.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition ${
                 periodFilter === 'weekly'
                   ? 'bg-indigo-600 text-white shadow-md'
                   : 'bg-white text-gray-700 hover:bg-indigo-50 border'
               }`}
             >
-              <span className="hidden sm:inline">최근 </span>7일
+              이번주
             </button>
             <button
               onClick={() => setPeriodFilter('monthly')}
-              className={`px-2 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm md:text-base font-semibold transition ${
+              className={`px-1.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition ${
                 periodFilter === 'monthly'
                   ? 'bg-indigo-600 text-white shadow-md'
                   : 'bg-white text-gray-700 hover:bg-indigo-50 border'
               }`}
             >
-              <span className="hidden sm:inline">최근 </span>30일
+              이번달
+            </button>
+            <button
+              onClick={() => setPeriodFilter('last30days')}
+              className={`px-1.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition ${
+                periodFilter === 'last30days'
+                  ? 'bg-indigo-600 text-white shadow-md'
+                  : 'bg-white text-gray-700 hover:bg-indigo-50 border'
+              }`}
+            >
+              <span className="hidden sm:inline">최근</span>30일
             </button>
             <button
               onClick={() => setPeriodFilter('custom')}
-              className={`px-2 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm md:text-base font-semibold transition ${
+              className={`px-1.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition ${
                 periodFilter === 'custom'
                   ? 'bg-indigo-600 text-white shadow-md'
                   : 'bg-white text-gray-700 hover:bg-indigo-50 border'
               }`}
             >
-              기간<span className="hidden sm:inline"> 선택</span>
+              기간<span className="hidden sm:inline">선택</span>
             </button>
           </div>
           
@@ -2447,7 +2475,7 @@ const App = () => {
       
       {/* 규칙 가져오기 모달 */}
       {showImportModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-4">
           <div className="bg-white rounded-xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
@@ -2588,7 +2616,7 @@ const App = () => {
         url={`https://classpoint.kr${currentRoute === '#/' ? '' : currentRoute}`}
       />
       {error && (
-        <div className="fixed top-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg shadow-lg z-50">
+        <div className="fixed top-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg shadow-lg z-[110]">
           <div className="flex items-center justify-between">
             <span>{error}</span>
             <button onClick={() => setError(null)} className="ml-4">

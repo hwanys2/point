@@ -514,17 +514,17 @@ const PublicLeaderboard = ({ token }) => {
           <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-3">
             <button
               onClick={() => setPeriodFilter('all')}
-              className={`px-2 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm md:text-base font-semibold transition ${
+              className={`px-1.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition ${
                 periodFilter === 'all'
                   ? 'bg-indigo-600 text-white shadow-md'
                   : 'bg-gray-100 text-gray-700 hover:bg-indigo-50 border'
               }`}
             >
-              전체
+              현재
             </button>
             <button
               onClick={() => setPeriodFilter('daily')}
-              className={`px-2 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm md:text-base font-semibold transition ${
+              className={`px-1.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition ${
                 periodFilter === 'daily'
                   ? 'bg-indigo-600 text-white shadow-md'
                   : 'bg-gray-100 text-gray-700 hover:bg-indigo-50 border'
@@ -534,33 +534,43 @@ const PublicLeaderboard = ({ token }) => {
             </button>
             <button
               onClick={() => setPeriodFilter('weekly')}
-              className={`px-2 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm md:text-base font-semibold transition ${
+              className={`px-1.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition ${
                 periodFilter === 'weekly'
                   ? 'bg-indigo-600 text-white shadow-md'
                   : 'bg-gray-100 text-gray-700 hover:bg-indigo-50 border'
               }`}
             >
-              <span className="hidden sm:inline">최근 </span>7일
+              이번주
             </button>
             <button
               onClick={() => setPeriodFilter('monthly')}
-              className={`px-2 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm md:text-base font-semibold transition ${
+              className={`px-1.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition ${
                 periodFilter === 'monthly'
                   ? 'bg-indigo-600 text-white shadow-md'
                   : 'bg-gray-100 text-gray-700 hover:bg-indigo-50 border'
               }`}
             >
-              <span className="hidden sm:inline">최근 </span>30일
+              이번달
+            </button>
+            <button
+              onClick={() => setPeriodFilter('last30days')}
+              className={`px-1.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition ${
+                periodFilter === 'last30days'
+                  ? 'bg-indigo-600 text-white shadow-md'
+                  : 'bg-gray-100 text-gray-700 hover:bg-indigo-50 border'
+              }`}
+            >
+              <span className="hidden sm:inline">최근</span>30일
             </button>
             <button
               onClick={() => setPeriodFilter('custom')}
-              className={`px-2 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm md:text-base font-semibold transition ${
+              className={`px-1.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition ${
                 periodFilter === 'custom'
                   ? 'bg-indigo-600 text-white shadow-md'
                   : 'bg-gray-100 text-gray-700 hover:bg-indigo-50 border'
               }`}
             >
-              기간<span className="hidden sm:inline"> 선택</span>
+              기간<span className="hidden sm:inline">선택</span>
             </button>
           </div>
           
@@ -597,10 +607,11 @@ const PublicLeaderboard = ({ token }) => {
           <div className="bg-white rounded-xl shadow-2xl border border-gray-100 p-6">
             <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
               <ListOrdered className="w-6 h-6 mr-2 text-indigo-500" /> 
-              {periodFilter === 'all' ? '전체' : 
+              {periodFilter === 'all' ? '현재' : 
                periodFilter === 'daily' ? '오늘' :
-               periodFilter === 'weekly' ? '최근 7일' :
-               periodFilter === 'monthly' ? '최근 30일' :
+               periodFilter === 'weekly' ? '이번주' :
+               periodFilter === 'monthly' ? '이번달' :
+               periodFilter === 'last30days' ? '최근 30일' :
                '선택한 기간'} 순위표
             </h2>
 
