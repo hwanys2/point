@@ -2400,6 +2400,102 @@ const App = () => {
         </form>
       </div>
       
+      {/* 규칙별 순위표 기간 필터 */}
+      <div className="mb-6 p-3 sm:p-4 bg-gray-50 rounded-lg border">
+        <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
+          <BarChart className="w-5 h-5 mr-2 text-indigo-500" /> 규칙별 순위표 기간 선택
+        </h3>
+        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-3">
+          <button
+            onClick={() => setPeriodFilter('all')}
+            className={`px-1.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition ${
+              periodFilter === 'all'
+                ? 'bg-indigo-600 text-white shadow-md'
+                : 'bg-white text-gray-700 hover:bg-indigo-50 border'
+            }`}
+          >
+            현재
+          </button>
+          <button
+            onClick={() => setPeriodFilter('daily')}
+            className={`px-1.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition ${
+              periodFilter === 'daily'
+                ? 'bg-indigo-600 text-white shadow-md'
+                : 'bg-white text-gray-700 hover:bg-indigo-50 border'
+            }`}
+          >
+            오늘
+          </button>
+          <button
+            onClick={() => setPeriodFilter('weekly')}
+            className={`px-1.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition ${
+              periodFilter === 'weekly'
+                ? 'bg-indigo-600 text-white shadow-md'
+                : 'bg-white text-gray-700 hover:bg-indigo-50 border'
+            }`}
+          >
+            이번주
+          </button>
+          <button
+            onClick={() => setPeriodFilter('monthly')}
+            className={`px-1.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition ${
+              periodFilter === 'monthly'
+                ? 'bg-indigo-600 text-white shadow-md'
+                : 'bg-white text-gray-700 hover:bg-indigo-50 border'
+            }`}
+          >
+            이번달
+          </button>
+          <button
+            onClick={() => setPeriodFilter('last30days')}
+            className={`px-1.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition ${
+              periodFilter === 'last30days'
+                ? 'bg-indigo-600 text-white shadow-md'
+                : 'bg-white text-gray-700 hover:bg-indigo-50 border'
+            }`}
+          >
+            <span className="hidden sm:inline">최근</span>30일
+          </button>
+          <button
+            onClick={() => setPeriodFilter('custom')}
+            className={`px-1.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition ${
+              periodFilter === 'custom'
+                ? 'bg-indigo-600 text-white shadow-md'
+                : 'bg-white text-gray-700 hover:bg-indigo-50 border'
+            }`}
+          >
+            기간<span className="hidden sm:inline">선택</span>
+          </button>
+        </div>
+        
+        {periodFilter === 'custom' && (
+          <div className="flex flex-wrap items-center gap-3 mt-3">
+            <div>
+              <label className="text-sm text-gray-600 mr-2">시작일:</label>
+              <input
+                type="date"
+                value={customStartDate}
+                onChange={(e) => setCustomStartDate(e.target.value)}
+                max={customEndDate}
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+            <span className="text-gray-500">~</span>
+            <div>
+              <label className="text-sm text-gray-600 mr-2">종료일:</label>
+              <input
+                type="date"
+                value={customEndDate}
+                onChange={(e) => setCustomEndDate(e.target.value)}
+                min={customStartDate}
+                max={getTodayDate()}
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+          </div>
+        )}
+      </div>
+
       <h3 className="text-2xl font-bold text-gray-800 mb-4 flex items-center">
         <BarChart className="w-6 h-6 mr-2 text-indigo-500" /> 규칙별 순위표
       </h3>
