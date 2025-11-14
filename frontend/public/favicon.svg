@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4f46e5;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#7c3aed;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="barGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.8" />
+      <stop offset="100%" style="stop-color:#ffffff;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- 배경 원 (약간의 그림자 효과) -->
+  <circle cx="32" cy="32" r="30" fill="url(#bgGrad)"/>
+  <circle cx="32" cy="32" r="30" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+  
+  <!-- 차트/순위표 아이콘 -->
+  <g transform="translate(14, 18)">
+    <!-- 막대 그래프 (그라데이션 적용) -->
+    <rect x="2" y="14" width="5" height="6" fill="url(#barGrad)" rx="1.5" stroke="rgba(255,255,255,0.3)" stroke-width="0.5"/>
+    <rect x="9" y="10" width="5" height="10" fill="url(#barGrad)" rx="1.5" stroke="rgba(255,255,255,0.3)" stroke-width="0.5"/>
+    <rect x="16" y="6" width="5" height="14" fill="url(#barGrad)" rx="1.5" stroke="rgba(255,255,255,0.3)" stroke-width="0.5"/>
+    <rect x="23" y="12" width="5" height="8" fill="url(#barGrad)" rx="1.5" stroke="rgba(255,255,255,0.3)" stroke-width="0.5"/>
+    
+    <!-- 별 아이콘 (상위 순위 표시) - 더 세련된 디자인 -->
+    <g transform="translate(33, 0)">
+      <path d="M 0 4 L 1.5 6.5 L 4.5 7 L 1.5 7.5 L 0 10 L -1.5 7.5 L -4.5 7 L -1.5 6.5 Z" fill="white" opacity="1" stroke="rgba(255,255,255,0.5)" stroke-width="0.3"/>
+      <circle cx="0" cy="7" r="0.8" fill="#ffd700" opacity="0.9"/>
+    </g>
+  </g>
+  
+  <!-- 하단 강조선 -->
+  <line x1="12" y1="50" x2="52" y2="50" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" stroke-linecap="round"/>
+</svg>
+
