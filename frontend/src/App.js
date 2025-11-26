@@ -166,6 +166,127 @@ const EditStudentModal = ({ student, onClose, onSave }) => {
   );
 };
 
+const EditManagerModal = ({ manager, rules, onClose, onSave }) => {
+  const [displayName, setDisplayName] = useState(manager?.displayName || '');
+  const [selectedRules, setSelectedRules] = useState(manager?.allowedRuleIds || []);
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    setDisplayName(manager?.displayName || '');
+    setSelectedRules(manager?.allowedRuleIds || []);
+  }, [manager]);
+
+  if (!manager) return null;
+
+  const toggleRule = (ruleId) => {
+    setSelectedRules(prev =>
+      prev.includes(ruleId) ? prev.filter(id => id !== ruleId) : [...prev, ruleId]
+    );
+  };
+
+  const handleSave = async () => {
+    if (!displayName.trim()) {
+      alert('표시 이름을 입력해주세요.');
+      return;
+    }
+    if (selectedRules.length === 0) {
+      alert('최소 1개 이상의 규칙을 선택하세요.');
+      return;
+    }
+    setIsSaving(true);
+    try {
+      await onSave({
+        displayName: displayName.trim(),
+        allowedRuleIds: selectedRules,
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[110] p-4">
+      <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-lg">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-xl font-bold text-gray-800 flex items-center">
+            <UserPlus className="w-5 h-5 mr-2 text-indigo-500" /> 학생 관리자 수정
+          </h3>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-semibold text-gray-600 mb-1">표시 이름</label>
+            <input
+              type="text"
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-600 mb-1">로그인 ID</label>
+            <input
+              type="text"
+              value={manager.username}
+              readOnly
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-500"
+            />
+          </div>
+
+          <div className="p-3 bg-gray-50 rounded-lg border">
+            <p className="text-sm font-semibold text-gray-700 mb-2">체크 권한 부여할 규칙 선택</p>
+            <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto pr-1">
+              {rules.length === 0 ? (
+                <p className="text-sm text-gray-500">등록된 규칙이 없습니다.</p>
+              ) : (
+                rules.map(rule => {
+                  const RuleIcon = getIconComponent(rule.iconId);
+                  const isSelected = selectedRules.includes(rule.id);
+                  return (
+                    <button
+                      key={rule.id}
+                      type="button"
+                      onClick={() => toggleRule(rule.id)}
+                      className={`px-3 py-2 rounded-lg transition flex items-center text-sm ${
+                        isSelected
+                          ? 'bg-indigo-600 text-white shadow-md'
+                          : 'bg-white text-gray-700 border hover:bg-gray-50'
+                      }`}
+                    >
+                      <RuleIcon className="w-4 h-4 mr-1" style={{ color: isSelected ? 'white' : rule.color }} />
+                      {rule.name}
+                    </button>
+                  );
+                })
+              )}
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 rounded-lg border text-gray-700 hover:bg-gray-50"
+            >
+              취소
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={isSaving}
+              className="px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 disabled:opacity-60"
+            >
+              {isSaving ? '저장 중...' : '저장'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const EditClassroomModal = ({ classroom, onClose, onUpdate, onDelete }) => {
   const [name, setName] = useState(classroom.name);
   const [isSaving, setIsSaving] = useState(false);
@@ -945,6 +1066,7 @@ const App = () => {
   const [managers, setManagers] = useState([]);
   // eslint-disable-next-line no-unused-vars
   const [newManager, setNewManager] = useState({ username: '', password: '', confirmPassword: '', displayName: '', allowedRuleIds: [] });
+  const [editingManager, setEditingManager] = useState(null);
   
   // 규칙 가져오기 관련 상태
   const [showImportModal, setShowImportModal] = useState(false);
@@ -1392,6 +1514,21 @@ const App = () => {
     } catch (err) {
       console.error('Save student error:', err);
       setError(err.response?.data?.error || '학생 정보 수정 중 오류가 발생했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSaveManager = async (updatedFields) => {
+    if (!editingManager) return;
+    try {
+      setIsLoading(true);
+      await studentManagersAPI.update(editingManager.id, updatedFields);
+      await loadData();
+      alert('학생 관리자가 수정되었습니다.');
+      setEditingManager(null);
+    } catch (err) {
+      setError(err.response?.data?.error || '학생 관리자 수정 중 오류가 발생했습니다.');
     } finally {
       setIsLoading(false);
     }
@@ -2738,6 +2875,15 @@ const App = () => {
         />
       )}
 
+      {editingManager && (
+        <EditManagerModal
+          manager={editingManager}
+          rules={rules}
+          onClose={() => setEditingManager(null)}
+          onSave={handleSaveManager}
+        />
+      )}
+
       {/* 사용자 정보 - 최상단 우측 */}
       <div className="max-w-7xl mx-auto px-4 py-2">
         <div className="flex justify-end">
@@ -3020,24 +3166,35 @@ const App = () => {
                               })}
                             </div>
                           </div>
-                          <button
-                            onClick={async () => {
-                              if (!window.confirm(`${manager.displayName} 계정을 삭제하시겠습니까?`)) return;
-                              try {
-                                setIsLoading(true);
-                                await studentManagersAPI.delete(manager.id);
-                                await loadData();
-                              } catch (err) {
-                                setError('학생 관리자 삭제 중 오류가 발생했습니다.');
-                              } finally {
-                                setIsLoading(false);
-                              }
-                            }}
-                            className="text-red-500 hover:text-red-700 p-1"
-                            title="삭제"
-                          >
-                            <Trash2 className="w-5 h-5" />
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setEditingManager(manager)}
+                              className="text-blue-500 hover:text-blue-700 p-1"
+                              title="수정"
+                            >
+                              <Edit className="w-5 h-5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                if (!window.confirm(`${manager.displayName} 계정을 삭제하시겠습니까?`)) return;
+                                try {
+                                  setIsLoading(true);
+                                  await studentManagersAPI.delete(manager.id);
+                                  await loadData();
+                                } catch (err) {
+                                  setError('학생 관리자 삭제 중 오류가 발생했습니다.');
+                                } finally {
+                                  setIsLoading(false);
+                                }
+                              }}
+                              className="text-red-500 hover:text-red-700 p-1"
+                              title="삭제"
+                            >
+                              <Trash2 className="w-5 h-5" />
+                            </button>
+                          </div>
                         </div>
                       </div>
                     ))}
