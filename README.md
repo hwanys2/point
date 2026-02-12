@@ -75,6 +75,13 @@ npm run client
 
 ## 🚀 Railway 배포 가이드
 
+**할 일 정리**
+1. PostgreSQL 서비스 추가 후, **앱 서비스** Variables에 `DATABASE_PRIVATE_URL` 추가 → PostgreSQL Variables 탭에서 **Private** URL 복사해 넣기 (ECONNRESET 방지).
+2. `DATABASE_URL`, `JWT_SECRET`, `NODE_ENV=production`, `FRONTEND_URL` 설정.
+3. Start Command: `npm start`, Root Directory: `/`.
+
+---
+
 ### 1. Railway 회원가입
 https://railway.app 에서 회원가입
 
@@ -88,12 +95,13 @@ https://railway.app 에서 회원가입
 
 1. Railway Dashboard에서 "New Service" → "GitHub Repo" 선택
 2. 이 저장소를 연결
-3. 환경 변수 설정:
-   - `DATABASE_URL`: PostgreSQL의 DATABASE_URL (자동 연결됨)
-   - `JWT_SECRET`: 랜덤 문자열 (예: `openssl rand -base64 32` 실행 결과)
+3. **환경 변수 설정** (앱 서비스의 Variables 탭):
+   - `DATABASE_URL`: PostgreSQL 서비스에서 복사 (또는 변수 참조로 자동 연결)
+   - **`DATABASE_PRIVATE_URL`** (권장): PostgreSQL 서비스 Variables 탭의 **Private** URL (`postgres.railway.internal` 호스트). ECONNRESET 방지용. 없으면 `DATABASE_URL` 사용
+   - `JWT_SECRET`: 랜덤 문자열 (예: `openssl rand -base64 32`)
    - `NODE_ENV`: `production`
-   - `FRONTEND_URL`: 프론트엔드 배포 URL (추후 설정)
-   - `PORT`: Railway가 자동으로 설정 (비워두면 됨)
+   - `FRONTEND_URL`: 배포된 프론트엔드 URL
+   - `PORT`: 비워두면 Railway가 자동 설정
 
 4. Root Directory: `/` (기본값)
 5. Start Command: `npm start`
