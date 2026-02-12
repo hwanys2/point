@@ -151,7 +151,7 @@ router.put('/:id', auth, [
     try {
       await client.query('BEGIN');
 
-      // 학생 존재 확인
+      // 학생 존재 확인 (classroom_id 포함 조회)
       const checkResult = await client.query(
         'SELECT * FROM students WHERE id = $1 AND user_id = $2',
         [id, req.userId]
@@ -163,23 +163,15 @@ router.put('/:id', auth, [
       }
 
       const student = checkResult.rows[0];
-      // id 형식: classroomId-grade-classNum-studentNum (생성 시와 동일하게)
-      const newId = `${student.classroom_id}-${grade}-${classNum}-${studentNum}`;
+      const classroomId = student.classroom_id;
+      const newId = `${classroomId}-${grade}-${classNum}-${studentNum}`;
 
       if (id !== newId) {
-        // 새 ID가 이미 다른 학생에게 사용 중인지 확인
-        const conflictResult = await client.query(
-          'SELECT id FROM students WHERE id = $1 AND user_id = $2',
-          [newId, req.userId]
-        );
-        if (conflictResult.rows.length > 0) {
-          await client.query('ROLLBACK');
-          return res.status(400).json({ error: '이미 존재하는 학번입니다. (같은 학년/반/번호의 다른 학생이 있습니다.)' });
-        }
-        // 1. 새 ID로 학생 생성 (classroom_id 포함)
+        // ID가 변경되는 경우
+        // 1. 새 ID로 학생 생성 (id 형식: classroomId-grade-classNum-studentNum)
         await client.query(
           'INSERT INTO students (id, user_id, classroom_id, name, grade, class_num, student_num, score) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
-          [newId, req.userId, student.classroom_id, name, grade, classNum, studentNum, student.score]
+          [newId, req.userId, classroomId, name, grade, classNum, studentNum, student.score]
         );
 
         // 2. 점수 데이터 이전
