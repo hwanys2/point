@@ -80,7 +80,8 @@ app.use('/api/classrooms', require('./routes/classrooms'));
 app.use('/api/students', require('./routes/students'));
 app.use('/api/rules', require('./routes/rules'));
 app.use('/api/scores', require('./routes/scores'));
-app.use('/api/settings', require('./routes/settings'));
+const settingsRoutes = require('./routes/settings');
+app.use('/api/settings', settingsRoutes);
 app.use('/api/student-managers', require('./routes/student-managers'));
 app.use('/api/public', require('./routes/public'));
 console.log('✅ All routes registered');
@@ -120,9 +121,11 @@ const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
   try {
-    // Initialize database
+    // Initialize database (재시도 포함)
     await initDatabase();
-    
+    // Settings 테이블은 DB 초기화 이후에만 실행 (ECONNRESET 방지)
+    await settingsRoutes.initSettingsTable();
+
     app.listen(PORT, () => {
       console.log(`
 ╔════════════════════════════════════════╗

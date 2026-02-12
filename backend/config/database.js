@@ -2,11 +2,34 @@ const { Pool } = require('pg');
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+  connectionTimeoutMillis: 10000,
+  idleTimeoutMillis: 30000,
+  max: 10
 });
+
+// Railway 등에서 DB 준비 전 ECONNRESET 방지: 재시도 + 지수 백오프
+const withRetry = async (fn, maxAttempts = 5) => {
+  let delayMs = 2000;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      const isLast = attempt === maxAttempts;
+      console.log(
+        isLast ? `❌ DB 연결 실패 (${attempt}/${maxAttempts})` : `⚠️ DB 연결 시도 ${attempt}/${maxAttempts} 실패, ${delayMs}ms 후 재시도...`,
+        err.code || err.message
+      );
+      if (isLast) throw err;
+      await new Promise((r) => setTimeout(r, delayMs));
+      delayMs = Math.min(Math.round(delayMs * 1.5), 15000);
+    }
+  }
+};
 
 // 데이터베이스 테이블 초기화
 const initDatabase = async () => {
+  await withRetry(async () => {
   try {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS users (
@@ -208,6 +231,7 @@ const initDatabase = async () => {
     console.error('❌ Database initialization error:', error);
     throw error;
   }
+  });
 };
 
 module.exports = { pool, initDatabase };
