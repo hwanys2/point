@@ -1,50 +1,12 @@
 const { Pool } = require('pg');
 
-// Railway: 같은 프로젝트 내 DB는 private URL 사용 권장 (ECONNRESET 방지)
-const connectionString = process.env.DATABASE_PRIVATE_URL || process.env.DATABASE_URL;
-const isProduction = process.env.NODE_ENV === 'production';
-if (isProduction && process.env.DATABASE_PRIVATE_URL) {
-  console.log('🔗 DB: Railway private URL 사용');
-}
-
 const pool = new Pool({
-  connectionString,
-  ssl: isProduction ? { rejectUnauthorized: false } : false,
-  connectionTimeoutMillis: 15000,
-  idleTimeoutMillis: 30000,
-  max: 10,
-  keepAlive: true,
-  keepAliveInitialDelayMillis: 10000
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
 });
-
-// Railway 등에서 DB 준비/private 네트워크 초기화 대기 후 재시도
-const withRetry = async (fn, maxAttempts = 8) => {
-  const initialDelay = isProduction ? 5000 : 1000;
-  let delayMs = initialDelay;
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    try {
-      return await fn();
-    } catch (err) {
-      const isLast = attempt === maxAttempts;
-      console.log(
-        isLast ? `❌ DB 연결 실패 (${attempt}/${maxAttempts})` : `⚠️ DB 연결 시도 ${attempt}/${maxAttempts} 실패, ${delayMs}ms 후 재시도...`,
-        err.code || err.message
-      );
-      if (isLast) throw err;
-      await new Promise((r) => setTimeout(r, delayMs));
-      delayMs = Math.min(Math.round(delayMs * 1.5), 20000);
-    }
-  }
-};
 
 // 데이터베이스 테이블 초기화
 const initDatabase = async () => {
-  // Railway private 네트워크 초기화 대기 (권장 3초 이상)
-  if (isProduction) {
-    console.log('⏳ DB 연결 대기 중 (5초)...');
-    await new Promise((r) => setTimeout(r, 5000));
-  }
-  await withRetry(async () => {
   try {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS users (
@@ -246,7 +208,6 @@ const initDatabase = async () => {
     console.error('❌ Database initialization error:', error);
     throw error;
   }
-  });
 };
 
 module.exports = { pool, initDatabase };

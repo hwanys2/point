@@ -77,6 +77,8 @@ const initSettingsTable = async () => {
   }
 };
 
+initSettingsTable();
+
 // 설정 조회
 router.get('/', auth, async (req, res) => {
   try {
@@ -190,4 +192,3 @@ router.put('/', auth, [
 });
 
 module.exports = router;
-module.exports.initSettingsTable = initSettingsTable;
