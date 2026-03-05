@@ -1,8 +1,8 @@
 import axios from 'axios';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || (
-  process.env.NODE_ENV === 'production' 
-    ? 'https://classpoint.kr/api' 
+  process.env.NODE_ENV === 'production'
+    ? 'https://classpoint.kr/api'
     : 'http://localhost:5000/api'
 );
 
@@ -60,6 +60,7 @@ export const classroomsAPI = {
   update: (id, data) => api.put(`/classrooms/${id}`, data),
   delete: (id) => api.delete(`/classrooms/${id}`),
   setDefault: (id) => api.patch(`/classrooms/${id}/set-default`),
+  reorder: (data) => api.put('/classrooms/reorder/batch', data),
 };
 
 // Students API

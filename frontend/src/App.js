@@ -1,11 +1,27 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { 
-  Award, UserPlus, ListOrdered, Loader2, AlertTriangle, Plus, Calendar, 
+import {
+  Award, UserPlus, ListOrdered, Loader2, AlertTriangle, Plus, Calendar,
   Shirt, BookOpenCheck, Sparkles, Armchair, Smile, Lightbulb,
-  Feather, ShieldCheck, Settings, BarChart3, FileText, Trash2, Edit, Save, 
+  Feather, ShieldCheck, Settings, BarChart3, FileText, Trash2, Edit, Save,
   ClipboardList, X, BarChart, Palette, LogOut, Clock,
-  Star, Download, Users, Mail, ExternalLink, ChevronDown, User, Minus
+  Star, Download, Users, Mail, ExternalLink, ChevronDown, User, Minus, GripHorizontal
 } from 'lucide-react';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  horizontalListSortingStrategy,
+  useSortable
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import Auth from './components/Auth';
 import LandingPage from './components/LandingPage';
 import PublicLeaderboard from './components/PublicLeaderboard';
@@ -60,6 +76,83 @@ const getIconComponent = (iconId) => {
 
 // --- Sub-Components ---
 
+const SortableClassroomItem = ({ classroom, isActiveClassroom, onSelect, onSetDefault, onEditSettings, role }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: classroom.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 100 : 'auto',
+    opacity: isDragging ? 0.8 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} className="relative group flex items-center bg-gray-50 rounded-md shadow-sm border border-gray-100 hover:border-indigo-300 transition-colors">
+      <div
+        {...attributes}
+        {...listeners}
+        className="px-2 py-3 cursor-grab hover:bg-gray-100 rounded-l-md text-gray-400 hover:text-gray-600 transition-colors"
+        title="드래그하여 순서 변경"
+      >
+        <GripHorizontal className="w-4 h-4" />
+      </div>
+      <button
+        onClick={() => onSelect(classroom)}
+        className={`flex items-center gap-2 pr-3 py-2 rounded-r-md transition-all ${isActiveClassroom
+          ? 'bg-indigo-500 text-white shadow-md'
+          : 'text-gray-700 hover:bg-indigo-50 hover:text-indigo-600'
+          }`}
+      >
+        {/* 기본 학급 별표 */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            if (!classroom.is_default) {
+              onSetDefault(classroom.id);
+            }
+          }}
+          className={`transition ${classroom.is_default
+            ? (isActiveClassroom ? 'text-yellow-400 hover:text-yellow-300' : 'text-yellow-500 hover:text-yellow-400')
+            : (isActiveClassroom ? 'text-indigo-300 hover:text-yellow-400' : 'text-gray-300 hover:text-yellow-500')
+            }`}
+          title={classroom.is_default ? '기본 학급' : '기본 학급으로 설정'}
+        >
+          <Star className={`w-4 h-4 ${classroom.is_default ? 'fill-current' : ''}`} />
+        </button>
+
+        {/* 학급 이름 */}
+        <span className="font-medium whitespace-nowrap">{classroom.name}</span>
+
+        {/* 점세개 메뉴 */}
+        {role === 'teacher' && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onEditSettings(classroom);
+            }}
+            className={`opacity-70 hover:opacity-100 transition-opacity p-1 rounded ${isActiveClassroom
+              ? 'text-indigo-200 hover:text-white hover:bg-indigo-600'
+              : 'text-gray-400 hover:text-gray-700 hover:bg-gray-200'
+              }`}
+            title="학급 관리"
+          >
+            <Settings className="w-4 h-4" />
+          </button>
+        )}
+      </button>
+    </div>
+  );
+};
+
+// --- Main App Component ---
+
 const EditStudentModal = ({ student, onClose, onSave }) => {
   const [name, setName] = useState(student.name);
   const [grade, setGrade] = useState(String(student.grade || 1));
@@ -70,21 +163,21 @@ const EditStudentModal = ({ student, onClose, onSave }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (isNaN(Number(grade)) || isNaN(Number(classNum)) || isNaN(Number(studentNum))) {
       setWarning('학년, 반, 번호는 숫자만 입력해야 합니다.');
       return;
     }
 
     setIsSaving(true);
-    await onSave({ 
-      oldId: student.id, 
+    await onSave({
+      oldId: student.id,
       newFields: {
         name: name.trim(),
         grade: Number(grade),
         classNum: Number(classNum),
         studentNum: Number(studentNum),
-      } 
+      }
     });
     setIsSaving(false);
   };
@@ -142,7 +235,7 @@ const EditStudentModal = ({ student, onClose, onSave }) => {
               />
             </label>
           </div>
-          
+
           <div className="flex justify-end gap-3 mt-6">
             <button
               type="button"
@@ -251,11 +344,10 @@ const EditManagerModal = ({ manager, rules, onClose, onSave }) => {
                       key={rule.id}
                       type="button"
                       onClick={() => toggleRule(rule.id)}
-                      className={`px-3 py-2 rounded-lg transition flex items-center text-sm ${
-                        isSelected
-                          ? 'bg-indigo-600 text-white shadow-md'
-                          : 'bg-white text-gray-700 border hover:bg-gray-50'
-                      }`}
+                      className={`px-3 py-2 rounded-lg transition flex items-center text-sm ${isSelected
+                        ? 'bg-indigo-600 text-white shadow-md'
+                        : 'bg-white text-gray-700 border hover:bg-gray-50'
+                        }`}
                     >
                       <RuleIcon className="w-4 h-4 mr-1" style={{ color: isSelected ? 'white' : rule.color }} />
                       {rule.name}
@@ -307,7 +399,7 @@ const EditClassroomModal = ({ classroom, onClose, onUpdate, onDelete }) => {
 
   const handleDelete = async () => {
     if (!window.confirm(`정말로 '${classroom.name}' 학급을 삭제하시겠습니까?`)) return;
-    
+
     setIsSaving(true);
     await onDelete(classroom.id);
     setIsSaving(false);
@@ -319,7 +411,7 @@ const EditClassroomModal = ({ classroom, onClose, onUpdate, onDelete }) => {
         <h3 className="text-xl font-bold mb-4 flex items-center text-indigo-600">
           <Settings className="w-5 h-5 mr-2" /> 학급 관리
         </h3>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -334,7 +426,7 @@ const EditClassroomModal = ({ classroom, onClose, onUpdate, onDelete }) => {
               required
             />
           </div>
-          
+
           <div className="flex gap-3 pt-4">
             <button
               type="button"
@@ -346,7 +438,7 @@ const EditClassroomModal = ({ classroom, onClose, onUpdate, onDelete }) => {
               <Trash2 className="w-5 h-5 mr-2" />
               삭제
             </button>
-            
+
             <button
               type="button"
               onClick={onClose}
@@ -355,7 +447,7 @@ const EditClassroomModal = ({ classroom, onClose, onUpdate, onDelete }) => {
             >
               취소
             </button>
-            
+
             <button
               type="submit"
               className="flex-1 bg-indigo-500 text-white py-3 px-4 rounded-lg hover:bg-indigo-600 transition disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center"
@@ -436,7 +528,7 @@ const EditUserModal = ({ user, onClose, onUpdate }) => {
         <h3 className="text-xl font-bold mb-4 flex items-center text-indigo-600">
           <User className="w-5 h-5 mr-2" /> 사용자 정보 수정
         </h3>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">사용자명</label>
@@ -461,7 +553,7 @@ const EditUserModal = ({ user, onClose, onUpdate }) => {
 
           <div className="border-t pt-4">
             <h4 className="text-sm font-medium text-gray-700 mb-3">비밀번호 변경 (선택사항)</h4>
-            
+
             <div className="space-y-3">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">현재 비밀번호</label>
@@ -539,14 +631,12 @@ const Toast = ({ toast, onClose }) => {
 
   return (
     <div className="fixed top-4 right-4 z-[110] animate-in slide-in-from-right duration-300">
-      <div className={`px-4 py-3 rounded-lg shadow-lg border-l-4 flex items-center space-x-3 ${
-        toast.type === 'success' 
-          ? 'bg-green-50 border-green-400 text-green-800' 
-          : 'bg-red-50 border-red-400 text-red-800'
-      }`}>
-        <div className={`w-5 h-5 rounded-full flex items-center justify-center ${
-          toast.type === 'success' ? 'bg-green-100' : 'bg-red-100'
+      <div className={`px-4 py-3 rounded-lg shadow-lg border-l-4 flex items-center space-x-3 ${toast.type === 'success'
+        ? 'bg-green-50 border-green-400 text-green-800'
+        : 'bg-red-50 border-red-400 text-red-800'
         }`}>
+        <div className={`w-5 h-5 rounded-full flex items-center justify-center ${toast.type === 'success' ? 'bg-green-100' : 'bg-red-100'
+          }`}>
           {toast.type === 'success' ? (
             <svg className="w-3 h-3 text-green-600" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -602,37 +692,37 @@ const Footer = () => {
           {/* Contact */}
           <div className="flex items-center">
             <Mail className="w-4 h-4 mr-2" />
-            <a 
-              href="mailto:hwanys2@naver.com" 
+            <a
+              href="mailto:hwanys2@naver.com"
               className="hover:text-gray-700 transition-colors"
             >
               Contact: hwanys2@naver.com
             </a>
           </div>
-          
+
           {/* Separator */}
           <div className="hidden sm:block text-gray-300">•</div>
-          
+
           {/* Privacy Policy & Terms */}
           <div className="flex items-center gap-3">
-            <a 
-              href="/#/privacy-policy" 
+            <a
+              href="/#/privacy-policy"
               className="hover:text-gray-700 transition-colors"
             >
               개인정보처리방침
             </a>
             <span className="text-gray-300">•</span>
-            <a 
-              href="/#/terms-of-service" 
+            <a
+              href="/#/terms-of-service"
               className="hover:text-gray-700 transition-colors"
             >
               이용약관
             </a>
           </div>
-          
+
           {/* Separator */}
           <div className="hidden sm:block text-gray-300">•</div>
-          
+
           {/* Other Sites Dropdown */}
           <div className="relative footer-dropdown">
             <button
@@ -642,7 +732,7 @@ const Footer = () => {
               <span>개발자의 다른 사이트</span>
               <ChevronDown className={`w-4 h-4 ml-1 transition-transform ${showOtherSites ? 'rotate-180' : ''}`} />
             </button>
-            
+
             {showOtherSites && (
               <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-10">
                 {otherSites.map((site, index) => (
@@ -671,80 +761,107 @@ const Footer = () => {
 const RuleScoreBar = ({ student, rules, studentRuleScores }) => {
   const scores = studentRuleScores[student.id] || {};
   const totalScore = student.periodScore !== undefined ? student.periodScore : (student.score || 0);
-  
+
   // 양수/음수 점수 합계 계산 (해당 학생만)
   let totalPositive = 0;
   let totalNegative = 0;
-  
+
   Object.values(scores).forEach(scoreData => {
     if (scoreData && typeof scoreData === 'object') {
       totalPositive += scoreData.positive || 0;
       totalNegative += scoreData.negative || 0;
     }
   });
-  
+
   // 해당 학생의 점수 기준으로 계산 (자기 점수 100%)
   const totalRange = totalPositive + totalNegative;
   const hasNegative = totalNegative > 0;
   const zeroPosition = hasNegative ? (totalNegative / totalRange) * 100 : 0;
-  
+
   if (totalPositive === 0 && totalNegative === 0) {
     return <div className="h-4 w-full bg-gray-200 rounded"></div>;
   }
-  
+
   return (
     <div className="relative w-full h-4" title={`총점: ${totalScore}점 (양수: +${totalPositive}, 음수: -${totalNegative})`}>
       {/* 실제 점수 막대 (액체) */}
       <div className="absolute inset-0 flex overflow-hidden rounded">
         {/* 회색 배경 (유리관) - 막대보다 4px 크게 */}
         <div className="absolute inset-x-0 bg-gray-200 rounded" style={{ top: '-2px', bottom: '-2px' }}></div>
-      
-      {/* 0 지점 구분선 (음수가 있을 때만) */}
-      {hasNegative && (
-        <div 
-          className="absolute w-0.5 bg-gray-800 z-[2]"
-          style={{ left: `${zeroPosition}%`, top: '-2px', bottom: '-2px' }}
-        ></div>
-      )}
-      
+
+        {/* 0 지점 구분선 (음수가 있을 때만) */}
+        {hasNegative && (
+          <div
+            className="absolute w-0.5 bg-gray-800 z-[2]"
+            style={{ left: `${zeroPosition}%`, top: '-2px', bottom: '-2px' }}
+          ></div>
+        )}
+
         {/* 점수 막대 내용 */}
         <div className="absolute inset-0 flex z-[1]">
-        {hasNegative ? (
-          <>
-            {/* 음수 영역 (0 지점 왼쪽) */}
-            <div 
-              className="relative flex flex-row-reverse"
-              style={{ width: `${zeroPosition}%` }}
-            >
-              {rules.map((rule, index, arr) => {
-                const scoreData = scores[rule.id];
-                const negativeScore = scoreData?.negative || 0;
-                const percentage = totalNegative > 0 ? (negativeScore / totalNegative) * 100 : 0;
-                const visibleRules = arr.filter(r => {
-                  const sd = scores[r.id];
-                  return (sd?.negative || 0) > 0;
-                });
-                const isFirst = index === arr.length - 1 || rule.id === visibleRules[visibleRules.length - 1]?.id;
-        
-        if (percentage > 0) {
-          return (
-            <div 
-                      key={`neg-${rule.id}`}
-                      className={`opacity-75 ${isFirst ? 'rounded-l' : ''}`}
-                      style={{ width: `${percentage}%`, height: '75%', alignSelf: 'center', backgroundColor: rule.color }}
-                      title={`${rule.name}: -${negativeScore}점`}
-                    />
-                  );
-                }
-                return null;
-              })}
-            </div>
-            
-            {/* 양수 영역 (0 지점 오른쪽) */}
-            <div 
-              className="relative flex"
-              style={{ width: `${100 - zeroPosition}%` }}
-            >
+          {hasNegative ? (
+            <>
+              {/* 음수 영역 (0 지점 왼쪽) */}
+              <div
+                className="relative flex flex-row-reverse"
+                style={{ width: `${zeroPosition}%` }}
+              >
+                {rules.map((rule, index, arr) => {
+                  const scoreData = scores[rule.id];
+                  const negativeScore = scoreData?.negative || 0;
+                  const percentage = totalNegative > 0 ? (negativeScore / totalNegative) * 100 : 0;
+                  const visibleRules = arr.filter(r => {
+                    const sd = scores[r.id];
+                    return (sd?.negative || 0) > 0;
+                  });
+                  const isFirst = index === arr.length - 1 || rule.id === visibleRules[visibleRules.length - 1]?.id;
+
+                  if (percentage > 0) {
+                    return (
+                      <div
+                        key={`neg-${rule.id}`}
+                        className={`opacity-75 ${isFirst ? 'rounded-l' : ''}`}
+                        style={{ width: `${percentage}%`, height: '75%', alignSelf: 'center', backgroundColor: rule.color }}
+                        title={`${rule.name}: -${negativeScore}점`}
+                      />
+                    );
+                  }
+                  return null;
+                })}
+              </div>
+
+              {/* 양수 영역 (0 지점 오른쪽) */}
+              <div
+                className="relative flex"
+                style={{ width: `${100 - zeroPosition}%` }}
+              >
+                {rules.map((rule, index, arr) => {
+                  const scoreData = scores[rule.id];
+                  const positiveScore = scoreData?.positive || 0;
+                  const percentage = totalPositive > 0 ? (positiveScore / totalPositive) * 100 : 0;
+                  const visibleRules = arr.filter(r => {
+                    const sd = scores[r.id];
+                    return (sd?.positive || 0) > 0;
+                  });
+                  const isLast = index === arr.length - 1 || rule.id === visibleRules[visibleRules.length - 1]?.id;
+
+                  if (percentage > 0) {
+                    return (
+                      <div
+                        key={`pos-${rule.id}`}
+                        className={`h-full ${isLast ? 'rounded-r' : ''}`}
+                        style={{ width: `${percentage}%`, backgroundColor: rule.color }}
+                        title={`${rule.name}: +${positiveScore}점`}
+                      />
+                    );
+                  }
+                  return null;
+                })}
+              </div>
+            </>
+          ) : (
+            /* 음수가 없을 때: 0부터 최대값까지 범위로 표시 */
+            <div className="relative flex w-full">
               {rules.map((rule, index, arr) => {
                 const scoreData = scores[rule.id];
                 const positiveScore = scoreData?.positive || 0;
@@ -753,50 +870,23 @@ const RuleScoreBar = ({ student, rules, studentRuleScores }) => {
                   const sd = scores[r.id];
                   return (sd?.positive || 0) > 0;
                 });
+                const isFirst = index === 0 || rule.id === visibleRules[0]?.id;
                 const isLast = index === arr.length - 1 || rule.id === visibleRules[visibleRules.length - 1]?.id;
-                
+
                 if (percentage > 0) {
                   return (
-                    <div 
+                    <div
                       key={`pos-${rule.id}`}
-                      className={`h-full ${isLast ? 'rounded-r' : ''}`}
-              style={{ width: `${percentage}%`, backgroundColor: rule.color }}
-                      title={`${rule.name}: +${positiveScore}점`}
-            />
-          );
-        }
-        return null;
-      })}
+                      className={`h-full ${isFirst ? 'rounded-l' : ''} ${isLast ? 'rounded-r' : ''}`}
+                      style={{ width: `${percentage}%`, backgroundColor: rule.color }}
+                      title={`${rule.name}: ${positiveScore}점`}
+                    />
+                  );
+                }
+                return null;
+              })}
             </div>
-          </>
-        ) : (
-          /* 음수가 없을 때: 0부터 최대값까지 범위로 표시 */
-          <div className="relative flex w-full">
-            {rules.map((rule, index, arr) => {
-              const scoreData = scores[rule.id];
-              const positiveScore = scoreData?.positive || 0;
-              const percentage = totalPositive > 0 ? (positiveScore / totalPositive) * 100 : 0;
-              const visibleRules = arr.filter(r => {
-                const sd = scores[r.id];
-                return (sd?.positive || 0) > 0;
-              });
-              const isFirst = index === 0 || rule.id === visibleRules[0]?.id;
-              const isLast = index === arr.length - 1 || rule.id === visibleRules[visibleRules.length - 1]?.id;
-              
-              if (percentage > 0) {
-                return (
-                  <div 
-                    key={`pos-${rule.id}`}
-                    className={`h-full ${isFirst ? 'rounded-l' : ''} ${isLast ? 'rounded-r' : ''}`}
-                    style={{ width: `${percentage}%`, backgroundColor: rule.color }}
-                    title={`${rule.name}: ${positiveScore}점`}
-                  />
-                );
-              }
-              return null;
-            })}
-          </div>
-        )}
+          )}
         </div>
       </div>
     </div>
@@ -808,29 +898,29 @@ const AllStudentsRuleComparison = ({ students, rules, studentRuleScores }) => {
   const rangeValues = useMemo(() => {
     let maxPositive = 0;
     let maxNegative = 0;
-    
+
     students.forEach(student => {
       const scores = studentRuleScores[student.id] || {};
       let studentPositive = 0;
       let studentNegative = 0;
-      
+
       Object.values(scores).forEach(scoreData => {
         if (scoreData && typeof scoreData === 'object') {
           studentPositive += scoreData.positive || 0;
           studentNegative += scoreData.negative || 0;
         }
       });
-      
+
       maxPositive = Math.max(maxPositive, studentPositive);
       maxNegative = Math.max(maxNegative, studentNegative);
     });
-    
+
     const totalRange = maxPositive + maxNegative;
     const hasNegative = maxNegative > 0;
     const zeroPosition = hasNegative ? (maxNegative / totalRange) * 100 : 0;
-    
-    return { 
-      maxPositive: maxPositive || 1, 
+
+    return {
+      maxPositive: maxPositive || 1,
       maxNegative: maxNegative || 0,
       totalRange: totalRange || 1,
       hasNegative,
@@ -845,7 +935,7 @@ const AllStudentsRuleComparison = ({ students, rules, studentRuleScores }) => {
       </div>
     );
   }
-  
+
   const sortedStudents = [...students].sort((a, b) => {
     const scoreA = a.periodScore !== undefined ? a.periodScore : (a.score || 0);
     const scoreB = b.periodScore !== undefined ? b.periodScore : (b.score || 0);
@@ -855,36 +945,36 @@ const AllStudentsRuleComparison = ({ students, rules, studentRuleScores }) => {
   return (
     <div className="bg-white p-3 sm:p-4 md:p-6 rounded-xl shadow-2xl border border-gray-100">
       <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-800 mb-4 sm:mb-6 flex items-center">
-        <BarChart3 className="w-5 h-5 sm:w-6 sm:h-6 mr-2 text-indigo-500" /> 
+        <BarChart3 className="w-5 h-5 sm:w-6 sm:h-6 mr-2 text-indigo-500" />
         <span>규칙별 득점 비교 차트</span>
       </h3>
-      
+
       <div className="flex flex-wrap gap-x-4 gap-y-2 mb-6 p-2 rounded-lg border bg-gray-50">
         {rules.map(rule => (
-            <span key={rule.id} className="flex items-center text-xs font-medium text-gray-600">
-              <div className="w-3 h-3 rounded-full mr-1" style={{ backgroundColor: rule.color }}></div>
-              {rule.name}
-            </span>
-          )
+          <span key={rule.id} className="flex items-center text-xs font-medium text-gray-600">
+            <div className="w-3 h-3 rounded-full mr-1" style={{ backgroundColor: rule.color }}></div>
+            {rule.name}
+          </span>
+        )
         )}
       </div>
-      
+
       <div className="space-y-6">
         {sortedStudents.map(student => {
           const scores = studentRuleScores[student.id] || {};
           const totalScore = student.periodScore || 0;
-          
+
           // 양수/음수 점수 합계 계산
           let totalPositive = 0;
           let totalNegative = 0;
-          
+
           Object.values(scores).forEach(scoreData => {
             if (scoreData && typeof scoreData === 'object') {
               totalPositive += scoreData.positive || 0;
               totalNegative += scoreData.negative || 0;
             }
           });
-          
+
           if (totalPositive === 0 && totalNegative === 0) return null;
 
           return (
@@ -892,59 +982,86 @@ const AllStudentsRuleComparison = ({ students, rules, studentRuleScores }) => {
               <div className="text-sm font-bold text-gray-700 min-w-[80px]">
                 {student.name}
               </div>
-              
+
               <div className="flex-1 relative h-6">
                 {/* 실제 점수 막대 (액체) */}
                 <div className="absolute inset-0 flex overflow-hidden rounded">
                   {/* 회색 배경 (유리관) - 막대보다 4px 크게 */}
                   <div className="absolute inset-x-0 bg-gray-200 rounded" style={{ top: '-2px', bottom: '-2px' }}></div>
-                
-                {/* 0 지점 구분선 (음수가 있을 때만) */}
-                {rangeValues.hasNegative && (
-                  <div 
-                    className="absolute w-0.5 bg-gray-800 z-[2]"
-                    style={{ left: `${rangeValues.zeroPosition}%`, top: '-2px', bottom: '-2px' }}
-                  ></div>
-                )}
-                
+
+                  {/* 0 지점 구분선 (음수가 있을 때만) */}
+                  {rangeValues.hasNegative && (
+                    <div
+                      className="absolute w-0.5 bg-gray-800 z-[2]"
+                      style={{ left: `${rangeValues.zeroPosition}%`, top: '-2px', bottom: '-2px' }}
+                    ></div>
+                  )}
+
                   {/* 점수 막대 내용 */}
                   <div className="absolute inset-0 flex z-[1]">
-                  {rangeValues.hasNegative ? (
-                    <>
-                      {/* 음수 영역 (0 지점 왼쪽) */}
-                      <div 
-                        className="relative flex flex-row-reverse"
-                        style={{ width: `${rangeValues.zeroPosition}%` }}
-                      >
-                        {rules.map((rule, index, arr) => {
-                          const scoreData = scores[rule.id];
-                          const negativeScore = scoreData?.negative || 0;
-                          const percentage = (negativeScore / rangeValues.maxNegative) * 100;
-                          const visibleRules = arr.filter(r => {
-                            const sd = scores[r.id];
-                            return (sd?.negative || 0) > 0;
-                          });
-                          const isFirst = index === arr.length - 1 || rule.id === visibleRules[visibleRules.length - 1]?.id;
-                          
-                          if (percentage > 0) {
-                      return (
-                        <div 
-                                key={`neg-${rule.id}`}
-                                className={`opacity-75 ${isFirst ? 'rounded-l' : ''}`}
-                                style={{ width: `${percentage}%`, height: '75%', alignSelf: 'center', backgroundColor: rule.color }}
-                                title={`${student.name} - ${rule.name}: -${negativeScore}점`}
-                        />
-                      );
-                    }
-                    return null;
-                        })}
-                      </div>
-                      
-                      {/* 양수 영역 (0 지점 오른쪽) */}
-                      <div 
-                        className="relative flex"
-                        style={{ width: `${100 - rangeValues.zeroPosition}%` }}
-                      >
+                    {rangeValues.hasNegative ? (
+                      <>
+                        {/* 음수 영역 (0 지점 왼쪽) */}
+                        <div
+                          className="relative flex flex-row-reverse"
+                          style={{ width: `${rangeValues.zeroPosition}%` }}
+                        >
+                          {rules.map((rule, index, arr) => {
+                            const scoreData = scores[rule.id];
+                            const negativeScore = scoreData?.negative || 0;
+                            const percentage = (negativeScore / rangeValues.maxNegative) * 100;
+                            const visibleRules = arr.filter(r => {
+                              const sd = scores[r.id];
+                              return (sd?.negative || 0) > 0;
+                            });
+                            const isFirst = index === arr.length - 1 || rule.id === visibleRules[visibleRules.length - 1]?.id;
+
+                            if (percentage > 0) {
+                              return (
+                                <div
+                                  key={`neg-${rule.id}`}
+                                  className={`opacity-75 ${isFirst ? 'rounded-l' : ''}`}
+                                  style={{ width: `${percentage}%`, height: '75%', alignSelf: 'center', backgroundColor: rule.color }}
+                                  title={`${student.name} - ${rule.name}: -${negativeScore}점`}
+                                />
+                              );
+                            }
+                            return null;
+                          })}
+                        </div>
+
+                        {/* 양수 영역 (0 지점 오른쪽) */}
+                        <div
+                          className="relative flex"
+                          style={{ width: `${100 - rangeValues.zeroPosition}%` }}
+                        >
+                          {rules.map((rule, index, arr) => {
+                            const scoreData = scores[rule.id];
+                            const positiveScore = scoreData?.positive || 0;
+                            const percentage = (positiveScore / rangeValues.maxPositive) * 100;
+                            const visibleRules = arr.filter(r => {
+                              const sd = scores[r.id];
+                              return (sd?.positive || 0) > 0;
+                            });
+                            const isLast = index === arr.length - 1 || rule.id === visibleRules[visibleRules.length - 1]?.id;
+
+                            if (percentage > 0) {
+                              return (
+                                <div
+                                  key={`pos-${rule.id}`}
+                                  className={`h-full ${isLast ? 'rounded-r' : ''}`}
+                                  style={{ width: `${percentage}%`, backgroundColor: rule.color }}
+                                  title={`${student.name} - ${rule.name}: +${positiveScore}점`}
+                                />
+                              );
+                            }
+                            return null;
+                          })}
+                        </div>
+                      </>
+                    ) : (
+                      /* 음수가 없을 때: 0부터 최대값까지 범위로 표시 */
+                      <div className="relative flex w-full">
                         {rules.map((rule, index, arr) => {
                           const scoreData = scores[rule.id];
                           const positiveScore = scoreData?.positive || 0;
@@ -953,54 +1070,27 @@ const AllStudentsRuleComparison = ({ students, rules, studentRuleScores }) => {
                             const sd = scores[r.id];
                             return (sd?.positive || 0) > 0;
                           });
+                          const isFirst = index === 0 || rule.id === visibleRules[0]?.id;
                           const isLast = index === arr.length - 1 || rule.id === visibleRules[visibleRules.length - 1]?.id;
-                          
+
                           if (percentage > 0) {
                             return (
-                              <div 
+                              <div
                                 key={`pos-${rule.id}`}
-                                className={`h-full ${isLast ? 'rounded-r' : ''}`}
+                                className={`h-full ${isFirst ? 'rounded-l' : ''} ${isLast ? 'rounded-r' : ''}`}
                                 style={{ width: `${percentage}%`, backgroundColor: rule.color }}
-                                title={`${student.name} - ${rule.name}: +${positiveScore}점`}
+                                title={`${student.name} - ${rule.name}: ${positiveScore}점`}
                               />
                             );
                           }
                           return null;
                         })}
                       </div>
-                    </>
-                  ) : (
-                    /* 음수가 없을 때: 0부터 최대값까지 범위로 표시 */
-                    <div className="relative flex w-full">
-                      {rules.map((rule, index, arr) => {
-                        const scoreData = scores[rule.id];
-                        const positiveScore = scoreData?.positive || 0;
-                        const percentage = (positiveScore / rangeValues.maxPositive) * 100;
-                        const visibleRules = arr.filter(r => {
-                          const sd = scores[r.id];
-                          return (sd?.positive || 0) > 0;
-                        });
-                        const isFirst = index === 0 || rule.id === visibleRules[0]?.id;
-                        const isLast = index === arr.length - 1 || rule.id === visibleRules[visibleRules.length - 1]?.id;
-                        
-                        if (percentage > 0) {
-                          return (
-                            <div 
-                              key={`pos-${rule.id}`}
-                              className={`h-full ${isFirst ? 'rounded-l' : ''} ${isLast ? 'rounded-r' : ''}`}
-                              style={{ width: `${percentage}%`, backgroundColor: rule.color }}
-                              title={`${student.name} - ${rule.name}: ${positiveScore}점`}
-                            />
-                          );
-                        }
-                        return null;
-                      })}
-                    </div>
-                  )}
+                    )}
                   </div>
                 </div>
               </div>
-              
+
               <div className="text-xs font-semibold min-w-[100px] text-right">
                 {rangeValues.hasNegative && (
                   <>
@@ -1051,31 +1141,31 @@ const App = () => {
   const [shareEnabled, setShareEnabled] = useState(false);
   const [shareToken, setShareToken] = useState(null);
   const [currentRoute, setCurrentRoute] = useState(window.location.hash);
-  
+
   // 순위표 기간 필터
   const [periodFilter, setPeriodFilter] = useState('all'); // 'all', 'daily', 'weekly', 'monthly', 'custom'
   const [customStartDate, setCustomStartDate] = useState(getTodayDate());
   const [customEndDate, setCustomEndDate] = useState(getTodayDate());
-  
+
   // Auth 모달 상태
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState('login'); // 'login' or 'register'
-  
+
   // 학생 관리자 관리 (교사만)
   // eslint-disable-next-line no-unused-vars
   const [managers, setManagers] = useState([]);
   // eslint-disable-next-line no-unused-vars
   const [newManager, setNewManager] = useState({ username: '', password: '', confirmPassword: '', displayName: '', allowedRuleIds: [] });
   const [editingManager, setEditingManager] = useState(null);
-  
+
   // 규칙 가져오기 관련 상태
   const [showImportModal, setShowImportModal] = useState(false);
   const [selectedSourceClassroom, setSelectedSourceClassroom] = useState('');
   const [isImporting, setIsImporting] = useState(false);
-  
+
   // 학급 관리 관련 상태
   const [editingClassroom, setEditingClassroom] = useState(null);
-  
+
   // 점수 입력 중인 값을 추적하기 위한 로컬 상태
   const [editingScores, setEditingScores] = useState({});
 
@@ -1087,7 +1177,7 @@ const App = () => {
     const handleHashChange = () => {
       setCurrentRoute(window.location.hash);
     };
-    
+
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
@@ -1097,20 +1187,58 @@ const App = () => {
     console.log('editingClassroom state changed:', editingClassroom);
   }, [editingClassroom]);
 
+  // Drag and Drop (dnd-kit) 센서 및 핸들러
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = async (event) => {
+    const { active, over } = event;
+
+    if (active.id !== over?.id) {
+      setClassrooms((items) => {
+        const oldIndex = items.findIndex((i) => i.id === active.id);
+        const newIndex = items.findIndex((i) => i.id === over.id);
+
+        const newOrder = arrayMove(items, oldIndex, newIndex);
+
+        // 백엔드 API 호출하여 순서 저장
+        const orderedItems = newOrder.map((item, index) => ({
+          id: item.id,
+          display_order: index + 1
+        }));
+
+        classroomsAPI.reorder({ orderedItems }).catch(err => {
+          console.error('Reorder error:', err);
+          setError('학급 순서 변경 중 오류가 발생했습니다.');
+        });
+
+        return newOrder;
+      });
+    }
+  };
+
   // 초기 로드: 토큰 확인
   useEffect(() => {
     const token = localStorage.getItem('token');
     const savedUser = localStorage.getItem('user');
-    
+
     if (token && savedUser) {
       const parsedUser = JSON.parse(savedUser);
       setUser(parsedUser);
-      
+
       // 학생 관리자는 점수 부여 탭을 기본으로 표시
       if (parsedUser.role === 'student_manager') {
         setActiveTab('scoring');
       }
-      
+
       loadData();
     } else {
       setIsLoading(false);
@@ -1127,18 +1255,18 @@ const App = () => {
             studentsAPI.getAll({ params: { classroomId: currentClassroom.id } }),
             rulesAPI.getAll({ params: { classroomId: currentClassroom.id } })
           ];
-          
+
           // 교사인 경우에만 학생관리자 목록도 로드
           if (user.role === 'teacher') {
             promises.push(
               studentManagersAPI.getAll({ params: { classroomId: currentClassroom.id } })
             );
           }
-          
+
           const results = await Promise.all(promises);
           setStudents(results[0].data);
           setRules(results[1].data);
-          
+
           // 교사인 경우 학생관리자 목록도 업데이트
           if (user.role === 'teacher' && results[2]) {
             setManagers(results[2].data);
@@ -1157,9 +1285,9 @@ const App = () => {
     try {
       setIsLoading(true);
       const savedUser = JSON.parse(localStorage.getItem('user') || '{}');
-      
+
       let selectedClassroom = null;
-      
+
       // 학생 관리자인 경우: classroomId를 user 객체에서 직접 가져옴
       if (savedUser.role === 'student_manager') {
         if (!savedUser.classroomId) {
@@ -1168,10 +1296,10 @@ const App = () => {
           return;
         }
         // 학생 관리자는 단일 학급만 접근 가능
-        selectedClassroom = { 
-          id: savedUser.classroomId, 
+        selectedClassroom = {
+          id: savedUser.classroomId,
           name: '담당 학급',
-          user_id: savedUser.teacherId 
+          user_id: savedUser.teacherId
         };
         setClassrooms([selectedClassroom]);
         setCurrentClassroom(selectedClassroom);
@@ -1180,36 +1308,36 @@ const App = () => {
         const classroomsResponse = await classroomsAPI.getAll();
         const classroomsList = classroomsResponse.data;
         setClassrooms(classroomsList);
-        
+
         // 저장된 마지막 선택 학급 또는 기본 학급 찾기
         const savedClassroomId = localStorage.getItem('selectedClassroomId');
-        
+
         if (savedClassroomId) {
           // 저장된 학급 ID로 학급 찾기
           selectedClassroom = classroomsList.find(c => c.id === parseInt(savedClassroomId));
         }
-        
+
         // 저장된 학급이 없거나 삭제된 경우, 기본 학급 또는 첫 번째 학급 선택
         if (!selectedClassroom) {
           selectedClassroom = classroomsList.find(c => c.is_default) || classroomsList[0];
         }
-        
+
         if (!selectedClassroom) {
           // 학급이 없는 경우 기본 학급을 생성하거나 안내 메시지 표시
           setError('학급이 없습니다. 학급을 먼저 생성해주세요.');
           setIsLoading(false);
           return;
         }
-        
+
         setCurrentClassroom(selectedClassroom);
       }
-      
+
       const promises = [
         studentsAPI.getAll({ params: { classroomId: selectedClassroom.id } }),
         rulesAPI.getAll({ params: { classroomId: selectedClassroom.id } }),
         settingsAPI.get({ params: { classroomId: selectedClassroom.id } }),
       ];
-      
+
       const results = await Promise.all(promises);
 
       setStudents(results[0].data);
@@ -1218,7 +1346,7 @@ const App = () => {
       setAppSettings(settings);
       setShareEnabled(settings.shareEnabled || false);
       setShareToken(settings.shareToken || null);
-      
+
       // 교사인 경우에만 학생 관리자 목록도 로드 (별도 처리로 실패해도 앱 작동)
       if (savedUser.role === 'teacher') {
         try {
@@ -1242,11 +1370,11 @@ const App = () => {
     // 학생 관리자는 점수 부여 탭을, 교사는 순위표 탭을 기본으로 표시
     setActiveTab(userData.role === 'student_manager' ? 'scoring' : 'leaderboard');
     setShowAuthModal(false);
-    
+
     // 사용자 정보를 즉시 설정하고 데이터 로드
     loadData();
   };
-  
+
   const handleShowAuth = (mode) => {
     setAuthMode(mode);
     setShowAuthModal(true);
@@ -1262,7 +1390,7 @@ const App = () => {
 
   const handleUpdateUser = (updatedData) => {
     setUser(prev => ({ ...prev, ...updatedData }));
-    
+
     // 성공 토스트 알림
     setToast({
       type: 'success',
@@ -1297,11 +1425,11 @@ const App = () => {
 
   // 기간별 필터링된 학생 점수 계산
   const filteredStudentsWithScores = useMemo(() => {
-    
+
     const getDateRange = () => {
       const today = new Date();
       const todayStr = getTodayDate();
-      
+
       switch (periodFilter) {
         case 'daily':
           return [todayStr];
@@ -1310,7 +1438,7 @@ const App = () => {
           const dates = [];
           const dayOfWeek = today.getDay(); // 0(일요일) ~ 6(토요일)
           const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // 월요일까지 가는 일수
-          
+
           for (let i = mondayOffset; i >= 0; i--) {
             const d = new Date(today);
             d.setDate(d.getDate() - i);
@@ -1325,7 +1453,7 @@ const App = () => {
           // 이번달 (1일부터 오늘까지)
           const dates = [];
           const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-          
+
           for (let d = new Date(firstDay); d <= today; d.setDate(d.getDate() + 1)) {
             const y = d.getFullYear();
             const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -1369,7 +1497,7 @@ const App = () => {
     const result = students.map(student => {
       let periodScore = 0;
       let filteredDailyScores = {};
-      
+
       if (dateRange === null) {
         // 전체 기간 - dailyScores에서 직접 계산 (DB의 score는 GREATEST로 인해 부정확할 수 있음)
         filteredDailyScores = student.dailyScores;
@@ -1395,16 +1523,16 @@ const App = () => {
       }
 
       // 명시적으로 dailyScores를 덮어쓰기
-      const filteredStudent = { 
-        ...student, 
-        periodScore, 
-        dailyScores: filteredDailyScores 
+      const filteredStudent = {
+        ...student,
+        periodScore,
+        dailyScores: filteredDailyScores
       };
-      
-      
+
+
       return filteredStudent;
     });
-    
+
     return result;
   }, [students, periodFilter, customStartDate, customEndDate]);
 
@@ -1424,18 +1552,18 @@ const App = () => {
       return a.studentNum - b.studentNum;
     });
   }, [students]);
-  
+
 
   // filteredStudentsWithScores를 기반으로 한 studentRuleScores 계산 (양수/음수 분리)
   const filteredStudentRuleScores = useMemo(() => {
     const scores = {};
-    
+
 
     // filteredStudentsWithScores를 기반으로 계산 (이미 필터링된 dailyScores 사용)
     filteredStudentsWithScores.forEach(student => {
       scores[student.id] = {};
-      
-      
+
+
       // 이미 필터링된 dailyScores 사용
       const daily = student.dailyScores || {};
       Object.keys(daily).forEach(dateStr => {
@@ -1443,12 +1571,12 @@ const App = () => {
         for (const ruleId in dailyEntry) {
           const scoreData = dailyEntry[ruleId];
           const scoreValue = typeof scoreData === 'object' ? scoreData.value : scoreData;
-          
+
           if (rules.some(r => r.id === parseInt(ruleId, 10)) && scoreValue !== 0) {
             if (!scores[student.id][ruleId]) {
               scores[student.id][ruleId] = { positive: 0, negative: 0, total: 0 };
             }
-            
+
             if (scoreValue > 0) {
               scores[student.id][ruleId].positive += scoreValue;
             } else {
@@ -1458,11 +1586,11 @@ const App = () => {
           }
         }
       });
-      
+
     });
     return scores;
   }, [filteredStudentsWithScores, rules]);
-  
+
   const handleAddStudent = async (e) => {
     e.preventDefault();
     const { grade, classNum, studentNum, name } = newStudentInfo;
@@ -1475,16 +1603,16 @@ const App = () => {
 
     try {
       setIsLoading(true);
-      const response = await studentsAPI.create({ 
-        name: name.trim(), 
-        grade, 
-        classNum, 
+      const response = await studentsAPI.create({
+        name: name.trim(),
+        grade,
+        classNum,
         studentNum,
-        classroomId: currentClassroom.id 
+        classroomId: currentClassroom.id
       });
       setStudents([...students, response.data]);
       setNewStudentInfo({ grade, classNum, studentNum, name: '' });
-      
+
       // 성공 토스트 알림
       setToast({
         type: 'success',
@@ -1494,7 +1622,7 @@ const App = () => {
       console.error('Add student error:', err);
       const errorMessage = err.response?.data?.error || '학생 추가 중 오류가 발생했습니다.';
       setError(errorMessage);
-      
+
       // 실패 토스트 알림
       setToast({
         type: 'error',
@@ -1566,13 +1694,13 @@ const App = () => {
           if (!updatedStudent.dailyScores[date]) {
             updatedStudent.dailyScores[date] = {};
           }
-          
+
           const currentScore = updatedStudent.dailyScores[date][ruleId];
           const currentValue = currentScore ? (typeof currentScore === 'object' ? currentScore.value : currentScore) : 0;
           const newValue = currentValue + delta;
-          
+
           updatedStudent.dailyScores[date][ruleId] = newValue;
-          
+
           return updatedStudent;
         }
         return student;
@@ -1595,7 +1723,7 @@ const App = () => {
 
   const handleBulkIncrement = useCallback(async (ruleId, date) => {
     if (!Array.isArray(students) || students.length === 0) return;
-    
+
     // Optimistic UI 업데이트: 모든 학생의 점수를 먼저 즉시 업데이트
     setStudents(prevStudents => {
       return prevStudents.map(student => {
@@ -1606,19 +1734,19 @@ const App = () => {
         if (!updatedStudent.dailyScores[date]) {
           updatedStudent.dailyScores[date] = {};
         }
-        
+
         const currentScore = updatedStudent.dailyScores[date][ruleId];
         const currentValue = currentScore ? (typeof currentScore === 'object' ? currentScore.value : currentScore) : 0;
         updatedStudent.dailyScores[date][ruleId] = currentValue + 1;
-        
+
         return updatedStudent;
       });
     });
-    
+
     // 백그라운드에서 API 호출
     try {
       setIsLoading(true);
-      const adjustPromises = students.map((s) => 
+      const adjustPromises = students.map((s) =>
         scoresAPI.adjust({ studentId: s.id, ruleId, date, delta: 1 })
       );
       await Promise.all(adjustPromises);
@@ -1634,7 +1762,7 @@ const App = () => {
 
   const handleBulkDecrement = useCallback(async (ruleId, date) => {
     if (!Array.isArray(students) || students.length === 0) return;
-    
+
     // Optimistic UI 업데이트: 모든 학생의 점수를 먼저 즉시 업데이트
     setStudents(prevStudents => {
       return prevStudents.map(student => {
@@ -1645,19 +1773,19 @@ const App = () => {
         if (!updatedStudent.dailyScores[date]) {
           updatedStudent.dailyScores[date] = {};
         }
-        
+
         const currentScore = updatedStudent.dailyScores[date][ruleId];
         const currentValue = currentScore ? (typeof currentScore === 'object' ? currentScore.value : currentScore) : 0;
         updatedStudent.dailyScores[date][ruleId] = currentValue - 1;
-        
+
         return updatedStudent;
       });
     });
-    
+
     // 백그라운드에서 API 호출
     try {
       setIsLoading(true);
-      const adjustPromises = students.map((s) => 
+      const adjustPromises = students.map((s) =>
         scoresAPI.adjust({ studentId: s.id, ruleId, date, delta: -1 })
       );
       await Promise.all(adjustPromises);
@@ -1670,7 +1798,7 @@ const App = () => {
       setIsLoading(false);
     }
   }, [students, loadData]);
-  
+
   const handleDownloadSampleCsv = () => {
     // 샘플 CSV 데이터 생성
     const sampleData = [
@@ -1681,14 +1809,14 @@ const App = () => {
       ['5', '2', '4', '최예은'],
       ['5', '2', '5', '정하윤']
     ];
-    
+
     // CSV 문자열로 변환
     const csvContent = sampleData.map(row => row.join(',')).join('\n');
-    
+
     // BOM 추가 (한글 깨짐 방지)
     const bom = '\uFEFF';
     const blob = new Blob([bom + csvContent], { type: 'text/csv;charset=utf-8;' });
-    
+
     // 다운로드 링크 생성 및 클릭
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
@@ -1699,7 +1827,7 @@ const App = () => {
     link.click();
     document.body.removeChild(link);
   };
-  
+
   const handleCsvUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -1734,9 +1862,9 @@ const App = () => {
 
       try {
         setIsLoading(true);
-        const response = await studentsAPI.bulkUpload({ 
+        const response = await studentsAPI.bulkUpload({
           students: newStudents,
-          classroomId: currentClassroom.id 
+          classroomId: currentClassroom.id
         });
         alert(response.data.message);
         await loadData();
@@ -1790,7 +1918,7 @@ const App = () => {
       setIsLoading(false);
     }
   };
-  
+
   const handleDeleteRule = async (ruleId, ruleName) => {
     if (!window.confirm(`정말로 '${ruleName}' 규칙과 관련된 모든 점수 데이터를 삭제하시겠습니까?`)) return;
 
@@ -1825,29 +1953,29 @@ const App = () => {
       });
 
       const { summary } = response.data;
-      
+
       // 결과 메시지 생성
       let message = `규칙 가져오기 완료!\n\n`;
       message += `• 총 ${summary.total}개 규칙 중\n`;
       message += `• ${summary.imported}개 성공적으로 가져옴\n`;
-      
+
       if (summary.duplicates > 0) {
         message += `• ${summary.duplicates}개 중복으로 건너뜀\n`;
       }
-      
+
       if (summary.skipped > 0) {
         message += `• ${summary.skipped}개 오류로 건너뜀\n`;
       }
 
       alert(message);
-      
+
       // 데이터 다시 로드
       await loadData();
-      
+
       // 모달 닫기
       setShowImportModal(false);
       setSelectedSourceClassroom('');
-      
+
     } catch (err) {
       console.error('Import rules error:', err);
       setError('규칙 가져오기 중 오류가 발생했습니다.');
@@ -1855,11 +1983,11 @@ const App = () => {
       setIsImporting(false);
     }
   };
-  
+
   const handleStartEditRule = (rule) => {
     setEditingRuleId(rule.id);
     setCurrentRule({ name: rule.name, iconId: rule.iconId, color: rule.color });
-    
+
     // 규칙 입력 폼으로 부드럽게 스크롤
     setTimeout(() => {
       if (ruleFormRef.current) {
@@ -1917,13 +2045,13 @@ const App = () => {
     try {
       setIsLoading(true);
       await classroomsAPI.delete(classroomId);
-      
+
       // 삭제된 학급이 현재 선택된 학급인 경우 localStorage에서 제거
       const savedClassroomId = localStorage.getItem('selectedClassroomId');
       if (savedClassroomId === classroomId.toString()) {
         localStorage.removeItem('selectedClassroomId');
       }
-      
+
       await loadData();
       setEditingClassroom(null);
     } catch (err) {
@@ -1956,136 +2084,130 @@ const App = () => {
             <h2 className="text-2xl lg:text-3xl font-bold text-gray-800 flex items-center">
               <ListOrdered className="w-6 h-6 lg:w-7 lg:h-7 mr-2 text-indigo-500" /> 종합 순위표
             </h2>
-          
+
           </div>
-        
-        {/* 기간 필터 */}
-        <div className="mb-6 p-3 sm:p-4 bg-gray-50 rounded-lg border">
-          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-3">
-            <button
-              onClick={() => setPeriodFilter('all')}
-              className={`px-1.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition ${
-                periodFilter === 'all'
+
+          {/* 기간 필터 */}
+          <div className="mb-6 p-3 sm:p-4 bg-gray-50 rounded-lg border">
+            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-3">
+              <button
+                onClick={() => setPeriodFilter('all')}
+                className={`px-1.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition ${periodFilter === 'all'
                   ? 'bg-indigo-600 text-white shadow-md'
                   : 'bg-white text-gray-700 hover:bg-indigo-50 border'
-              }`}
-            >
-              현재
-            </button>
-            <button
-              onClick={() => setPeriodFilter('daily')}
-              className={`px-1.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition ${
-                periodFilter === 'daily'
+                  }`}
+              >
+                현재
+              </button>
+              <button
+                onClick={() => setPeriodFilter('daily')}
+                className={`px-1.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition ${periodFilter === 'daily'
                   ? 'bg-indigo-600 text-white shadow-md'
                   : 'bg-white text-gray-700 hover:bg-indigo-50 border'
-              }`}
-            >
-              오늘
-            </button>
-            <button
-              onClick={() => setPeriodFilter('weekly')}
-              className={`px-1.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition ${
-                periodFilter === 'weekly'
+                  }`}
+              >
+                오늘
+              </button>
+              <button
+                onClick={() => setPeriodFilter('weekly')}
+                className={`px-1.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition ${periodFilter === 'weekly'
                   ? 'bg-indigo-600 text-white shadow-md'
                   : 'bg-white text-gray-700 hover:bg-indigo-50 border'
-              }`}
-            >
-              이번주
-            </button>
-            <button
-              onClick={() => setPeriodFilter('monthly')}
-              className={`px-1.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition ${
-                periodFilter === 'monthly'
+                  }`}
+              >
+                이번주
+              </button>
+              <button
+                onClick={() => setPeriodFilter('monthly')}
+                className={`px-1.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition ${periodFilter === 'monthly'
                   ? 'bg-indigo-600 text-white shadow-md'
                   : 'bg-white text-gray-700 hover:bg-indigo-50 border'
-              }`}
-            >
-              이번달
-            </button>
-            <button
-              onClick={() => setPeriodFilter('last30days')}
-              className={`px-1.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition ${
-                periodFilter === 'last30days'
+                  }`}
+              >
+                이번달
+              </button>
+              <button
+                onClick={() => setPeriodFilter('last30days')}
+                className={`px-1.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition ${periodFilter === 'last30days'
                   ? 'bg-indigo-600 text-white shadow-md'
                   : 'bg-white text-gray-700 hover:bg-indigo-50 border'
-              }`}
-            >
-              <span className="hidden sm:inline">최근</span>30일
-            </button>
-            <button
-              onClick={() => setPeriodFilter('custom')}
-              className={`px-1.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition ${
-                periodFilter === 'custom'
+                  }`}
+              >
+                <span className="hidden sm:inline">최근</span>30일
+              </button>
+              <button
+                onClick={() => setPeriodFilter('custom')}
+                className={`px-1.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition ${periodFilter === 'custom'
                   ? 'bg-indigo-600 text-white shadow-md'
                   : 'bg-white text-gray-700 hover:bg-indigo-50 border'
-              }`}
-            >
-              기간<span className="hidden sm:inline">선택</span>
-            </button>
-          </div>
-          
-          {periodFilter === 'custom' && (
-            <div className="flex flex-wrap items-center gap-3 mt-3">
-              <div>
-                <label className="text-sm text-gray-600 mr-2">시작일:</label>
-                <input
-                  type="date"
-                  value={customStartDate}
-                  onChange={(e) => setCustomStartDate(e.target.value)}
-                  max={customEndDate}
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                />
-              </div>
-              <span className="text-gray-500">~</span>
-              <div>
-                <label className="text-sm text-gray-600 mr-2">종료일:</label>
-                <input
-                  type="date"
-                  value={customEndDate}
-                  onChange={(e) => setCustomEndDate(e.target.value)}
-                  min={customStartDate}
-                  max={getTodayDate()}
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                />
-              </div>
+                  }`}
+              >
+                기간<span className="hidden sm:inline">선택</span>
+              </button>
             </div>
-          )}
-        </div>
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead>
-              <TableHeader showRuleBar={true} />
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-100">
-              {sortedStudents.map((student, index) => {
-                return (
-                  <tr key={student.id} className={`transition duration-150 ease-in-out ${index % 2 === 0 ? 'hover:bg-gray-50' : 'hover:bg-indigo-50'} ${index < 3 ? 'bg-yellow-50/50 font-bold' : ''}`}>
-                    <td className="px-1 sm:px-2 md:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-center">
-                      <span className={`text-sm sm:text-lg md:text-xl ${index === 0 ? 'text-yellow-500' : index === 1 ? 'text-gray-500' : index === 2 ? 'text-yellow-900' : 'text-gray-600'}`}>
-                        #{index + 1}
-                      </span>
-                    </td>
-                    <td className="px-1 sm:px-2 md:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">{student.grade}</td>
-                    <td className="px-1 sm:px-2 md:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">{student.classNum}</td>
-                    <td className="px-1 sm:px-2 md:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">{student.studentNum}</td>
-                    <td className="px-1 sm:px-2 md:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">{student.name}</td>
-                    <td className="px-1 sm:px-2 md:px-3 py-2 sm:py-4 whitespace-nowrap text-base sm:text-xl md:text-2xl font-extrabold text-right text-indigo-700">
-                      {student.periodScore}
-                    </td>
-                    <td className="px-1 sm:px-2 md:px-3 py-2 sm:py-4 whitespace-nowrap text-sm text-center">
-                      <div className="w-12 sm:w-24 md:w-32 lg:w-40 mx-auto">
-                        <RuleScoreBar student={student} rules={rules} studentRuleScores={filteredStudentRuleScores} />
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-          {students.length === 0 && (
-            <p className="text-center text-gray-500 py-8">학생 관리 탭에서 학생을 먼저 등록해주세요.</p>
-          )}
-        </div>
+
+            {periodFilter === 'custom' && (
+              <div className="flex flex-wrap items-center gap-3 mt-3">
+                <div>
+                  <label className="text-sm text-gray-600 mr-2">시작일:</label>
+                  <input
+                    type="date"
+                    value={customStartDate}
+                    onChange={(e) => setCustomStartDate(e.target.value)}
+                    max={customEndDate}
+                    className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+                <span className="text-gray-500">~</span>
+                <div>
+                  <label className="text-sm text-gray-600 mr-2">종료일:</label>
+                  <input
+                    type="date"
+                    value={customEndDate}
+                    onChange={(e) => setCustomEndDate(e.target.value)}
+                    min={customStartDate}
+                    max={getTodayDate()}
+                    className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead>
+                <TableHeader showRuleBar={true} />
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-100">
+                {sortedStudents.map((student, index) => {
+                  return (
+                    <tr key={student.id} className={`transition duration-150 ease-in-out ${index % 2 === 0 ? 'hover:bg-gray-50' : 'hover:bg-indigo-50'} ${index < 3 ? 'bg-yellow-50/50 font-bold' : ''}`}>
+                      <td className="px-1 sm:px-2 md:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-center">
+                        <span className={`text-sm sm:text-lg md:text-xl ${index === 0 ? 'text-yellow-500' : index === 1 ? 'text-gray-500' : index === 2 ? 'text-yellow-900' : 'text-gray-600'}`}>
+                          #{index + 1}
+                        </span>
+                      </td>
+                      <td className="px-1 sm:px-2 md:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">{student.grade}</td>
+                      <td className="px-1 sm:px-2 md:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">{student.classNum}</td>
+                      <td className="px-1 sm:px-2 md:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">{student.studentNum}</td>
+                      <td className="px-1 sm:px-2 md:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">{student.name}</td>
+                      <td className="px-1 sm:px-2 md:px-3 py-2 sm:py-4 whitespace-nowrap text-base sm:text-xl md:text-2xl font-extrabold text-right text-indigo-700">
+                        {student.periodScore}
+                      </td>
+                      <td className="px-1 sm:px-2 md:px-3 py-2 sm:py-4 whitespace-nowrap text-sm text-center">
+                        <div className="w-12 sm:w-24 md:w-32 lg:w-40 mx-auto">
+                          <RuleScoreBar student={student} rules={rules} studentRuleScores={filteredStudentRuleScores} />
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+            {students.length === 0 && (
+              <p className="text-center text-gray-500 py-8">학생 관리 탭에서 학생을 먼저 등록해주세요.</p>
+            )}
+          </div>
         </div>
 
         {/* 규칙별 득점 비교 차트 */}
@@ -2127,7 +2249,7 @@ const App = () => {
                 />
                 공개 링크 활성화
               </label>
-              
+
               {shareEnabled && shareToken && (
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full sm:w-auto">
                   <input
@@ -2171,9 +2293,9 @@ const App = () => {
           className="p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 w-full sm:w-auto text-lg"
         />
       </div>
- 
+
       <h3 className="text-xl font-semibold text-gray-700 mb-4">{selectedDate} 점수 부여 그리드</h3>
-      
+
       {user?.role === 'student_manager' && (
         <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
           <p className="text-sm text-blue-700">
@@ -2181,11 +2303,11 @@ const App = () => {
           </p>
         </div>
       )}
-      
+
       {allowedRules.length === 0 ? (
         <div className="text-center p-8 bg-yellow-50 border border-yellow-300 rounded-lg">
           <p className="text-lg text-yellow-800 font-semibold">
-            {user?.role === 'teacher' 
+            {user?.role === 'teacher'
               ? "점수를 부여할 규칙이 없습니다. '규칙' 탭에서 규칙을 먼저 등록해주세요."
               : "부여된 권한이 없습니다. 교사에게 문의하세요."}
           </p>
@@ -2249,7 +2371,7 @@ const App = () => {
                         return (
                           <td key={rule.id} className="px-3 py-3 whitespace-nowrap text-center">
                             <div className="flex items-center justify-center gap-0.5">
-            <button
+                              <button
                                 onClick={() => handleAdjustScore(student.id, rule.id, selectedDate, -1)}
                                 className="text-red-500 hover:text-red-700 transition duration-100 disabled:opacity-30 p-1"
                                 title="점수 -1"
@@ -2281,17 +2403,17 @@ const App = () => {
                                 onBlur={(e) => {
                                   const inputValue = e.target.value;
                                   const key = `${student.id}-${rule.id}`;
-                                  
+
                                   // 빈 문자열이거나 '-'만 있으면 0으로 처리
                                   const newValue = (inputValue === '' || inputValue === '-') ? 0 : parseInt(inputValue, 10);
-                                  
+
                                   if (!isNaN(newValue)) {
                                     const delta = newValue - scoreValue;
                                     if (delta !== 0) {
                                       handleAdjustScore(student.id, rule.id, selectedDate, delta);
                                     }
                                   }
-                                  
+
                                   // 편집 완료 후 상태 제거
                                   setEditingScores(prev => {
                                     const newState = { ...prev };
@@ -2304,13 +2426,12 @@ const App = () => {
                                     e.target.blur(); // Enter 키 누르면 blur 이벤트 발생
                                   }
                                 }}
-                                className={`w-12 text-center px-1 py-0.5 rounded border font-semibold text-sm ${
-                                  scoreValue > 0 
-                                    ? 'bg-green-50 text-green-700 border-green-300' 
-                                    : scoreValue < 0 
-                                    ? 'bg-red-50 text-red-700 border-red-300' 
+                                className={`w-12 text-center px-1 py-0.5 rounded border font-semibold text-sm ${scoreValue > 0
+                                  ? 'bg-green-50 text-green-700 border-green-300'
+                                  : scoreValue < 0
+                                    ? 'bg-red-50 text-red-700 border-red-300'
                                     : 'bg-gray-50 text-gray-600 border-gray-300'
-                                }`}
+                                  }`}
                                 disabled={isLoading}
                                 title="클릭하여 직접 입력 (음수 가능, Enter로 확정)"
                               />
@@ -2318,10 +2439,10 @@ const App = () => {
                                 onClick={() => handleAdjustScore(student.id, rule.id, selectedDate, 1)}
                                 className="text-green-500 hover:text-green-700 transition duration-100 disabled:opacity-30 p-1"
                                 title="점수 +1"
-                              disabled={isLoading}
-                            >
+                                disabled={isLoading}
+                              >
                                 <Plus className="w-4 h-4" />
-                            </button>
+                              </button>
                             </div>
                           </td>
                         );
@@ -2357,24 +2478,24 @@ const App = () => {
           {['grade', 'classNum', 'studentNum'].map(key => (
             <label key={key} className="col-span-1">
               <span className="text-gray-700 text-sm">{key === 'grade' ? '학년' : key === 'classNum' ? '반' : '번호'}</span>
-              <input 
-                type="number" 
-                value={newStudentInfo[key]} 
-                onChange={(e) => setNewStudentInfo(prev => ({ ...prev, [key]: Number(e.target.value) }))} 
-                min="1" 
-                className="block w-full p-2 border border-gray-300 rounded-lg" 
+              <input
+                type="number"
+                value={newStudentInfo[key]}
+                onChange={(e) => setNewStudentInfo(prev => ({ ...prev, [key]: Number(e.target.value) }))}
+                min="1"
+                className="block w-full p-2 border border-gray-300 rounded-lg"
                 required
               />
             </label>
           ))}
           <label className="col-span-1">
             <span className="text-gray-700 text-sm">이름</span>
-            <input 
-              type="text" 
-              value={newStudentInfo.name} 
-              onChange={(e) => setNewStudentInfo(prev => ({ ...prev, name: e.target.value }))} 
-              placeholder="이름" 
-              className="block w-full p-2 border border-gray-300 rounded-lg" 
+            <input
+              type="text"
+              value={newStudentInfo.name}
+              onChange={(e) => setNewStudentInfo(prev => ({ ...prev, name: e.target.value }))}
+              placeholder="이름"
+              className="block w-full p-2 border border-gray-300 rounded-lg"
               required
             />
           </label>
@@ -2408,7 +2529,7 @@ const App = () => {
           disabled={isLoading}
         />
       </div>
-      
+
       <div className="overflow-x-auto border border-gray-200 rounded-lg">
         <table className="min-w-full divide-y divide-gray-200">
           <thead>
@@ -2444,14 +2565,14 @@ const App = () => {
       {editingStudent && <EditStudentModal student={editingStudent} onClose={() => setEditingStudent(null)} onSave={handleSaveStudent} />}
     </div>
   );
-  
+
   const renderRules = () => (
     <div className="bg-white p-6 rounded-xl shadow-2xl border border-gray-100 min-h-[70vh] space-y-8">
       <div className="flex justify-between items-center">
         <h2 className="text-3xl font-bold text-gray-800 flex items-center">
           <ClipboardList className="w-7 h-7 mr-2 text-indigo-500" /> 규칙 관리
         </h2>
-        
+
         {/* 규칙 가져오기 버튼 */}
         {user?.role === 'teacher' && classrooms.length > 1 && (
           <button
@@ -2469,20 +2590,20 @@ const App = () => {
         <h3 className="text-xl font-semibold text-indigo-700 mb-3 flex items-center">
           <Edit className="w-5 h-5 mr-2" /> {editingRuleId ? '규칙 수정' : '새 규칙 등록'}
         </h3>
-        
+
         <form onSubmit={handleSaveRule} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 items-end">
           <label className="col-span-full">
             <span className="text-gray-700 text-sm">규칙 이름</span>
-            <input 
-              type="text" 
-              value={currentRule.name} 
-              onChange={(e) => setCurrentRule(prev => ({ ...prev, name: e.target.value }))} 
-              placeholder="예: 등교 시간 지키기" 
-              className="block w-full p-2 border border-gray-300 rounded-lg h-[42px]" 
+            <input
+              type="text"
+              value={currentRule.name}
+              onChange={(e) => setCurrentRule(prev => ({ ...prev, name: e.target.value }))}
+              placeholder="예: 등교 시간 지키기"
+              className="block w-full p-2 border border-gray-300 rounded-lg h-[42px]"
               required
             />
           </label>
-          
+
           <div className="md:col-span-2 lg:col-span-5">
             <span className="text-gray-700 text-sm block mb-1">아이콘 및 색상 선택</span>
             <div className="grid grid-cols-6 sm:grid-cols-8 gap-1 p-2 border border-gray-300 rounded-lg bg-gray-50 max-h-48 overflow-y-auto">
@@ -2502,28 +2623,28 @@ const App = () => {
                   </button>
                 );
               })}
-              
+
               {/* 색상 선택 버튼 */}
-              <label 
+              <label
                 className="p-2 rounded-lg bg-white hover:bg-gray-100 transition duration-150 flex justify-center items-center cursor-pointer border-2 border-dashed border-gray-300 hover:border-gray-400 relative overflow-hidden"
                 title="색상 선택"
               >
                 <Palette className="w-6 h-6 text-gray-600 absolute" />
-                <input 
-                  type="color" 
-                  value={currentRule.color} 
-                  onChange={(e) => setCurrentRule(prev => ({ ...prev, color: e.target.value }))} 
+                <input
+                  type="color"
+                  value={currentRule.color}
+                  onChange={(e) => setCurrentRule(prev => ({ ...prev, color: e.target.value }))}
                   className="opacity-0 w-full h-full absolute inset-0 cursor-pointer"
                   required
                 />
-                <div 
+                <div
                   className="w-full h-full absolute inset-0 opacity-30"
                   style={{ backgroundColor: currentRule.color }}
                 ></div>
               </label>
             </div>
           </div>
-          
+
           <div className="md:col-span-2 lg:col-span-1 flex gap-2 pt-2 md:pt-0">
             <button type="submit" className="flex-1 bg-indigo-500 text-white p-2 rounded-lg hover:bg-indigo-600 transition flex items-center justify-center shadow-md h-[42px]" disabled={isLoading}>
               <Save className="w-5 h-5 mr-1" /> {editingRuleId ? '수정' : '추가'}
@@ -2536,7 +2657,7 @@ const App = () => {
           </div>
         </form>
       </div>
-      
+
       {/* 규칙별 순위표 기간 필터 */}
       <div className="mb-6 p-3 sm:p-4 bg-gray-50 rounded-lg border">
         <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
@@ -2545,66 +2666,60 @@ const App = () => {
         <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-3">
           <button
             onClick={() => setPeriodFilter('all')}
-            className={`px-1.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition ${
-              periodFilter === 'all'
-                ? 'bg-indigo-600 text-white shadow-md'
-                : 'bg-white text-gray-700 hover:bg-indigo-50 border'
-            }`}
+            className={`px-1.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition ${periodFilter === 'all'
+              ? 'bg-indigo-600 text-white shadow-md'
+              : 'bg-white text-gray-700 hover:bg-indigo-50 border'
+              }`}
           >
             현재
           </button>
           <button
             onClick={() => setPeriodFilter('daily')}
-            className={`px-1.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition ${
-              periodFilter === 'daily'
-                ? 'bg-indigo-600 text-white shadow-md'
-                : 'bg-white text-gray-700 hover:bg-indigo-50 border'
-            }`}
+            className={`px-1.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition ${periodFilter === 'daily'
+              ? 'bg-indigo-600 text-white shadow-md'
+              : 'bg-white text-gray-700 hover:bg-indigo-50 border'
+              }`}
           >
             오늘
           </button>
           <button
             onClick={() => setPeriodFilter('weekly')}
-            className={`px-1.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition ${
-              periodFilter === 'weekly'
-                ? 'bg-indigo-600 text-white shadow-md'
-                : 'bg-white text-gray-700 hover:bg-indigo-50 border'
-            }`}
+            className={`px-1.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition ${periodFilter === 'weekly'
+              ? 'bg-indigo-600 text-white shadow-md'
+              : 'bg-white text-gray-700 hover:bg-indigo-50 border'
+              }`}
           >
             이번주
           </button>
           <button
             onClick={() => setPeriodFilter('monthly')}
-            className={`px-1.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition ${
-              periodFilter === 'monthly'
-                ? 'bg-indigo-600 text-white shadow-md'
-                : 'bg-white text-gray-700 hover:bg-indigo-50 border'
-            }`}
+            className={`px-1.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition ${periodFilter === 'monthly'
+              ? 'bg-indigo-600 text-white shadow-md'
+              : 'bg-white text-gray-700 hover:bg-indigo-50 border'
+              }`}
           >
             이번달
           </button>
           <button
             onClick={() => setPeriodFilter('last30days')}
-            className={`px-1.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition ${
-              periodFilter === 'last30days'
-                ? 'bg-indigo-600 text-white shadow-md'
-                : 'bg-white text-gray-700 hover:bg-indigo-50 border'
-            }`}
+            className={`px-1.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition ${periodFilter === 'last30days'
+              ? 'bg-indigo-600 text-white shadow-md'
+              : 'bg-white text-gray-700 hover:bg-indigo-50 border'
+              }`}
           >
             <span className="hidden sm:inline">최근</span>30일
           </button>
           <button
             onClick={() => setPeriodFilter('custom')}
-            className={`px-1.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition ${
-              periodFilter === 'custom'
-                ? 'bg-indigo-600 text-white shadow-md'
-                : 'bg-white text-gray-700 hover:bg-indigo-50 border'
-            }`}
+            className={`px-1.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition ${periodFilter === 'custom'
+              ? 'bg-indigo-600 text-white shadow-md'
+              : 'bg-white text-gray-700 hover:bg-indigo-50 border'
+              }`}
           >
             기간<span className="hidden sm:inline">선택</span>
           </button>
         </div>
-        
+
         {periodFilter === 'custom' && (
           <div className="flex flex-wrap items-center gap-3 mt-3">
             <div>
@@ -2647,12 +2762,12 @@ const App = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {rules.map((rule) => {
             const RuleIcon = getIconComponent(rule.iconId);
-            
+
             const rankedByRule = [...students].map(s => {
               const scoreData = filteredStudentRuleScores[s.id]?.[rule.id];
               const ruleScore = (scoreData && typeof scoreData === 'object') ? scoreData.total : (scoreData || 0);
               return {
-              ...s,
+                ...s,
                 ruleScore
               };
             }).sort((a, b) => {
@@ -2705,7 +2820,7 @@ const App = () => {
           })}
         </div>
       )}
-      
+
       {/* 규칙 가져오기 모달 */}
       {showImportModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-4">
@@ -2727,7 +2842,7 @@ const App = () => {
                   <X className="w-6 h-6" />
                 </button>
               </div>
-              
+
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -2749,7 +2864,7 @@ const App = () => {
                       ))}
                   </select>
                 </div>
-                
+
                 <div className="bg-blue-50 p-4 rounded-lg">
                   <h4 className="font-semibold text-blue-800 mb-2">가져오기 안내</h4>
                   <ul className="text-sm text-blue-700 space-y-1">
@@ -2758,7 +2873,7 @@ const App = () => {
                     <li>• 가져온 규칙은 현재 학급에 추가됩니다</li>
                   </ul>
                 </div>
-                
+
                 <div className="flex gap-3 pt-4">
                   <button
                     onClick={handleImportRules}
@@ -2798,7 +2913,7 @@ const App = () => {
 
   // 라우팅 처리
   const shareMatch = currentRoute.match(/#\/share\/([a-f0-9]+)/);
-  
+
   if (shareMatch) {
     const token = shareMatch[1];
     return <PublicLeaderboard token={token} />;
@@ -2815,7 +2930,7 @@ const App = () => {
   if (!user) {
     return (
       <>
-        <SEOHead 
+        <SEOHead
           title="학급 관리 시스템 - 무료 학생 점수 관리 도구"
           description="교사와 학생을 위한 스마트한 학급 관리 시스템. 학생 점수 부여, 실시간 순위표, 규칙별 관리 기능을 제공하는 무료 온라인 도구입니다. 회원가입 후 바로 사용하세요!"
           keywords="학급관리, 학생관리, 점수관리, 순위표, 학급점수, 학생점수, 교실관리, 교육도구, 학급운영, 학생평가, 포인트시스템, 학급순위, 교육관리, 무료, 온라인"
@@ -2823,8 +2938,8 @@ const App = () => {
         />
         <LandingPage onShowAuth={handleShowAuth} />
         {showAuthModal && (
-          <Auth 
-            onLogin={handleLogin} 
+          <Auth
+            onLogin={handleLogin}
             onClose={() => setShowAuthModal(false)}
             initialMode={authMode}
           />
@@ -2843,7 +2958,7 @@ const App = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 p-2 sm:p-4 md:p-6 lg:p-8" style={{ fontFamily: appSettings.font }}>
-      <SEOHead 
+      <SEOHead
         title={appSettings.title || '학급 관리 시스템'}
         description={`${appSettings.subtitle || '학년/반/번호 기반 관리 및 실시간 점수 순위표'} - ${appSettings.title || '학급 관리 시스템'}`}
         url={`https://classpoint.kr${currentRoute === '#/' ? '' : currentRoute}`}
@@ -2858,20 +2973,20 @@ const App = () => {
           </div>
         </div>
       )}
-      
+
       {/* 토스트 알림 */}
       <Toast toast={toast} onClose={() => setToast(null)} />
-      
+
       {editingClassroom && (() => {
         console.log('Rendering EditClassroomModal with classroom:', editingClassroom);
         return <EditClassroomModal classroom={editingClassroom} onClose={() => setEditingClassroom(null)} onUpdate={handleUpdateClassroom} onDelete={handleDeleteClassroom} />;
       })()}
-      
+
       {editingUser && (
-        <EditUserModal 
-          user={editingUser} 
-          onClose={() => setEditingUser(null)} 
-          onUpdate={handleUpdateUser} 
+        <EditUserModal
+          user={editingUser}
+          onClose={() => setEditingUser(null)}
+          onUpdate={handleUpdateUser}
         />
       )}
 
@@ -2908,72 +3023,49 @@ const App = () => {
 
       <header className="text-center mb-4 sm:mb-8">
         <div className="flex flex-col items-center justify-center pt-4 sm:pt-6">
-          <img 
-            src={`/${currentLogo}`} 
-            alt="학급 관리 시스템 로고" 
+          <img
+            src={`/${currentLogo}`}
+            alt="학급 관리 시스템 로고"
             className="h-24 sm:h-32 md:h-40 lg:h-48 w-auto object-contain mx-auto"
           />
         </div>
-        
+
         {/* 학급 선택 탭 (교사만, 학급이 1개 이상일 때) */}
         {user?.role === 'teacher' && classrooms.length > 0 && (
           <div className="mt-4 flex justify-center">
             <div className="flex flex-wrap gap-2 bg-white rounded-lg p-1 shadow-md border">
-              {classrooms.map(classroom => (
-                <div key={classroom.id} className="relative group">
-                  <button
-                    onClick={() => {
-                      if (classrooms.length > 1) {
-                        setCurrentClassroom(classroom);
-                        localStorage.setItem('selectedClassroomId', classroom.id.toString());
-                      }
-                    }}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-md transition-all ${
-                      currentClassroom?.id === classroom.id
-                        ? 'bg-indigo-500 text-white shadow-md'
-                        : 'bg-gray-50 text-gray-700 hover:bg-indigo-50 hover:text-indigo-600'
-                    }`}
-                  >
-                    {/* 기본 학급 별표 */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (!classroom.is_default) {
-                          handleSetDefaultClassroom(classroom.id);
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={classrooms.map(c => c.id)}
+                  strategy={horizontalListSortingStrategy}
+                >
+                  {classrooms.map(classroom => (
+                    <SortableClassroomItem
+                      key={classroom.id}
+                      classroom={classroom}
+                      isActiveClassroom={currentClassroom?.id === classroom.id}
+                      role={user?.role}
+                      onSelect={(cls) => {
+                        if (classrooms.length > 1) {
+                          setCurrentClassroom(cls);
+                          localStorage.setItem('selectedClassroomId', cls.id.toString());
                         }
                       }}
-                      className={`transition ${
-                        classroom.is_default 
-                          ? 'text-yellow-400 hover:text-yellow-300' 
-                          : 'text-gray-400 hover:text-yellow-500'
-                      }`}
-                      title={classroom.is_default ? '기본 학급' : '기본 학급으로 설정'}
-                    >
-                      <Star className={`w-4 h-4 ${classroom.is_default ? 'fill-current' : ''}`} />
-                    </button>
-                    
-                    {/* 학급 이름 */}
-                    <span className="font-medium">{classroom.name}</span>
-                    
-                    {/* 점세개 메뉴 */}
-                    {user?.role === 'teacher' && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          console.log('Settings button clicked for classroom:', classroom);
-                          setEditingClassroom(classroom);
-                          console.log('editingClassroom state set to:', classroom);
-                        }}
-                        className="opacity-70 hover:opacity-100 transition-opacity text-gray-500 hover:text-gray-700 p-1 rounded hover:bg-gray-200"
-                        title="학급 관리"
-                      >
-                        <Settings className="w-4 h-4" />
-                      </button>
-                    )}
-                  </button>
-                </div>
-              ))}
-              
+                      onSetDefault={handleSetDefaultClassroom}
+                      onEditSettings={(cls) => {
+                        console.log('Settings button clicked for classroom:', cls);
+                        setEditingClassroom(cls);
+                        console.log('editingClassroom state set to:', cls);
+                      }}
+                    />
+                  ))}
+                </SortableContext>
+              </DndContext>
+
               {/* 학급 추가 버튼 (교사만) */}
               {user?.role === 'teacher' && (
                 <button
@@ -3000,12 +3092,12 @@ const App = () => {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex-1 flex flex-col sm:flex-row items-center justify-center p-2 sm:p-3 text-center text-xs sm:text-sm md:text-base lg:text-lg font-semibold transition-colors duration-200 border-b-4 whitespace-nowrap min-w-fit
-                  ${isActive 
-                    ? 'border-indigo-600 text-indigo-600 bg-indigo-50' 
+                  ${isActive
+                    ? 'border-indigo-600 text-indigo-600 bg-indigo-50'
                     : 'border-transparent text-gray-500 hover:text-indigo-500 hover:border-gray-300'}`
                 }
               >
-                <TabIcon className="w-4 h-4 sm:w-5 sm:h-5 sm:mr-2 mb-1 sm:mb-0" /> 
+                <TabIcon className="w-4 h-4 sm:w-5 sm:h-5 sm:mr-2 mb-1 sm:mb-0" />
                 <span className="hidden sm:inline">{tab.name}</span>
                 <span className="sm:hidden text-xs">{tab.name.replace(' ', '')}</span>
               </button>
@@ -3065,7 +3157,7 @@ const App = () => {
                       required
                     />
                   </div>
-                  
+
                   <div className="p-3 bg-white rounded-lg border">
                     <p className="text-sm font-semibold text-gray-700 mb-2">체크 권한 부여할 규칙 선택:</p>
                     <div className="flex flex-wrap gap-2">
@@ -3084,11 +3176,10 @@ const App = () => {
                                   : [...prev.allowedRuleIds, rule.id]
                               }));
                             }}
-                            className={`px-3 py-2 rounded-lg transition flex items-center ${
-                              isSelected
-                                ? 'bg-indigo-600 text-white shadow-md'
-                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                            }`}
+                            className={`px-3 py-2 rounded-lg transition flex items-center ${isSelected
+                              ? 'bg-indigo-600 text-white shadow-md'
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                              }`}
                           >
                             <RuleIcon className="w-4 h-4 mr-1" style={{ color: isSelected ? 'white' : rule.color }} />
                             {rule.name}
@@ -3097,7 +3188,7 @@ const App = () => {
                       })}
                     </div>
                   </div>
-                  
+
                   <button
                     type="button"
                     onClick={async () => {
@@ -3115,10 +3206,10 @@ const App = () => {
                       }
                       try {
                         setIsLoading(true);
-                        await studentManagersAPI.create({ 
-                          username: newManager.username, 
-                          password: newManager.password, 
-                          displayName: newManager.displayName, 
+                        await studentManagersAPI.create({
+                          username: newManager.username,
+                          password: newManager.password,
+                          displayName: newManager.displayName,
                           allowedRuleIds: newManager.allowedRuleIds,
                           classroomId: currentClassroom.id
                         });
@@ -3205,7 +3296,7 @@ const App = () => {
           )}
         </div>
       </div>
-      
+
       {/* Footer */}
       <Footer />
     </div>

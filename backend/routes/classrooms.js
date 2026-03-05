@@ -9,7 +9,7 @@ const router = express.Router();
 router.get('/', auth, async (req, res) => {
   try {
     const result = await pool.query(
-      'SELECT id, name, is_default, created_at FROM classrooms WHERE user_id = $1 ORDER BY is_default DESC, created_at ASC',
+      'SELECT id, name, is_default, display_order, created_at FROM classrooms WHERE user_id = $1 ORDER BY is_default DESC, display_order ASC, created_at ASC',
       [req.userId]
     );
     res.json(result.rows);
@@ -34,12 +34,19 @@ router.post(
 
     try {
       const { name } = req.body;
-      
-      const result = await pool.query(
-        'INSERT INTO classrooms (user_id, name, is_default) VALUES ($1, $2, $3) RETURNING id, name, is_default, created_at',
-        [req.userId, name, false]
+
+      // 새 학급의 정렬 순서를 가장 마지막으로 설정하기 위해 현재 최대 display_order 조회
+      const orderResult = await pool.query(
+        'SELECT COALESCE(MAX(display_order), 0) + 1 AS next_order FROM classrooms WHERE user_id = $1',
+        [req.userId]
       );
-      
+      const nextOrder = orderResult.rows[0].next_order;
+
+      const result = await pool.query(
+        'INSERT INTO classrooms (user_id, name, is_default, display_order) VALUES ($1, $2, $3, $4) RETURNING id, name, is_default, display_order, created_at',
+        [req.userId, name, false, nextOrder]
+      );
+
       res.status(201).json(result.rows[0]);
     } catch (error) {
       console.error('Create classroom error:', error);
@@ -64,22 +71,22 @@ router.put(
     try {
       const { id } = req.params;
       const { name } = req.body;
-      
+
       // 권한 확인
       const checkResult = await pool.query(
         'SELECT id FROM classrooms WHERE id = $1 AND user_id = $2',
         [id, req.userId]
       );
-      
+
       if (checkResult.rows.length === 0) {
         return res.status(404).json({ error: '학급을 찾을 수 없습니다.' });
       }
-      
+
       const result = await pool.query(
-        'UPDATE classrooms SET name = $1 WHERE id = $2 AND user_id = $3 RETURNING id, name, is_default, created_at',
+        'UPDATE classrooms SET name = $1 WHERE id = $2 AND user_id = $3 RETURNING id, name, is_default, display_order, created_at',
         [name, id, req.userId]
       );
-      
+
       res.json(result.rows[0]);
     } catch (error) {
       console.error('Update classroom error:', error);
@@ -92,23 +99,23 @@ router.put(
 router.delete('/:id', auth, async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     // 권한 확인
     const checkResult = await pool.query(
       'SELECT id, is_default FROM classrooms WHERE id = $1 AND user_id = $2',
       [id, req.userId]
     );
-    
+
     if (checkResult.rows.length === 0) {
       return res.status(404).json({ error: '학급을 찾을 수 없습니다.' });
     }
-    
+
     if (checkResult.rows[0].is_default) {
       return res.status(400).json({ error: '기본 학급은 삭제할 수 없습니다. 먼저 다른 학급을 기본으로 설정해주세요.' });
     }
-    
+
     await pool.query('DELETE FROM classrooms WHERE id = $1 AND user_id = $2', [id, req.userId]);
-    
+
     res.json({ message: '학급이 삭제되었습니다.' });
   } catch (error) {
     console.error('Delete classroom error:', error);
@@ -120,35 +127,35 @@ router.delete('/:id', auth, async (req, res) => {
 router.patch('/:id/set-default', auth, async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     // 권한 확인
     const checkResult = await pool.query(
       'SELECT id FROM classrooms WHERE id = $1 AND user_id = $2',
       [id, req.userId]
     );
-    
+
     if (checkResult.rows.length === 0) {
       return res.status(404).json({ error: '학급을 찾을 수 없습니다.' });
     }
-    
+
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
-      
+
       // 기존 기본 학급 해제
       await client.query(
         'UPDATE classrooms SET is_default = false WHERE user_id = $1',
         [req.userId]
       );
-      
+
       // 새로운 기본 학급 설정
       const result = await client.query(
-        'UPDATE classrooms SET is_default = true WHERE id = $1 AND user_id = $2 RETURNING id, name, is_default, created_at',
+        'UPDATE classrooms SET is_default = true WHERE id = $1 AND user_id = $2 RETURNING id, name, is_default, display_order, created_at',
         [id, req.userId]
       );
-      
+
       await client.query('COMMIT');
-      
+
       res.json(result.rows[0]);
     } catch (error) {
       await client.query('ROLLBACK');
@@ -159,6 +166,38 @@ router.patch('/:id/set-default', auth, async (req, res) => {
   } catch (error) {
     console.error('Set default classroom error:', error);
     res.status(500).json({ error: '기본 학급 설정 중 오류가 발생했습니다.' });
+  }
+});
+
+// 학급 순서 일괄 업데이트
+router.put('/reorder/batch', auth, async (req, res) => {
+  const { orderedItems } = req.body; // [{id: 1, display_order: 1}, {id: 2, display_order: 2}, ...]
+
+  if (!Array.isArray(orderedItems)) {
+    return res.status(400).json({ error: '올바른 형식의 데이터가 아닙니다.' });
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    for (const item of orderedItems) {
+      if (!item.id || item.display_order === undefined) continue;
+
+      await client.query(
+        'UPDATE classrooms SET display_order = $1 WHERE id = $2 AND user_id = $3',
+        [item.display_order, item.id, req.userId]
+      );
+    }
+
+    await client.query('COMMIT');
+    res.json({ message: '순서가 성공적으로 업데이트되었습니다.' });
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Reorder classrooms error:', error);
+    res.status(500).json({ error: '순서 업데이트 중 오류가 발생했습니다.' });
+  } finally {
+    client.release();
   }
 });
 

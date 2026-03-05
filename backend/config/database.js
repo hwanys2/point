@@ -23,6 +23,7 @@ const initDatabase = async () => {
         user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
         name VARCHAR(100) NOT NULL,
         is_default BOOLEAN DEFAULT FALSE,
+        display_order INTEGER DEFAULT 0,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
 
@@ -83,6 +84,9 @@ const initDatabase = async () => {
       // 1. classroom_id 컬럼 추가 (NULL 허용)
       await pool.query(`ALTER TABLE students ADD COLUMN IF NOT EXISTS classroom_id INTEGER;`);
       await pool.query(`ALTER TABLE rules ADD COLUMN IF NOT EXISTS classroom_id INTEGER;`);
+      
+      // 1.5. classrooms.display_order 컬럼 추가
+      await pool.query(`ALTER TABLE classrooms ADD COLUMN IF NOT EXISTS display_order INTEGER DEFAULT 0;`);
       
       // 2. 기존 사용자들에게 기본 학급이 없으면 생성
       const usersWithoutClassroom = await pool.query(`
