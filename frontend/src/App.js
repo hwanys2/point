@@ -94,20 +94,28 @@ const SortableClassroomItem = ({ classroom, isActiveClassroom, onSelect, onSetDe
   };
 
   return (
-    <div ref={setNodeRef} style={style} className="relative group flex items-center bg-gray-50 rounded-md shadow-sm border border-gray-100 hover:border-indigo-300 transition-colors">
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`relative group flex items-center rounded-md shadow-sm border transition-all ${isActiveClassroom
+          ? 'bg-indigo-500 border-indigo-600 shadow-md'
+          : 'bg-gray-50 border-gray-100 hover:border-indigo-300'
+        }`}
+    >
       <div
         {...attributes}
         {...listeners}
-        className="px-2 py-3 cursor-grab hover:bg-gray-100 rounded-l-md text-gray-400 hover:text-gray-600 transition-colors"
+        className={`px-2 py-3 cursor-grab rounded-l-md transition-colors ${isActiveClassroom ? 'text-indigo-100 hover:bg-indigo-600' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+          }`}
         title="드래그하여 순서 변경"
       >
         <GripHorizontal className="w-4 h-4" />
       </div>
       <button
         onClick={() => onSelect(classroom)}
-        className={`flex items-center gap-2 pr-3 py-2 rounded-r-md transition-all ${isActiveClassroom
-          ? 'bg-indigo-500 text-white shadow-md'
-          : 'text-gray-700 hover:bg-indigo-50 hover:text-indigo-600'
+        className={`flex items-center gap-2 pr-3 py-2 rounded-r-md transition-all flex-1 ${isActiveClassroom
+            ? 'text-white'
+            : 'text-gray-700 hover:bg-indigo-50 hover:text-indigo-600'
           }`}
       >
         {/* 기본 학급 별표 */}
@@ -119,8 +127,8 @@ const SortableClassroomItem = ({ classroom, isActiveClassroom, onSelect, onSetDe
             }
           }}
           className={`transition ${classroom.is_default
-            ? (isActiveClassroom ? 'text-yellow-400 hover:text-yellow-300' : 'text-yellow-500 hover:text-yellow-400')
-            : (isActiveClassroom ? 'text-indigo-300 hover:text-yellow-400' : 'text-gray-300 hover:text-yellow-500')
+              ? (isActiveClassroom ? 'text-yellow-400 hover:text-yellow-300' : 'text-yellow-500 hover:text-yellow-400')
+              : (isActiveClassroom ? 'text-indigo-200 hover:text-yellow-400' : 'text-gray-300 hover:text-yellow-500')
             }`}
           title={classroom.is_default ? '기본 학급' : '기본 학급으로 설정'}
         >
@@ -137,9 +145,9 @@ const SortableClassroomItem = ({ classroom, isActiveClassroom, onSelect, onSetDe
               e.stopPropagation();
               onEditSettings(classroom);
             }}
-            className={`opacity-70 hover:opacity-100 transition-opacity p-1 rounded ${isActiveClassroom
-              ? 'text-indigo-200 hover:text-white hover:bg-indigo-600'
-              : 'text-gray-400 hover:text-gray-700 hover:bg-gray-200'
+            className={`opacity-70 hover:opacity-100 transition-opacity p-1 rounded ml-auto ${isActiveClassroom
+                ? 'text-indigo-100 hover:text-white hover:bg-indigo-600'
+                : 'text-gray-400 hover:text-gray-700 hover:bg-gray-300'
               }`}
             title="학급 관리"
           >
