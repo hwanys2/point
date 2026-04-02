@@ -1,15 +1,13 @@
 const express = require('express');
 const { pool } = require('../config/database');
+const {
+  formatSeoulYmd,
+  pgDateToYmd,
+  seoulDateRangeWeekly,
+  seoulLast30DaysInclusiveBounds
+} = require('../utils/koreaDate');
 
 const router = express.Router();
-
-// 로컬 날짜를 YYYY-MM-DD 형식으로 반환 (UTC 변환 없이)
-const getLocalDateString = (date = new Date()) => {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-};
 
 // 공개 리더보드 조회 (토큰 기반)
 router.get('/leaderboard/:token', async (req, res) => {
@@ -43,40 +41,32 @@ router.get('/leaderboard/:token', async (req, res) => {
     let paramIndex = 2;
 
     if (period === 'daily') {
-      // 오늘
-      const today = getLocalDateString();
+      // 오늘 (서울 달력)
+      const today = formatSeoulYmd();
       dateFilter = `AND s.date = $${paramIndex}`;
       queryParams.push(today);
       paramIndex++;
     } else if (period === 'weekly') {
-      // 이번주 (월요일부터 오늘까지)
-      const today = new Date();
-      const dayOfWeek = today.getDay(); // 0(일요일) ~ 6(토요일)
-      const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // 월요일까지 가는 일수
-      const monday = new Date(today);
-      monday.setDate(today.getDate() - mondayOffset);
-      
-      const mondayStr = getLocalDateString(monday);
-      const todayStr = getLocalDateString();
+      // 이번주 월요일 ~ 오늘 (서울 달력)
+      const weekDates = seoulDateRangeWeekly();
+      const mondayStr = weekDates[0];
+      const todayStr = weekDates[weekDates.length - 1];
       dateFilter = `AND s.date >= $${paramIndex} AND s.date <= $${paramIndex + 1}`;
       queryParams.push(mondayStr, todayStr);
       paramIndex += 2;
     } else if (period === 'monthly') {
-      // 이번달 (1일부터 오늘까지)
-      const today = new Date();
-      const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-      
-      const firstDayStr = getLocalDateString(firstDay);
-      const todayStr = getLocalDateString();
+      // 이번달 1일 ~ 오늘 (서울 달력)
+      const todayStr = formatSeoulYmd();
+      const [y, mo] = todayStr.split('-');
+      const firstDayStr = `${y}-${mo}-01`;
       dateFilter = `AND s.date >= $${paramIndex} AND s.date <= $${paramIndex + 1}`;
       queryParams.push(firstDayStr, todayStr);
       paramIndex += 2;
     } else if (period === 'last30days') {
-      // 최근 30일
-      const today = getLocalDateString();
-      const thirtyDaysAgo = getLocalDateString(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000));
+      // 최근 30일 (서울 달력, 오늘 포함 30일)
+      const { start, end } = seoulLast30DaysInclusiveBounds();
       dateFilter = `AND s.date >= $${paramIndex} AND s.date <= $${paramIndex + 1}`;
-      queryParams.push(thirtyDaysAgo, today);
+      queryParams.push(start, end);
       paramIndex += 2;
     } else if (period === 'custom' && startDate && endDate) {
       dateFilter = `AND s.date >= $${paramIndex} AND s.date <= $${paramIndex + 1}`;
@@ -121,9 +111,7 @@ router.get('/leaderboard/:token', async (req, res) => {
 
     // 점수 데이터 처리
     scoresResult.rows.forEach(score => {
-      const dateStr = score.date instanceof Date 
-        ? getLocalDateString(score.date)
-        : score.date;
+      const dateStr = pgDateToYmd(score.date);
       
       if (studentMap[score.student_id]) {
         studentMap[score.student_id].totalScore += score.value;

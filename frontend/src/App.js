@@ -29,15 +29,14 @@ import PrivacyPolicy from './components/PrivacyPolicy';
 import TermsOfService from './components/TermsOfService';
 import SEOHead from './components/SEOHead';
 import { classroomsAPI, studentsAPI, rulesAPI, scoresAPI, settingsAPI, studentManagersAPI, authAPI } from './services/api';
-
-// Helper functions
-const getTodayDate = () => {
-  const d = new Date();
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-};
+import {
+  formatSeoulYmd,
+  seoulDateRangeDaily,
+  seoulDateRangeWeekly,
+  seoulDateRangeMonthly,
+  seoulDateRangeLast30Days,
+  seoulDateRangeCustom
+} from './utils/koreaDate';
 
 // 아이콘 옵션
 const ICON_OPTIONS = [
@@ -1136,7 +1135,7 @@ const App = () => {
   const [rules, setRules] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedDate, setSelectedDate] = useState(getTodayDate());
+  const [selectedDate, setSelectedDate] = useState(() => formatSeoulYmd());
   const [activeTab, setActiveTab] = useState('leaderboard');
   const [newStudentInfo, setNewStudentInfo] = useState({ grade: 1, classNum: 1, studentNum: 1, name: '' });
   const [toast, setToast] = useState(null);
@@ -1152,8 +1151,8 @@ const App = () => {
 
   // 순위표 기간 필터
   const [periodFilter, setPeriodFilter] = useState('all'); // 'all', 'daily', 'weekly', 'monthly', 'custom'
-  const [customStartDate, setCustomStartDate] = useState(getTodayDate());
-  const [customEndDate, setCustomEndDate] = useState(getTodayDate());
+  const [customStartDate, setCustomStartDate] = useState(() => formatSeoulYmd());
+  const [customEndDate, setCustomEndDate] = useState(() => formatSeoulYmd());
 
   // Auth 모달 상태
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -1435,67 +1434,18 @@ const App = () => {
   const filteredStudentsWithScores = useMemo(() => {
 
     const getDateRange = () => {
-      const today = new Date();
-      const todayStr = getTodayDate();
-
       switch (periodFilter) {
         case 'daily':
-          return [todayStr];
-        case 'weekly': {
-          // 이번주 (월요일부터 오늘까지)
-          const dates = [];
-          const dayOfWeek = today.getDay(); // 0(일요일) ~ 6(토요일)
-          const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // 월요일까지 가는 일수
-
-          for (let i = mondayOffset; i >= 0; i--) {
-            const d = new Date(today);
-            d.setDate(d.getDate() - i);
-            const y = d.getFullYear();
-            const m = String(d.getMonth() + 1).padStart(2, '0');
-            const day = String(d.getDate()).padStart(2, '0');
-            dates.push(`${y}-${m}-${day}`);
-          }
-          return dates;
-        }
-        case 'monthly': {
-          // 이번달 (1일부터 오늘까지)
-          const dates = [];
-          const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-
-          for (let d = new Date(firstDay); d <= today; d.setDate(d.getDate() + 1)) {
-            const y = d.getFullYear();
-            const m = String(d.getMonth() + 1).padStart(2, '0');
-            const day = String(d.getDate()).padStart(2, '0');
-            dates.push(`${y}-${m}-${day}`);
-          }
-          return dates;
-        }
-        case 'last30days': {
-          // 최근 30일
-          const dates = [];
-          for (let i = 0; i < 30; i++) {
-            const d = new Date(today);
-            d.setDate(d.getDate() - i);
-            const y = d.getFullYear();
-            const m = String(d.getMonth() + 1).padStart(2, '0');
-            const day = String(d.getDate()).padStart(2, '0');
-            dates.push(`${y}-${m}-${day}`);
-          }
-          return dates;
-        }
-        case 'custom': {
-          const dates = [];
-          const start = new Date(customStartDate);
-          const end = new Date(customEndDate);
-          for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-            const y = d.getFullYear();
-            const m = String(d.getMonth() + 1).padStart(2, '0');
-            const day = String(d.getDate()).padStart(2, '0');
-            dates.push(`${y}-${m}-${day}`);
-          }
-          return dates;
-        }
-        default: // 'all'
+          return seoulDateRangeDaily();
+        case 'weekly':
+          return seoulDateRangeWeekly();
+        case 'monthly':
+          return seoulDateRangeMonthly();
+        case 'last30days':
+          return seoulDateRangeLast30Days();
+        case 'custom':
+          return seoulDateRangeCustom(customStartDate, customEndDate);
+        default:
           return null;
       }
     };
@@ -2174,7 +2124,7 @@ const App = () => {
                     value={customEndDate}
                     onChange={(e) => setCustomEndDate(e.target.value)}
                     min={customStartDate}
-                    max={getTodayDate()}
+                    max={formatSeoulYmd()}
                     className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
@@ -2297,7 +2247,7 @@ const App = () => {
           type="date"
           value={selectedDate}
           onChange={(e) => setSelectedDate(e.target.value)}
-          max={getTodayDate()}
+          max={formatSeoulYmd()}
           className="p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 w-full sm:w-auto text-lg"
         />
       </div>
@@ -2748,7 +2698,7 @@ const App = () => {
                 value={customEndDate}
                 onChange={(e) => setCustomEndDate(e.target.value)}
                 min={customStartDate}
-                max={getTodayDate()}
+                max={formatSeoulYmd()}
                 className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
               />
             </div>

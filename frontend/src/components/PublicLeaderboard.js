@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { ListOrdered, BarChart3 } from 'lucide-react';
 import { publicAPI } from '../services/api';
+import { formatSeoulYmd } from '../utils/koreaDate';
 import Footer from './Footer';
 
 // 규칙별 점수 막대 그래프 컴포넌트 (양수/음수 분리)
@@ -386,15 +387,8 @@ const PublicLeaderboard = ({ token }) => {
   const [error, setError] = useState(null);
   const [periodFilter, setPeriodFilter] = useState('all');
   const [randomLogo] = useState(() => Math.random() < 0.5 ? 'logo.png' : 'logo2.png');
-  const getLocalToday = () => {
-    const d = new Date();
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${y}-${m}-${day}`;
-  };
-  const [customStartDate, setCustomStartDate] = useState(getLocalToday());
-  const [customEndDate, setCustomEndDate] = useState(getLocalToday());
+  const [customStartDate, setCustomStartDate] = useState(() => formatSeoulYmd());
+  const [customEndDate, setCustomEndDate] = useState(() => formatSeoulYmd());
 
   useEffect(() => {
     const run = async () => {
@@ -594,7 +588,7 @@ const PublicLeaderboard = ({ token }) => {
                   value={customEndDate}
                   onChange={(e) => setCustomEndDate(e.target.value)}
                   min={customStartDate}
-                  max={getLocalToday()}
+                  max={formatSeoulYmd()}
                   className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
