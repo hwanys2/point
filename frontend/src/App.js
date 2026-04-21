@@ -4,7 +4,8 @@ import {
   Shirt, BookOpenCheck, Sparkles, Armchair, Smile, Lightbulb,
   Feather, ShieldCheck, Settings, BarChart3, FileText, Trash2, Edit, Save,
   ClipboardList, X, BarChart, Palette, LogOut, Clock,
-  Star, Download, Users, Mail, ExternalLink, ChevronDown, User, Minus, GripHorizontal
+  Star, Download, Users, Mail, ExternalLink, ChevronDown, User, Minus, GripHorizontal,
+  FileSpreadsheet
 } from 'lucide-react';
 import {
   DndContext,
@@ -37,6 +38,7 @@ import {
   seoulDateRangeLast30Days,
   seoulDateRangeCustom
 } from './utils/koreaDate';
+import { exportRuleRankingExcel } from './utils/exportRuleRankingExcel';
 
 // 아이콘 옵션
 const ICON_OPTIONS = [
@@ -1549,6 +1551,24 @@ const App = () => {
     return scores;
   }, [filteredStudentsWithScores, rules]);
 
+  const handleExportRuleRankingExcel = useCallback(async (rule) => {
+    try {
+      await exportRuleRankingExcel({
+        rule,
+        students,
+        filteredStudentsWithScores,
+        filteredStudentRuleScores,
+        periodFilter,
+        customStartDate,
+        customEndDate,
+      });
+      setToast({ type: 'success', message: '엑셀 파일을 다운로드했습니다.' });
+    } catch (err) {
+      console.error('Excel export error:', err);
+      setToast({ type: 'error', message: '엑셀 다운로드에 실패했습니다.' });
+    }
+  }, [students, filteredStudentsWithScores, filteredStudentRuleScores, periodFilter, customStartDate, customEndDate]);
+
   const handleAddStudent = async (e) => {
     e.preventDefault();
     const { grade, classNum, studentNum, name } = newStudentInfo;
@@ -2741,9 +2761,13 @@ const App = () => {
                     <RuleIcon className="w-5 h-5 mr-2" /> {rule.name}
                     <span className="text-base text-gray-500 ml-3 font-normal"> (총 {rankedByRule.reduce((sum, s) => sum + s.ruleScore, 0)}점)</span>
                   </h4>
-                  <div className="space-x-2">
-                    <button onClick={() => handleStartEditRule(rule)} className="text-blue-500 hover:text-blue-700 p-1" title="규칙 수정"><Edit className="w-5 h-5 inline" /></button>
-                    <button onClick={() => handleDeleteRule(rule.id, rule.name)} className="text-red-500 hover:text-red-700 p-1" title="규칙 삭제"><Trash2 className="w-5 h-5 inline" /></button>
+                  <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+                    <button type="button" onClick={() => handleExportRuleRankingExcel(rule)} className="text-emerald-600 hover:text-emerald-800 p-1 flex items-center" title="엑셀 다운로드 (일별 상세)">
+                      <FileSpreadsheet className="w-5 h-5 inline" />
+                      <span className="hidden sm:inline text-xs font-medium ml-0.5">엑셀</span>
+                    </button>
+                    <button type="button" onClick={() => handleStartEditRule(rule)} className="text-blue-500 hover:text-blue-700 p-1" title="규칙 수정"><Edit className="w-5 h-5 inline" /></button>
+                    <button type="button" onClick={() => handleDeleteRule(rule.id, rule.name)} className="text-red-500 hover:text-red-700 p-1" title="규칙 삭제"><Trash2 className="w-5 h-5 inline" /></button>
                   </div>
                 </div>
 
