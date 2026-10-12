@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Award, ListOrdered, Plus, ClipboardList, BarChart3, Calendar, CheckSquare, Sparkles, Zap, Users, KeySquare } from 'lucide-react';
 import Footer from './Footer';
+import ServiceNotice from './ServiceNotice';
 
 const LandingPage = ({ onShowAuth }) => {
   const [randomLogo] = useState(() => Math.random() < 0.5 ? 'logo.png' : 'logo2.png');
@@ -51,6 +52,10 @@ const LandingPage = ({ onShowAuth }) => {
           </div>
         </div>
       </header>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <ServiceNotice />
+      </div>
 
       {/* Hero Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">

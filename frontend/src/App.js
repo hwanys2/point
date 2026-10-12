@@ -25,6 +25,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import Auth from './components/Auth';
 import LandingPage from './components/LandingPage';
+import ServiceNotice from './components/ServiceNotice';
 import PublicLeaderboard from './components/PublicLeaderboard';
 import PrivacyPolicy from './components/PrivacyPolicy';
 import TermsOfService from './components/TermsOfService';
@@ -2982,6 +2983,7 @@ const App = () => {
       )}
 
       {/* 사용자 정보 - 최상단 우측 */}
+      <ServiceNotice />
       <div className="max-w-7xl mx-auto px-4 py-2">
         <div className="flex justify-end">
           <div className="flex items-center gap-2">
